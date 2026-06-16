@@ -41,6 +41,8 @@ const headerCopy = {
     search: "بحث",
     language: "اللغة",
     theme: "الوضع",
+    light: "فاتح",
+    dark: "داكن",
     concierge: "تسوق فاخر عبر واتساب",
     cartHint: "راجعي القطع قبل الانتقال لإتمام الطلب."
   },
@@ -60,6 +62,8 @@ const headerCopy = {
     search: "חיפוש",
     language: "שפה",
     theme: "ערכת צבע",
+    light: "בהיר",
+    dark: "כהה",
     concierge: "קנייה יוקרתית בוואטסאפ",
     cartHint: "בדקי את הפריטים לפני המשך ההזמנה."
   }
@@ -207,14 +211,14 @@ function HeaderInner() {
             </button>
             <button className="luxury-icon-action" onClick={handleThemeSwitch} aria-label={labels.theme}>
               {theme === "dark" ? <SunMedium size={18} /> : <Moon size={18} />}
-              <span>{theme === "dark" ? "Light" : "Dark"}</span>
+              <span>{theme === "dark" ? labels.light : labels.dark}</span>
             </button>
             <button className="luxury-cart-trigger" onClick={() => setCartOpen(true)} aria-label={labels.cart}>
               <ShoppingBag size={19} />
               <span>{labels.cart}</span>
               <b>{cartItemsCount}</b>
             </button>
-            <Link className="luxury-icon-link" href="/admin" aria-label={labels.admin}>
+            <Link className="luxury-icon-link luxury-icon-link--admin" href="/admin" aria-label={labels.admin}>
               <LayoutDashboard size={18} />
               <span>{labels.admin}</span>
             </Link>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Eye, RotateCcw, ShoppingBag, SlidersHorizontal } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { Eye, RotateCcw, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -71,6 +72,8 @@ const shopCopy = {
   }
 } as const;
 
+type ShopLabels = (typeof shopCopy)[Language];
+
 function ShopContent() {
   const searchParams = useSearchParams();
   const [storeData, setStoreData] = useState(initialStoreData);
@@ -80,6 +83,7 @@ function ShopContent() {
   const [minPrice, setMinPrice] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("newest");
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const labels = shopCopy[language];
 
   useEffect(() => {
@@ -197,6 +201,26 @@ function ShopContent() {
     window.dispatchEvent(new CustomEvent("flora-open-cart"));
   }
 
+  const filterPanel = (
+    <ShopFilterPanel
+      activeBrands={activeBrands}
+      activeCategories={activeCategories}
+      categoryCounts={categoryCounts}
+      labels={labels}
+      language={language}
+      maxPrice={maxPrice}
+      minPrice={minPrice}
+      onClose={() => setMobileFiltersOpen(false)}
+      resetFilters={resetFilters}
+      selectedBrands={selectedBrands}
+      selectedCategories={selectedCategories}
+      setMaxPrice={setMaxPrice}
+      setMinPrice={setMinPrice}
+      toggleBrand={toggleBrand}
+      toggleCategory={toggleCategory}
+    />
+  );
+
   return (
     <>
       <Header />
@@ -252,54 +276,7 @@ function ShopContent() {
         </section>
 
         <div className="shop-shell">
-          <aside className="shop-sidebar">
-            <div className="shop-sidebar__head">
-              <h2>{labels.filters}</h2>
-              <button className="shop-reset shop-reset--ghost" onClick={resetFilters} type="button">
-                {labels.clearAll}
-              </button>
-            </div>
-
-            <div className="shop-filter-group">
-              <span>{labels.categories}</span>
-              <div className="shop-filter-list">
-                {activeCategories.map((category) => (
-                  <label className="shop-check" key={category.id}>
-                    <input checked={selectedCategories.includes(category.id)} onChange={() => toggleCategory(category.id)} type="checkbox" />
-                    <em />
-                    <div>
-                      <strong>{textByLanguage(language, category.nameAr, category.nameHe)}</strong>
-                      <small>{categoryCounts[category.id] ?? 0}</small>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="shop-filter-group">
-              <span>{labels.brands}</span>
-              <div className="shop-filter-list">
-                {activeBrands.map((brand) => (
-                  <label className="shop-check" key={brand.id}>
-                    <input checked={selectedBrands.includes(brand.id)} onChange={() => toggleBrand(brand.id)} type="checkbox" />
-                    <em />
-                    <div>
-                      <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
-                      <small>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</small>
-                    </div>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="shop-filter-group">
-              <span>{labels.priceRange}</span>
-              <div className="shop-price-fields">
-                <input className="field" onChange={(event) => setMinPrice(event.target.value)} placeholder={labels.minPrice} type="number" value={minPrice} />
-                <input className="field" onChange={(event) => setMaxPrice(event.target.value)} placeholder={labels.maxPrice} type="number" value={maxPrice} />
-              </div>
-            </div>
-          </aside>
+          <aside className="shop-sidebar">{filterPanel}</aside>
 
           <section className="shop-main">
             <div className="shop-toolbar">
@@ -309,14 +286,20 @@ function ShopContent() {
                   {filteredProducts.length} {labels.results}
                 </h2>
               </div>
-              <label className="shop-sort">
-                <span>{labels.sortBy}</span>
-                <select className="select" onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
-                  <option value="newest">{labels.sortNewest}</option>
-                  <option value="price-desc">{labels.sortPriceDesc}</option>
-                  <option value="price-asc">{labels.sortPriceAsc}</option>
-                </select>
-              </label>
+              <div className="shop-toolbar__actions">
+                <label className="shop-sort">
+                  <span>{labels.sortBy}</span>
+                  <select className="select" onChange={(event) => setSortBy(event.target.value)} value={sortBy}>
+                    <option value="newest">{labels.sortNewest}</option>
+                    <option value="price-desc">{labels.sortPriceDesc}</option>
+                    <option value="price-asc">{labels.sortPriceAsc}</option>
+                  </select>
+                </label>
+                <button className="shop-mobile-filter-trigger" onClick={() => setMobileFiltersOpen(true)} type="button">
+                  <SlidersHorizontal size={16} />
+                  {labels.filters}
+                </button>
+              </div>
             </div>
 
             {activeFilterLabels.length || minPrice || maxPrice ? (
@@ -382,6 +365,29 @@ function ShopContent() {
             )}
           </section>
         </div>
+
+        <AnimatePresence>
+          {mobileFiltersOpen ? (
+            <motion.div
+              animate={{ opacity: 1 }}
+              className="shop-mobile-filter-overlay"
+              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }}
+              onClick={() => setMobileFiltersOpen(false)}
+            >
+              <motion.div
+                animate={{ y: 0 }}
+                className="shop-mobile-filter-sheet"
+                exit={{ y: "100%" }}
+                initial={{ y: "100%" }}
+                onClick={(event) => event.stopPropagation()}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {filterPanel}
+              </motion.div>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
       </main>
     </>
   );
@@ -392,5 +398,97 @@ export default function ShopPage() {
     <Suspense fallback={<div className="shop-page" />}>
       <ShopContent />
     </Suspense>
+  );
+}
+
+function ShopFilterPanel({
+  activeBrands,
+  activeCategories,
+  categoryCounts,
+  labels,
+  language,
+  maxPrice,
+  minPrice,
+  onClose,
+  resetFilters,
+  selectedBrands,
+  selectedCategories,
+  setMaxPrice,
+  setMinPrice,
+  toggleBrand,
+  toggleCategory
+}: {
+  activeBrands: Array<{ id: string; nameAr: string; nameHe: string; descriptionAr: string; descriptionHe: string }>;
+  activeCategories: Array<{ id: string; nameAr: string; nameHe: string }>;
+  categoryCounts: Record<string, number>;
+  labels: ShopLabels;
+  language: Language;
+  maxPrice: string;
+  minPrice: string;
+  onClose?: () => void;
+  resetFilters: () => void;
+  selectedBrands: string[];
+  selectedCategories: string[];
+  setMaxPrice: (value: string) => void;
+  setMinPrice: (value: string) => void;
+  toggleBrand: (id: string) => void;
+  toggleCategory: (id: string) => void;
+}) {
+  return (
+    <div className="shop-filter-panel">
+      <div className="shop-sidebar__head">
+        <h2>{labels.filters}</h2>
+        <div className="shop-sidebar__head-actions">
+          <button className="shop-reset shop-reset--ghost" onClick={resetFilters} type="button">
+            {labels.clearAll}
+          </button>
+          {onClose ? (
+            <button aria-label={labels.filters} className="shop-mobile-filter-close" onClick={onClose} type="button">
+              <X size={18} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="shop-filter-group">
+        <span>{labels.categories}</span>
+        <div className="shop-filter-list">
+          {activeCategories.map((category) => (
+            <label className="shop-check" key={category.id}>
+              <input checked={selectedCategories.includes(category.id)} onChange={() => toggleCategory(category.id)} type="checkbox" />
+              <em />
+              <div>
+                <strong>{textByLanguage(language, category.nameAr, category.nameHe)}</strong>
+                <small>{categoryCounts[category.id] ?? 0}</small>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="shop-filter-group">
+        <span>{labels.brands}</span>
+        <div className="shop-filter-list">
+          {activeBrands.map((brand) => (
+            <label className="shop-check" key={brand.id}>
+              <input checked={selectedBrands.includes(brand.id)} onChange={() => toggleBrand(brand.id)} type="checkbox" />
+              <em />
+              <div>
+                <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
+                <small>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</small>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="shop-filter-group">
+        <span>{labels.priceRange}</span>
+        <div className="shop-price-fields">
+          <input className="field" onChange={(event) => setMinPrice(event.target.value)} placeholder={labels.minPrice} type="number" value={minPrice} />
+          <input className="field" onChange={(event) => setMaxPrice(event.target.value)} placeholder={labels.maxPrice} type="number" value={maxPrice} />
+        </div>
+      </div>
+    </div>
   );
 }

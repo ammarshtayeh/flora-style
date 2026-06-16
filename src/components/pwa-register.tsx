@@ -2,6 +2,7 @@
 
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { Language } from "@/lib/store";
 
 type BeforeInstallPromptEvent = Event & {
@@ -13,6 +14,8 @@ export function PwaRegister() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [language, setLanguage] = useState<Language>("ar");
+  const [readyToShow, setReadyToShow] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -30,8 +33,23 @@ export function PwaRegister() {
       setLanguage((event as CustomEvent<Language>).detail);
     };
 
+    const isHome = pathname === "/";
+    const revealPrompt = () => setReadyToShow(true);
+    const revealOnScroll = () => {
+      const threshold = isHome ? window.innerHeight * 0.72 : 260;
+      if (window.scrollY > threshold) {
+        setReadyToShow(true);
+        window.removeEventListener("scroll", revealOnScroll);
+      }
+    };
+
+    const timer = window.setTimeout(() => {
+      if (!isHome) revealPrompt();
+    }, isHome ? 9000 : 4500);
+
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("flora-language-changed", handleLanguageChange);
+    window.addEventListener("scroll", revealOnScroll, { passive: true });
 
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
       navigator.serviceWorker.register("/sw.js").catch(() => {
@@ -42,8 +60,10 @@ export function PwaRegister() {
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("flora-language-changed", handleLanguageChange);
+      window.removeEventListener("scroll", revealOnScroll);
+      window.clearTimeout(timer);
     };
-  }, []);
+  }, [pathname]);
 
   async function handleInstall() {
     if (!installPrompt) return;
@@ -57,7 +77,7 @@ export function PwaRegister() {
     window.localStorage.setItem("flora-install-dismissed", "1");
   }
 
-  return installPrompt && !dismissed ? (
+  return installPrompt && !dismissed && readyToShow && pathname === "/" && !pathname?.startsWith("/admin") ? (
     <div className="install-prompt">
       <div>
         <span>Install Flora Style</span>

@@ -1,8 +1,12 @@
-const CACHE_NAME = "flora-style-v2";
-const CORE_ASSETS = ["/", "/shop", "/manifest.webmanifest", "/flora-logo.png"];
+const CACHE_NAME = "flora-style-v3";
+const APP_SHELL = ["/", "/shop", "/manifest.webmanifest", "/flora-logo.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png"];
+
+function isSameOrigin(request) {
+  return new URL(request.url).origin === self.location.origin;
+}
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS)));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
   self.skipWaiting();
 });
 
@@ -15,13 +19,28 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
+  const url = new URL(event.request.url);
+
+  if (event.request.mode === "navigate") {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
+    );
+    return;
+  }
+
+  if (!isSameOrigin(event.request)) return;
+
+  if (url.pathname.startsWith("/_next/static/") || APP_SHELL.includes(url.pathname)) {
+    event.respondWith(
+      caches.match(event.request).then((cached) => {
+        const networkFetch = fetch(event.request).then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          return response;
+        });
+
+        return cached || networkFetch;
       })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match("/")))
-  );
+    );
+  }
 });

@@ -1,11 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Assistant, IBM_Plex_Sans_Arabic, Manrope } from "next/font/google";
+import { Alexandria, Assistant, Manrope } from "next/font/google";
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
-const arabicFont = IBM_Plex_Sans_Arabic({
+const arabicFont = Alexandria({
   subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-arabic"
 });
 
@@ -32,8 +32,11 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   keywords: ["Flora Style", "luxury fashion", "Arabic storefront", "Hebrew storefront", "bags", "accessories", "watches"],
   icons: {
-    icon: "/flora-logo.png",
-    apple: "/flora-logo.png"
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }]
   },
   appleWebApp: {
     capable: true,
