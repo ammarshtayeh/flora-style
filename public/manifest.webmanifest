@@ -1,0 +1,31 @@
+{
+  "name": "Flora Style Online Store",
+  "short_name": "Flora Style",
+  "description": "Luxury bilingual fashion shopping experience.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0b0a",
+  "theme_color": "#0b0b0a",
+  "orientation": "portrait-primary",
+  "shortcuts": [
+    {
+      "name": "Shop",
+      "short_name": "Shop",
+      "url": "/shop"
+    },
+    {
+      "name": "Admin",
+      "short_name": "Admin",
+      "url": "/admin"
+    }
+  ],
+  "icons": [
+    {
+      "src": "/flora-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

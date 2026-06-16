@@ -1,0 +1,491 @@
+"use client";
+
+import { motion, useScroll, useTransform, type Variants } from "framer-motion";
+import gsap from "gsap";
+import Lenis from "lenis";
+import { Eye, ShoppingBag } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Header } from "@/components/header";
+import { addToCart } from "@/lib/cart";
+import { loadStoreData, subscribeToStoreData } from "@/lib/db";
+import { formatPrice, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
+
+const copy = {
+  ar: {
+    shop: "تسوق المجموعة",
+    browseCategories: "تصفح التصنيفات",
+    heroEyebrow: "Luxury pieces, quietly curated",
+    heroTitle: "أناقة تشبهك، بتفاصيل عالمية",
+    heroBody: "Flora Style تجربة تسوق فاخرة للحقائب والإكسسوارات والساعات المختارة بعناية، مع طلب سريع وواجهة واضحة تقودك مباشرة إلى ما تبحثين عنه.",
+    collections: "التصنيفات",
+    collectionsLead: "ابدئي من التصنيف المناسب أولاً حتى تكون الرحلة أوضح وأسرع.",
+    featured: "مختارات مميزة",
+    bestSellers: "الأكثر طلباً",
+    newArrivals: "وصل حديثاً",
+    discounted: "عروض مختارة",
+    brands: "البراندات",
+    brandsLead: "أسماء حاضرة بذوق متوازن، مع اختيارات تخدم الذوق اليومي والمناسبات.",
+    storyTitle: "قطع مختارة لتعيش أكثر من موسم.",
+    storyBody: "نختار القطع التي تبدو راقية، عملية، وسهلة الدمج في الإطلالة اليومية أو المناسبة. الفكرة ليست كثرة الخيارات، بل دقة الاختيار.",
+    why: "لماذا Flora Style",
+    concierge: "تنسيق سريع عبر واتساب",
+    conciergeBody: "عندما تكون القطعة قريبة من قرار الشراء، نجعل التواصل أسرع من أي خطوة إضافية. استفسار، تنسيق لون، أو تأكيد طلب خلال لحظات.",
+    conciergeCta: "ابدئي المحادثة",
+    reviews: "آراء العملاء",
+    view: "عرض التفاصيل",
+    add: "إضافة",
+    soldOut: "نفد",
+    categoryCta: "عرض التصنيف",
+    statProducts: "منتج مختار",
+    statZones: "منطقة توصيل",
+    statBrands: "ماركة فاخرة",
+    whyItems: [
+      { title: "تصنيفات واضحة", body: "الوصول إلى المنتج يبدأ من تقسيمات مباشرة تسهّل التصفح بدل إرباك المستخدم." },
+      { title: "اختيار مدروس", body: "كل قطعة مضافة هنا مختارة لتخدم ذوقاً فاخرًا وواضحاً، لا مجرد تعبئة واجهة." },
+      { title: "طلب أسرع", body: "من الصفحة الرئيسية حتى السلة، المسار مباشر وواضح ويقلل الخطوات غير الضرورية." },
+      { title: "دعم عبر واتساب", body: "التواصل المباشر حاضر دائماً عندما يحتاج العميل سؤالاً سريعاً قبل الشراء." }
+    ],
+    reviewItems: [
+      "التصنيفات واضحة والمنتج وصلني بالضبط مثل الصور.",
+      "التجربة مرتبة جداً والطلب كان سريعاً وواضحاً.",
+      "شكل الموقع فاخر فعلاً وليس مثل المتاجر العادية."
+    ],
+    footer: {
+      note: "وجهة رقمية لقطع مختارة بعناية، مع تجربة تصفح أهدأ وأوضح.",
+      explore: "استكشف",
+      categories: "التصنيفات",
+      contact: "التواصل",
+      concierge: "تنسيق سريع عبر واتساب",
+      supportNote: "للأسئلة السريعة أو تنسيق الطلبات الخاصة، فريق Flora Style جاهز مباشرة.",
+      allProducts: "كل المنتجات",
+      bestSellers: "الأكثر طلباً",
+      newArrivals: "وصل حديثاً",
+      story: "قصتنا",
+      whatsapp: "واتساب",
+      email: "البريد الإلكتروني",
+      copyright: "جميع الحقوق محفوظة"
+    }
+  },
+  he: {
+    shop: "גלי את הקולקציה",
+    browseCategories: "צפי בקטגוריות",
+    heroEyebrow: "Luxury pieces, quietly curated",
+    heroTitle: "אלגנטיות שמרגישה אישית",
+    heroBody: "Flora Style היא חוויית קנייה יוקרתית לתיקים, אביזרים ושעונים שנבחרו בקפידה, עם מסלול ברור שמוביל מהר למה שהלקוחה מחפשת.",
+    collections: "קטגוריות",
+    collectionsLead: "התחילי מהקטגוריה הנכונה כדי שהניווט יהיה ברור ומהיר יותר.",
+    featured: "בחירות מודגשות",
+    bestSellers: "הנמכרים ביותר",
+    newArrivals: "חדש באתר",
+    discounted: "מחירי בחירה",
+    brands: "מותגים",
+    brandsLead: "שמות נוכחים עם טעם מאוזן, ובחירות שמתאימות ליומיום ולאירועים.",
+    storyTitle: "פריטים שנבחרו להישאר רלוונטיים יותר מעונה אחת.",
+    storyBody: "אנחנו בוחרים פריטים אלגנטיים, שימושיים וקלים לשילוב בלוק יומיומי או לאירוע. לא עודף אפשרויות, אלא בחירה מדויקת.",
+    why: "למה Flora Style",
+    concierge: "תיאום מהיר בוואטסאפ",
+    conciergeBody: "כשהלקוחה קרובה להחלטת קנייה, אנחנו הופכים את התקשורת למהירה יותר מכל שלב נוסף. שאלה, התאמת צבע או אישור הזמנה בתוך רגעים.",
+    conciergeCta: "פתיחת שיחה",
+    reviews: "חוות דעת לקוחות",
+    view: "לפרטים",
+    add: "הוספה",
+    soldOut: "אזל",
+    categoryCta: "לצפייה בקטגוריה",
+    statProducts: "מוצר נבחר",
+    statZones: "אזור משלוח",
+    statBrands: "מותג יוקרתי",
+    whyItems: [
+      { title: "קטגוריות ברורות", body: "הלקוחה מגיעה מהר יותר למוצר כשהחלוקה ברורה ולא עמוסה." },
+      { title: "בחירה מדויקת", body: "כל פריט נבחר כדי לשדר יוקרה אמיתית ולא רק למלא את המסך." },
+      { title: "רכישה מהירה", body: "מהעמוד הראשי ועד העגלה, הזרימה ישירה וברורה עם פחות צעדים מיותרים." },
+      { title: "שירות בוואטסאפ", body: "יש מענה ישיר ומהיר לכל שאלה לפני הקנייה." }
+    ],
+    reviewItems: [
+      "הקטגוריות ברורות והמוצר הגיע בדיוק כמו בתמונות.",
+      "החוויה מסודרת מאוד וההזמנה הייתה מהירה.",
+      "האתר באמת מרגיש יוקרתי ולא כמו חנות רגילה."
+    ],
+    footer: {
+      note: "בית דיגיטלי לפריטים שנבחרו בקפידה, עם חוויית גלישה שקטה וברורה יותר.",
+      explore: "לגלות",
+      categories: "קטגוריות",
+      contact: "יצירת קשר",
+      concierge: "תיאום מהיר בוואטסאפ",
+      supportNote: "לשאלות מהירות או להזמנות מיוחדות, צוות Flora Style זמין ישירות.",
+      allProducts: "כל המוצרים",
+      bestSellers: "הנמכרים ביותר",
+      newArrivals: "חדש באתר",
+      story: "הסיפור שלנו",
+      whatsapp: "וואטסאפ",
+      email: "אימייל",
+      copyright: "כל הזכויות שמורות"
+    }
+  }
+} as const;
+
+const reveal: Variants = {
+  hidden: { opacity: 0, y: 34 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] } }
+};
+
+export function Storefront() {
+  const [storeData, setStoreData] = useState(initialStoreData);
+  const [language, setLanguage] = useState<Language>("ar");
+  const heroRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 140]);
+  const labels = copy[language];
+
+  useEffect(() => {
+    setStoreData(loadStoreData());
+    return subscribeToStoreData(setStoreData);
+  }, []);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("flora-language") as Language;
+    if (saved === "ar" || saved === "he") setLanguage(saved);
+    const handleLangChange = (event: Event) => setLanguage((event as CustomEvent<Language>).detail);
+    window.addEventListener("flora-language-changed", handleLangChange);
+    return () => window.removeEventListener("flora-language-changed", handleLangChange);
+  }, []);
+
+  useEffect(() => {
+    const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
+    let frame = 0;
+    const raf = (time: number) => {
+      lenis.raf(time);
+      frame = requestAnimationFrame(raf);
+    };
+    frame = requestAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(frame);
+      lenis.destroy();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!heroRef.current) return;
+    const media = heroRef.current.querySelector(".luxury-hero__image");
+    if (!media) return;
+    const tween = gsap.to(media, { scale: 1.08, yPercent: 8, ease: "none" });
+    return () => {
+      tween.kill();
+    };
+  }, []);
+
+  const activeProducts = useMemo(() => storeData.products.filter((product) => product.active), [storeData.products]);
+  const bestSellers = useMemo(() => {
+    const items = activeProducts.filter((product) => product.bestSeller);
+    return items.length ? items : activeProducts.slice(0, 4);
+  }, [activeProducts]);
+  const featuredProducts = useMemo(() => {
+    const items = activeProducts.filter((product) => product.featured);
+    return items.length ? items : activeProducts.slice(0, 4);
+  }, [activeProducts]);
+  const newArrivals = useMemo(() => [...activeProducts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4), [activeProducts]);
+  const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
+  const discountedProducts = useMemo(() => activeProducts.filter((product) => typeof product.salePrice === "number").slice(0, 4), [activeProducts]);
+  const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
+  const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
+
+  const productsPerCategory = useMemo(() => {
+    return activeProducts.reduce<Record<string, number>>((acc, product) => {
+      acc[product.categoryId] = (acc[product.categoryId] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [activeProducts]);
+
+  const productsPerBrand = useMemo(() => {
+    return activeProducts.reduce<Record<string, number>>((acc, product) => {
+      acc[product.brandId] = (acc[product.brandId] ?? 0) + 1;
+      return acc;
+    }, {});
+  }, [activeProducts]);
+
+  function handleAddToCart(product: Product) {
+    const color = storeData.colors.find((entry) => entry.productId === product.id && entry.stockQuantity > 0);
+    if (!color) return;
+    addToCart(product.id, color.id, 1);
+    window.dispatchEvent(new CustomEvent("flora-open-cart"));
+  }
+
+  return (
+    <>
+      <Header />
+      <main className="luxury-shell" dir="rtl">
+        <section className="luxury-hero" ref={heroRef}>
+          <motion.div className="luxury-hero__media" style={{ y: heroY }}>
+            {banner ? <Image className="luxury-hero__image" src={banner.imageUrl} alt="Flora Style editorial" fill priority sizes="100vw" /> : null}
+          </motion.div>
+          <motion.div className="luxury-hero__content" initial="hidden" animate="show" variants={reveal}>
+            <p className="luxury-kicker">{labels.heroEyebrow}</p>
+            <h1>{banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}</h1>
+            <p>{banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}</p>
+            <div className="luxury-actions">
+              <Link href="/shop">{labels.shop}</Link>
+              <a href="#collections">{labels.browseCategories}</a>
+            </div>
+          </motion.div>
+        </section>
+
+        <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
+          <div className="category-directory__intro">
+            <p>{labels.collectionsLead}</p>
+            <Link href="/shop">{labels.shop}</Link>
+          </div>
+          <div className="category-directory__grid">
+            {activeCategories.map((category) => (
+              <Link className="category-directory__card" href={`/shop?category=${category.id}`} key={category.id}>
+                <div className="category-directory__media">
+                  <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 100vw, 25vw" />
+                </div>
+                <div className="category-directory__content">
+                  <strong>{textByLanguage(language, category.nameAr, category.nameHe)}</strong>
+                  <p>{textByLanguage(language, category.descriptionAr, category.descriptionHe)}</p>
+                  <div>
+                    <span>{productsPerCategory[category.id] ?? 0}</span>
+                    <small>{labels.categoryCta}</small>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection id="featured" eyebrow="02" title={labels.featured}>
+          <ProductRail
+            products={featuredProducts}
+            language={language}
+            onAdd={handleAddToCart}
+            viewLabel={labels.view}
+            addLabel={labels.add}
+            colorsList={storeData.colors}
+            soldOutLabel={labels.soldOut}
+          />
+        </AnimatedSection>
+
+        <AnimatedSection id="best-sellers" eyebrow="03" title={labels.bestSellers}>
+          <ProductRail
+            products={bestSellers}
+            language={language}
+            onAdd={handleAddToCart}
+            viewLabel={labels.view}
+            addLabel={labels.add}
+            colorsList={storeData.colors}
+            soldOutLabel={labels.soldOut}
+          />
+        </AnimatedSection>
+
+        <AnimatedSection id="new-arrivals" eyebrow="04" title={labels.newArrivals}>
+          <ProductRail
+            products={newArrivals}
+            language={language}
+            onAdd={handleAddToCart}
+            viewLabel={labels.view}
+            addLabel={labels.add}
+            colorsList={storeData.colors}
+            soldOutLabel={labels.soldOut}
+          />
+        </AnimatedSection>
+
+        {discountedProducts.length ? (
+          <AnimatedSection id="discounted" eyebrow="05" title={labels.discounted}>
+            <ProductRail
+              products={discountedProducts}
+              language={language}
+              onAdd={handleAddToCart}
+              viewLabel={labels.view}
+              addLabel={labels.add}
+              colorsList={storeData.colors}
+              soldOutLabel={labels.soldOut}
+            />
+          </AnimatedSection>
+        ) : null}
+
+        <AnimatedSection id="brands" eyebrow="06" title={labels.brands}>
+          <div className="brand-salon">
+            <div className="brand-salon__lead">
+              <p>{labels.brandsLead}</p>
+              <Link href="/shop">{labels.shop}</Link>
+            </div>
+            <div className="brand-salon__grid">
+              {activeBrands.map((brand) => (
+                <div className="brand-salon__card" key={brand.id}>
+                  <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
+                  <p>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</p>
+                  <span>{productsPerBrand[brand.id] ?? 0}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </AnimatedSection>
+
+        <section className="brand-story" id="story">
+          <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} variants={reveal}>
+            <p className="luxury-kicker">Brand Story</p>
+            <h2>{labels.storyTitle}</h2>
+            <p>{labels.storyBody}</p>
+          </motion.div>
+          <motion.div
+            className="story-image"
+            initial={{ clipPath: "inset(12% 12% 12% 12%)" }}
+            whileInView={{ clipPath: "inset(0% 0% 0% 0%)" }}
+            viewport={{ once: true }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Image
+              src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1600&q=88"
+              alt="Flora Style atelier story"
+              fill
+              sizes="(max-width: 900px) 100vw, 50vw"
+            />
+          </motion.div>
+        </section>
+
+        <section className="concierge-banner">
+          <motion.div className="concierge-banner__copy" initial={{ opacity: 0, y: 26 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.3 }}>
+            <p className="luxury-kicker">WhatsApp Concierge</p>
+            <h2>{labels.concierge}</h2>
+            <p>{labels.conciergeBody}</p>
+          </motion.div>
+          <motion.a
+            className="concierge-banner__action"
+            href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`}
+            rel="noreferrer"
+            target="_blank"
+            initial={{ opacity: 0, y: 26 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+          >
+            {labels.conciergeCta}
+          </motion.a>
+        </section>
+
+        <footer className="luxury-footer">
+          <div className="luxury-footer__inner">
+            <div className="luxury-footer__lead">
+              <div className="luxury-footer__brand">
+                <Image src="/flora-logo.png" alt="Flora Style" width={64} height={64} />
+                <div>
+                  <h2>{storeData.settings.storeName}</h2>
+                  <p>{labels.footer.note}</p>
+                </div>
+              </div>
+
+              <a className="luxury-footer__cta" href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`} rel="noreferrer" target="_blank">
+                <strong>{labels.footer.concierge}</strong>
+                <span>{labels.footer.supportNote}</span>
+              </a>
+            </div>
+
+            <div className="luxury-footer__grid">
+              <div className="luxury-footer__column">
+                <span>{labels.footer.explore}</span>
+                <Link href="/shop">{labels.footer.allProducts}</Link>
+                <Link href="#best-sellers">{labels.footer.bestSellers}</Link>
+                <Link href="#new-arrivals">{labels.footer.newArrivals}</Link>
+                <Link href="#story">{labels.footer.story}</Link>
+              </div>
+
+              <div className="luxury-footer__column">
+                <span>{labels.footer.categories}</span>
+                {activeCategories.slice(0, 4).map((category) => (
+                  <Link href={`/shop?category=${category.id}`} key={category.id}>
+                    {textByLanguage(language, category.nameAr, category.nameHe)}
+                  </Link>
+                ))}
+              </div>
+
+              <div className="luxury-footer__column">
+                <span>{labels.footer.contact}</span>
+                <a href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`} rel="noreferrer" target="_blank">
+                  {labels.footer.whatsapp}
+                </a>
+                <a href={`mailto:${storeData.settings.email}`}>{labels.footer.email}</a>
+                <p>{storeData.settings.whatsappNumber}</p>
+                <p>{storeData.settings.email}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="luxury-footer__bottom">
+            <span>
+              © {new Date().getFullYear()} {storeData.settings.storeName} - {labels.footer.copyright}
+            </span>
+            <span>{storeData.settings.whatsappNumber}</span>
+          </div>
+        </footer>
+      </main>
+    </>
+  );
+}
+
+function AnimatedSection({ id, eyebrow, title, children }: { id?: string; eyebrow: string; title: string; children: React.ReactNode }) {
+  return (
+    <motion.section className="luxury-section" id={id} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }} variants={reveal}>
+      <div className="luxury-section__head">
+        <span>{eyebrow}</span>
+        <h2>{title}</h2>
+      </div>
+      {children}
+    </motion.section>
+  );
+}
+
+function ProductRail({
+  products,
+  language,
+  onAdd,
+  viewLabel,
+  addLabel,
+  colorsList,
+  soldOutLabel
+}: {
+  products: Product[];
+  language: Language;
+  onAdd: (product: Product) => void;
+  viewLabel: string;
+  addLabel: string;
+  colorsList: Array<{ productId: string; stockQuantity: number }>;
+  soldOutLabel: string;
+}) {
+  return (
+    <div className="luxury-product-grid">
+      {products.map((product) => {
+        const colors = colorsList.filter((color) => color.productId === product.id);
+        const stock = colors.reduce((sum, color) => sum + color.stockQuantity, 0);
+        return (
+          <motion.article className="luxury-product" key={product.id} whileHover={{ y: -8 }} transition={{ duration: 0.45 }}>
+            <Link className="luxury-product__image" href={`/products/${product.slug}`}>
+              <Image className="primary" src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 900px) 100vw, 33vw" />
+              <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 100vw, 33vw" />
+            </Link>
+            <div className="luxury-product__meta">
+              <span>{product.sku}</span>
+              <Link href={`/products/${product.slug}`}>
+                <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
+              </Link>
+              <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p>
+              <div className="luxury-product__bottom">
+                <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
+                <span>{stock > 0 ? `${stock} pcs` : soldOutLabel}</span>
+              </div>
+            </div>
+            <div className="floating-actions">
+              <Link href={`/products/${product.slug}`}>
+                <Eye size={15} />
+                {viewLabel}
+              </Link>
+              <button onClick={() => onAdd(product)} disabled={stock <= 0}>
+                <ShoppingBag size={15} />
+                {addLabel}
+              </button>
+            </div>
+          </motion.article>
+        );
+      })}
+    </div>
+  );
+}
