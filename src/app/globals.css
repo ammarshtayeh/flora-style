@@ -261,6 +261,13 @@ html[data-theme="light"] .checkout-line__content strong {
   color: var(--ink);
 }
 
+html[data-theme="light"] .luxury-section__head h2,
+html[data-theme="light"] .product-row h2,
+html[data-theme="light"] .product-story h2 {
+  background: none;
+  -webkit-text-fill-color: var(--ink);
+}
+
 html[data-theme="light"] .luxury-hero p:not(.luxury-kicker),
 html[data-theme="light"] .brand-story p,
 html[data-theme="light"] .luxury-product__meta p,
@@ -311,6 +318,29 @@ html[data-theme="light"] .shop-mobile-filter-sheet {
     var(--linen);
 }
 
+html[data-theme="light"] .install-prompt {
+  border-color: rgba(176, 139, 87, 0.18);
+}
+
+html[data-theme="light"] .install-prompt span {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .install-prompt p {
+  color: #5f5448;
+}
+
+html[data-theme="light"] .install-prompt__actions button {
+  border-color: rgba(176, 139, 87, 0.22);
+  color: #5f5448;
+}
+
+html[data-theme="light"] .install-prompt__actions button:last-child {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fffdf9;
+}
+
 html[data-theme="light"] .luxury-search input::placeholder {
   color: rgba(95, 84, 72, 0.78);
 }
@@ -336,6 +366,61 @@ html[data-theme="light"] .luxury-product__meta p,
 html[data-theme="light"] .cart-sheet__head p,
 html[data-theme="light"] .cart-toast span {
   color: #5f5448;
+}
+
+html[data-theme="light"] .category-directory__content small,
+html[data-theme="light"] .shop-filter-group > span,
+html[data-theme="light"] .shop-toolbar span,
+html[data-theme="light"] .shop-active-filters > span {
+  color: #8d6a3f;
+}
+
+html[data-theme="light"] .field,
+html[data-theme="light"] .textarea,
+html[data-theme="light"] .select,
+html[data-theme="light"] .cart-form input,
+html[data-theme="light"] .cart-form textarea,
+html[data-theme="light"] .cart-form select {
+  background: #fffdfa;
+  border-color: rgba(176, 139, 87, 0.2);
+  color: var(--ink);
+  box-shadow: 0 10px 24px rgba(176, 139, 87, 0.08);
+}
+
+html[data-theme="light"] .field::placeholder,
+html[data-theme="light"] .textarea::placeholder,
+html[data-theme="light"] .cart-form input::placeholder,
+html[data-theme="light"] .cart-form textarea::placeholder {
+  color: rgba(95, 84, 72, 0.74);
+  opacity: 1;
+}
+
+html[data-theme="light"] .field:focus,
+html[data-theme="light"] .textarea:focus,
+html[data-theme="light"] .select:focus,
+html[data-theme="light"] .cart-form input:focus,
+html[data-theme="light"] .cart-form textarea:focus,
+html[data-theme="light"] .cart-form select:focus {
+  background: #fffdf9;
+}
+
+html[data-theme="light"] .shop-sort .select {
+  border-color: rgba(176, 139, 87, 0.24);
+  color: #2f2418;
+  font-weight: 700;
+}
+
+html[data-theme="light"] .shop-check {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(176, 139, 87, 0.12);
+}
+
+html[data-theme="light"] .shop-check strong {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .shop-check small {
+  color: #6d6257;
 }
 
 html[data-theme="light"] .luxury-actions a:nth-child(2),
@@ -1597,7 +1682,7 @@ button {
 .luxury-product__bottom {
   align-items: center;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   margin-top: 18px;
   border-top: 1px solid var(--line);
   padding-top: 14px;
@@ -1615,6 +1700,12 @@ button {
   border: 1px solid var(--line);
   padding: 2px 8px;
   border-radius: 10px;
+}
+
+.luxury-product__meta > span,
+.shop-product-grid .luxury-product__bottom span,
+.product-facts div:first-child {
+  display: none;
 }
 
 /* Floating Action Bars on Hover */
@@ -2209,10 +2300,25 @@ button {
   align-items: center;
   display: flex;
   gap: 10px;
+  min-width: 0;
+  position: relative;
 }
 
 .shop-sort .select {
   min-width: 220px;
+}
+
+.shop-sort::after {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid currentColor;
+  color: var(--gold);
+  content: "";
+  inset-inline-end: 18px;
+  pointer-events: none;
+  position: absolute;
+  top: calc(50% + 10px);
+  transform: translateY(-50%);
 }
 
 .shop-mobile-filter-overlay {
@@ -2697,11 +2803,12 @@ button {
 .field,
 .textarea,
 .select {
+  appearance: none;
   background: rgba(22, 22, 21, 0.6);
   border: 1px solid var(--line);
   color: var(--ink);
   min-height: 50px;
-  padding: 0 16px;
+  padding: 0 42px 0 16px;
   width: 100%;
   border-radius: 12px;
   transition: var(--transition);
@@ -3520,6 +3627,11 @@ td strong {
 select.select option {
   background: #1c1c1a;
   color: var(--ink);
+}
+
+html[data-theme="light"] select.select option {
+  background: #fffdfa;
+  color: #2f2418;
 }
 
 /* Responsive Overrides */

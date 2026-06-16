@@ -331,7 +331,6 @@ function ShopContent() {
                         <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 100vw, 33vw" />
                       </Link>
                       <div className="luxury-product__meta">
-                        <span>{product.sku}</span>
                         <Link href={`/products/${product.slug}`}>
                           <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
                         </Link>

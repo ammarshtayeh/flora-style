@@ -463,14 +463,12 @@ function ProductRail({
               <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 100vw, 33vw" />
             </Link>
             <div className="luxury-product__meta">
-              <span>{product.sku}</span>
               <Link href={`/products/${product.slug}`}>
                 <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
               </Link>
               <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p>
               <div className="luxury-product__bottom">
                 <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-                <span>{stock > 0 ? `${stock} pcs` : soldOutLabel}</span>
               </div>
             </div>
             <div className="floating-actions">
