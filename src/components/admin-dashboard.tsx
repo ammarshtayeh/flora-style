@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Banner,
@@ -103,11 +104,12 @@ function textInput<T extends object>(
 }
 
 export function AdminDashboard() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [data, setData] = useState<StoreData>(initialStoreData);
-  const [loaded, setLoaded] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
   const [syncError, setSyncError] = useState("");
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const [productDraft, setProductDraft] = useState<Product>(() => blankProduct(data.categories[0]?.id, data.brands[0]?.id));
   const [categoryDraft, setCategoryDraft] = useState<Category>(() => blankCategory());
@@ -166,7 +168,6 @@ export function AdminDashboard() {
   // Sync state with remote store data (fallbacks still come from local cache)
   useEffect(() => {
     setData(loadStoreData());
-    setLoaded(true);
     const unsub = subscribeToStoreData((fresh) => {
       setData(fresh);
       setSettingsDraft(fresh.settings);
@@ -539,6 +540,33 @@ export function AdminDashboard() {
     setSyncMessage("تمت مزامنة بيانات المتجر الحالية إلى Supabase.");
   }
 
+  async function handleLogout() {
+    const supabase = createBrowserSupabaseClient();
+
+    setIsLoggingOut(true);
+    setSyncError("");
+    setSyncMessage("");
+
+    if (!supabase) {
+      router.replace("/admin/login");
+      router.refresh();
+      return;
+    }
+
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        throw error;
+      }
+
+      router.replace("/admin/login");
+      router.refresh();
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "تعذر تسجيل الخروج.");
+      setIsLoggingOut(false);
+    }
+  }
+
   return (
     <main className="admin-layout" dir="rtl">
       <aside className="sidebar">
@@ -551,14 +579,19 @@ export function AdminDashboard() {
         </Link>
         <nav className="side-nav" aria-label="Admin sections">
           {tabs.map((tab) => (
-            <button className={activeTab === tab.id ? "is-active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)}>
+            <button className={activeTab === tab.id ? "is-active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button">
               {tab.label}
             </button>
           ))}
         </nav>
-        <Link className="ghost-button" href="/">
-          عرض المتجر
-        </Link>
+        <div className="sidebar-actions">
+          <Link className="ghost-button" href="/">
+            عرض المتجر
+          </Link>
+          <button className="danger-button sidebar-logout-button" disabled={isLoggingOut} onClick={handleLogout} type="button">
+            {isLoggingOut ? "Logging out..." : "Logout"}
+          </button>
+        </div>
       </aside>
 
       <section className="admin-main">
@@ -609,19 +642,12 @@ export function AdminDashboard() {
                   {[...stats.lowStock, ...stats.outOfStock].map((color) => {
                     const product = data.products.find((entry) => entry.id === color.productId);
                     return (
-                      <div className="metric" key={color.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 18px" }}>
-                        <div>
+                      <div className="metric metric--compact" key={color.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 18px" }}>
+                        <div className="metric__content">
                           <strong style={{ fontSize: "16px", margin: 0 }}>{product?.nameAr ?? "منتج"}</strong>
-                          <span style={{ fontSize: "12px" }}>{color.nameAr}</span>
+                          <span className="metric__subtle">{color.nameAr}</span>
                         </div>
-                        <span style={{
-                          color: color.stockQuantity === 0 ? "#ff4757" : "#ffa502",
-                          fontWeight: 700,
-                          fontSize: "14px",
-                          border: "1px solid var(--line)",
-                          padding: "2px 8px",
-                          borderRadius: "8px"
-                        }}>
+                        <span className={`status-pill ${color.stockQuantity === 0 ? "status-pill--danger" : "status-pill--warning"}`}>
                           {color.stockQuantity === 0 ? "نفذ" : `${color.stockQuantity} قطع`}
                         </span>
                       </div>
@@ -732,17 +758,17 @@ export function AdminDashboard() {
             />
 
             {supabaseAvailable ? (
-              <div style={{ margin: "12px 0 20px", padding: "10px 14px", background: "rgba(46,213,115,0.1)", border: "1px solid rgba(46,213,115,0.35)", borderRadius: 10, fontSize: 13, color: "#2ed573" }}>
+              <div className="admin-inline-notice admin-inline-notice--success">
                 ✓ متصل بـ Supabase — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
               </div>
             ) : (
-              <div style={{ margin: "12px 0 20px", padding: "12px 16px", background: "rgba(255,170,0,0.08)", border: "1px solid rgba(255,170,0,0.3)", borderRadius: 10, fontSize: 13 }}>
+              <div className="admin-inline-notice admin-inline-notice--warning">
                 أضف متغيرات <code>NEXT_PUBLIC_SUPABASE_URL</code> و <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (أو PUBLISHABLE_KEY) في <code>.env.local</code> ثم أعد تشغيل السيرفر.
               </div>
             )}
 
             {ordersLoading ? (
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted)" }}>جاري تحميل الطلبات من Supabase...</div>
+              <div className="admin-loading-state">جاري تحميل الطلبات من Supabase...</div>
             ) : (
               <OrdersTable
                 data={{
@@ -1012,9 +1038,9 @@ function Stat({ label, value }: { label: string; value: string }) {
 // Stats panel section title component
 function PanelTitle({ title, hint }: { title: string; hint: string }) {
   return (
-    <div className="section-head" style={{ borderBottom: "1px solid var(--line)", paddingBottom: "12px", marginBottom: "16px" }}>
+    <div className="section-head">
       <h2>{title}</h2>
-      <p style={{ color: "var(--muted)", margin: "4px 0 0", fontSize: "13px" }}>{hint}</p>
+      <p>{hint}</p>
     </div>
   );
 }
@@ -1159,20 +1185,19 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
                 <td>{product.sku}</td>
                 <td>{formatPrice(product.salePrice || product.price)}</td>
                 <td>
-                  <span style={{
-                    color: product.active ? "#2ed573" : "#ff4757",
-                    fontWeight: 700
-                  }}>
+                  <span className={`status-pill ${product.active ? "status-pill--success" : "status-pill--danger"}`}>
                     {product.active ? "نشط" : "معطل"}
                   </span>
                 </td>
                 <td>
-                  <button className="ghost-button" style={{ marginInlineEnd: "8px" }} onClick={() => onEdit(product)}>
+                  <div className="table-action-group">
+                    <button className="ghost-button" onClick={() => onEdit(product)} type="button">
                     تعديل
-                  </button>
-                  <button className="danger-button" onClick={() => onDelete(product.id)}>
+                    </button>
+                    <button className="danger-button" onClick={() => onDelete(product.id)} type="button">
                     حذف
-                  </button>
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
@@ -1207,17 +1232,19 @@ function InventoryTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (
                   <small className="muted">{color.nameHe} / {color.value}</small>
                 </td>
                 <td>
-                  <strong style={{ color: color.stockQuantity <= 3 ? "#ffa502" : "inherit" }}>
+                  <strong className={color.stockQuantity <= 3 ? "stock-value stock-value--low" : "stock-value"}>
                     {color.stockQuantity}
                   </strong>
                 </td>
                 <td>
-                  <button className="ghost-button" style={{ marginInlineEnd: "8px" }} onClick={() => onEdit(color)}>
+                  <div className="table-action-group">
+                    <button className="ghost-button" onClick={() => onEdit(color)} type="button">
                     تعديل
-                  </button>
-                  <button className="danger-button" onClick={() => onDelete(color.id)}>
+                    </button>
+                    <button className="danger-button" onClick={() => onDelete(color.id)} type="button">
                     حذف
-                  </button>
+                    </button>
+                  </div>
                 </td>
               </tr>
             );
@@ -1240,14 +1267,17 @@ function OrdersTable({
 }) {
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
-  const getStatusColor = (status: OrderStatus) => {
+  const getStatusTone = (status: OrderStatus) => {
     switch (status) {
-      case "Pending": return "#ffa502";
-      case "Confirmed": return "#2ed573";
-      case "Processing": return "#9b59b6";
-      case "Delivered": return "#10ac84";
-      case "Cancelled": return "#ff4757";
-      default: return "#fff";
+      case "Confirmed":
+      case "Delivered":
+        return "success";
+      case "Pending":
+        return "warning";
+      case "Cancelled":
+        return "danger";
+      default:
+        return "neutral";
     }
   };
 
@@ -1284,21 +1314,15 @@ function OrdersTable({
                     <br />
                     <span className="muted">{order.phoneNumber}</span>
                   </td>
-                  <td style={{ color: "var(--gold)", fontWeight: 700 }}>{formatPrice(order.totalPrice)}</td>
+                  <td className="order-total">{formatPrice(order.totalPrice)}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <select
-                      className="select"
+                      className={`select status-select status-select--${getStatusTone(order.status)}`}
                       value={order.status}
                       onChange={(event) => onStatusChange(order.id, event.target.value as OrderStatus)}
-                      style={{
-                        borderColor: getStatusColor(order.status),
-                        color: getStatusColor(order.status),
-                        background: "rgba(11,11,10,0.8)",
-                        fontWeight: 700
-                      }}
                     >
                       {statuses.map((status) => (
-                        <option key={status} value={status} style={{ color: getStatusColor(status) }}>
+                        <option key={status} value={status}>
                           {status}
                         </option>
                       ))}
@@ -1306,61 +1330,66 @@ function OrdersTable({
                   </td>
                   <td>{order.items.reduce((sum, item) => sum + item.quantity, 0)} قطع</td>
                   <td onClick={(e) => e.stopPropagation()}>
-                    <button className="danger-button" onClick={() => onDelete(order.id)}>
+                    <button className="danger-button" onClick={() => onDelete(order.id)} type="button">
                       حذف
                     </button>
                   </td>
                 </tr>
                 {isExpanded && (
                   <tr className="order-details-expanded">
-                    <td colSpan={6} style={{ background: "rgba(212,175,55,0.02)", padding: "24px", borderBottom: "1px solid var(--line)" }}>
-                      <div style={{ display: "grid", gap: "24px", gridTemplateColumns: "1fr 1fr" }}>
+                    <td className="order-details-cell" colSpan={6}>
+                      <div className="order-details-grid">
                         <div>
-                          <h4 style={{ color: "var(--gold)", margin: "0 0 12px", fontSize: "16px", borderBottom: "1px solid var(--line)", paddingBottom: "6px" }}>
+                          <h4 className="order-details-title">
                             تفاصيل العميل والتوصيل
                           </h4>
-                          <div style={{ display: "grid", gap: "8px", fontSize: "14px" }}>
+                          <div className="order-details-copy">
                             <p><strong>الاسم بالكامل:</strong> {order.customerName}</p>
                             <p><strong>رقم الهاتف:</strong> {order.phoneNumber}</p>
                             <p><strong>منطقة التوصيل:</strong> {zone ? zone.nameAr : "-"}</p>
                             <p><strong>العنوان المفصل:</strong> {order.detailedAddress}</p>
                             <p><strong>ملاحظات العميل:</strong> {order.notes || "-"}</p>
-                            <p><strong>حالة الخصم من المخزون:</strong> <span style={{ color: order.stockDeducted ? "#2ed573" : "#ffa502", fontWeight: 700 }}>{order.stockDeducted ? "تم الخصم تلقائياً" : "لم يخصم بعد"}</span></p>
+                            <p>
+                              <strong>حالة الخصم من المخزون:</strong>{" "}
+                              <span className={`status-pill ${order.stockDeducted ? "status-pill--success" : "status-pill--warning"}`}>
+                                {order.stockDeducted ? "تم الخصم تلقائياً" : "لم يخصم بعد"}
+                              </span>
+                            </p>
                           </div>
                         </div>
                         <div>
-                          <h4 style={{ color: "var(--gold)", margin: "0 0 12px", fontSize: "16px", borderBottom: "1px solid var(--line)", paddingBottom: "6px" }}>
+                          <h4 className="order-details-title">
                             المنتجات المطلوبة
                           </h4>
-                          <div style={{ display: "grid", gap: "10px", maxHeight: "150px", overflowY: "auto" }}>
+                          <div className="order-details-lines">
                             {order.items.map((item, idx) => {
                               const prod = data.products.find((p) => p.id === item.productId);
                               const col = data.colors.find((c) => c.id === item.colorId);
                               return (
-                                <div key={idx} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "14px", borderBottom: "1px dashed rgba(255,255,255,0.05)", paddingBottom: "6px" }}>
+                                <div className="order-details-line" key={idx}>
                                   <div>
                                     <strong>{prod ? prod.nameAr : "منتج غير موجود"}</strong>
-                                    <span style={{ fontSize: "12px", color: "var(--muted)", marginInlineStart: "8px" }}>
+                                    <span className="order-details-meta">
                                       (اللون: {col ? col.nameAr : "-"})
                                     </span>
                                   </div>
-                                  <span style={{ fontWeight: 600 }}>
+                                  <span className="order-details-price">
                                     {item.quantity} × {formatPrice(item.price)}
                                   </span>
                                 </div>
                               );
                             })}
                           </div>
-                          <div style={{ borderTop: "1px solid var(--line)", marginTop: "16px", paddingTop: "12px", fontSize: "14px", display: "grid", gap: "6px" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                          <div className="order-details-totals">
+                            <div>
                               <span>مجموع المنتجات:</span>
                               <strong>{formatPrice(order.subtotal)}</strong>
                             </div>
-                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                            <div>
                               <span>تكلفة التوصيل:</span>
                               <strong>{formatPrice(order.deliveryFee)}</strong>
                             </div>
-                            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "16px", color: "var(--gold)", borderTop: "1px dashed var(--line)", paddingTop: "8px" }}>
+                            <div className="order-details-grand-total">
                               <span>الإجمالي الكلي:</span>
                               <strong>{formatPrice(order.totalPrice)}</strong>
                             </div>
@@ -1468,12 +1497,14 @@ function EntityTable<T extends { id: string } & Record<string, unknown>>({
                 <td key={String(column)}>{formatCell(row[column])}</td>
               ))}
               <td>
-                <button className="ghost-button" style={{ marginInlineEnd: "8px" }} onClick={() => onEdit(row)}>
+                <div className="table-action-group">
+                  <button className="ghost-button" onClick={() => onEdit(row)} type="button">
                   تعديل
-                </button>
-                <button className="danger-button" onClick={() => onDelete(row.id)}>
+                  </button>
+                  <button className="danger-button" onClick={() => onDelete(row.id)} type="button">
                   حذف
-                </button>
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
