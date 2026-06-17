@@ -34,9 +34,9 @@ import {
 } from "@/lib/supabase/admin";
 import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
-import { getSupabaseConfigStatus } from "@/lib/supabase/client";
+import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
 
-type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts";
+type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts" | "profile";
 
 type AdminAccount = {
   user_id: string;
@@ -51,6 +51,12 @@ type AdminAccountDraft = {
   displayName: string;
 };
 
+type AdminProfileDraft = {
+  email: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "overview", label: "نظرة عامة" },
   { id: "products", label: "المنتجات" },
@@ -61,7 +67,8 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "delivery", label: "التوصيل" },
   { id: "banners", label: "البانرات" },
   { id: "settings", label: "الإعدادات" },
-  { id: "accounts", label: "إدارة حساباتي" }
+  { id: "accounts", label: "إدارة حساباتي" },
+  { id: "profile", label: "ملفي الشخصي" }
 ];
 
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Processing", "Delivered", "Cancelled"];
@@ -117,6 +124,11 @@ export function AdminDashboard() {
     email: "",
     password: "",
     displayName: "",
+  });
+  const [profileDraft, setProfileDraft] = useState<AdminProfileDraft>({
+    email: "",
+    newPassword: "",
+    confirmPassword: "",
   });
 
   // Supabase-backed orders (for the Orders tab)
@@ -200,6 +212,29 @@ export function AdminDashboard() {
       void loadAdminAccounts();
     }
   }, [activeTab]);
+
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      return;
+    }
+
+    let mounted = true;
+    void supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) {
+        return;
+      }
+
+      setProfileDraft((current) => ({
+        ...current,
+        email: data.user?.email || "",
+      }));
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const stats = useMemo(() => {
     const totalSales = data.orders
@@ -367,6 +402,49 @@ export function AdminDashboard() {
       setSyncMessage("تم إنشاء حساب الأدمن الجديد بنجاح.");
     } catch (error) {
       setSyncError(error instanceof Error ? error.message : "تعذر إنشاء حساب الأدمن.");
+    } finally {
+      setAccountsLoading(false);
+    }
+  }
+
+  async function updateMyPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSyncError("");
+
+    if (!profileDraft.newPassword || profileDraft.newPassword.length < 8) {
+      setSyncError("كلمة المرور الجديدة يجب أن تكون 8 أحرف على الأقل.");
+      return;
+    }
+
+    if (profileDraft.newPassword !== profileDraft.confirmPassword) {
+      setSyncError("تأكيد كلمة المرور غير مطابق.");
+      return;
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    if (!supabase) {
+      setSyncError("Supabase غير مفعّل حالياً.");
+      return;
+    }
+
+    setAccountsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: profileDraft.newPassword,
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      setProfileDraft((current) => ({
+        ...current,
+        newPassword: "",
+        confirmPassword: "",
+      }));
+      setSyncMessage("تم تغيير كلمة المرور بنجاح.");
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "تعذر تغيير كلمة المرور.");
     } finally {
       setAccountsLoading(false);
     }
@@ -825,6 +903,40 @@ export function AdminDashboard() {
                 {textInput<AdminAccountDraft>("كلمة المرور", accountDraft.password, "password", setAccountDraft, "password")}
                 <button className="button" disabled={accountsLoading || !serviceRoleConfigured}>
                   {accountsLoading ? "جاري الإنشاء..." : "إنشاء حساب أدمن"}
+                </button>
+              </form>
+            </div>
+          </div>
+        ) : null}
+
+        {activeTab === "profile" ? (
+          <div className="admin-grid">
+            <div className="admin-panel">
+              <PanelTitle
+                title="بيانات حساب الأدمن"
+                hint="هذا الحساب هو المستخدم الحالي المسجل دخوله إلى لوحة التحكم."
+              />
+              <div className="admin-accounts-list">
+                <div className="admin-account-card">
+                  <div>
+                    <strong>البريد الإلكتروني</strong>
+                    <span>{profileDraft.email || "-"}</span>
+                  </div>
+                  <small>Admin Account</small>
+                </div>
+              </div>
+            </div>
+
+            <div className="admin-panel">
+              <PanelTitle
+                title="تغيير كلمة المرور"
+                hint="غيّر كلمة مرور الأدمن الحالي مباشرة من داخل الحساب."
+              />
+              <form className="form-grid" onSubmit={updateMyPassword}>
+                {textInput<AdminProfileDraft>("كلمة المرور الجديدة", profileDraft.newPassword, "newPassword", setProfileDraft, "password")}
+                {textInput<AdminProfileDraft>("تأكيد كلمة المرور الجديدة", profileDraft.confirmPassword, "confirmPassword", setProfileDraft, "password")}
+                <button className="button" disabled={accountsLoading}>
+                  {accountsLoading ? "جاري الحفظ..." : "حفظ كلمة المرور الجديدة"}
                 </button>
               </form>
             </div>

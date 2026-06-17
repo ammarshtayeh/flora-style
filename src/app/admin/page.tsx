@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { AdminDashboard } from "@/components/admin-dashboard";
-import { isAllowedAdminEmail } from "@/lib/admin-access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export const metadata = {
@@ -17,10 +16,6 @@ export default async function AdminPage() {
 
     if (!user) {
       redirect("/admin/login");
-    }
-
-    if (!isAllowedAdminEmail(user.email)) {
-      redirect("/admin/login?blocked=1");
     }
 
     const { data: adminRecord } = await supabase

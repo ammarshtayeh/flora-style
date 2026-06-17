@@ -4,7 +4,6 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Mail } from "lucide-react";
-import { isAllowedAdminEmail } from "@/lib/admin-access";
 import { createBrowserSupabaseClient, isSupabaseEnabled } from "@/lib/supabase/client";
 
 function AdminLoginContent() {
@@ -44,10 +43,8 @@ function AdminLoginContent() {
 
       if (user?.email) {
         setEmail((currentEmail) => currentEmail || user.email || "");
-        if (isAllowedAdminEmail(user.email)) {
-          router.replace(nextPath);
-          router.refresh();
-        }
+        router.replace(nextPath);
+        router.refresh();
       }
     }
 
@@ -58,10 +55,8 @@ function AdminLoginContent() {
     } = client.auth.onAuthStateChange((_event, session) => {
       if (session?.user?.email) {
         setEmail((currentEmail) => currentEmail || session.user.email || "");
-        if (isAllowedAdminEmail(session.user.email)) {
-          router.replace(nextPath);
-          router.refresh();
-        }
+        router.replace(nextPath);
+        router.refresh();
       }
     });
 
@@ -80,12 +75,6 @@ function AdminLoginContent() {
 
     setLoading(true);
     setError("");
-
-    if (!isAllowedAdminEmail(email)) {
-      setError("هذا البريد الإلكتروني غير مصرح له بدخول الأدمن.");
-      setLoading(false);
-      return;
-    }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
