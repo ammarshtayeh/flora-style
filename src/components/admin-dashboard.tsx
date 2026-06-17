@@ -1507,12 +1507,25 @@ function OrderDetails({ data, order, zoneName }: { data: StoreData; order: Order
           {order.items.map((item, idx) => {
             const prod = data.products.find((p) => p.id === item.productId);
             const col = data.colors.find((c) => c.id === item.colorId);
+            const imageUrl = prod?.images?.[0];
+
             return (
               <div className="order-details-line" key={idx}>
-                <div>
+                {imageUrl ? (
+                  <Image
+                    alt={prod ? prod.nameAr : "منتج"}
+                    className="order-details-line__image"
+                    height={56}
+                    src={imageUrl}
+                    width={48}
+                  />
+                ) : (
+                  <div aria-hidden="true" className="order-details-line__image order-details-line__image--placeholder" />
+                )}
+                <div className="order-details-line__content">
                   <strong>{prod ? prod.nameAr : "منتج غير موجود"}</strong>
                   <span className="order-details-meta">
-                    (اللون: {col ? col.nameAr : "-"})
+                    اللون: {col ? col.nameAr : "-"}
                   </span>
                 </div>
                 <span className="order-details-price">
