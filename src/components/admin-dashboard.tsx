@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -22,6 +23,8 @@ import {
   deleteEntity,
   saveSettings as saveSettingsRemote,
   seedStoreFromInitialData,
+  uploadAdminAsset,
+  uploadAdminAssets,
   upsertBanner,
   upsertBrand,
   upsertCategory,
@@ -33,7 +36,20 @@ import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { getSupabaseConfigStatus } from "@/lib/supabase/client";
 
-type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings";
+type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts";
+
+type AdminAccount = {
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  created_at: string;
+};
+
+type AdminAccountDraft = {
+  email: string;
+  password: string;
+  displayName: string;
+};
 
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "overview", label: "نظرة عامة" },
@@ -44,7 +60,8 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "brands", label: "البراندات" },
   { id: "delivery", label: "التوصيل" },
   { id: "banners", label: "البانرات" },
-  { id: "settings", label: "الإعدادات" }
+  { id: "settings", label: "الإعدادات" },
+  { id: "accounts", label: "إدارة حساباتي" }
 ];
 
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Processing", "Delivered", "Cancelled"];
@@ -83,6 +100,7 @@ export function AdminDashboard() {
   const [data, setData] = useState<StoreData>(initialStoreData);
   const [loaded, setLoaded] = useState(false);
   const [syncMessage, setSyncMessage] = useState("");
+  const [syncError, setSyncError] = useState("");
   
   const [productDraft, setProductDraft] = useState<Product>(() => blankProduct(data.categories[0]?.id, data.brands[0]?.id));
   const [categoryDraft, setCategoryDraft] = useState<Category>(() => blankCategory());
@@ -91,6 +109,15 @@ export function AdminDashboard() {
   const [zoneDraft, setZoneDraft] = useState<DeliveryZone>(() => blankZone());
   const [bannerDraft, setBannerDraft] = useState<Banner>(() => blankBanner());
   const [settingsDraft, setSettingsDraft] = useState<StoreSettings>(data.settings);
+  const [uploadingField, setUploadingField] = useState("");
+  const [adminAccounts, setAdminAccounts] = useState<AdminAccount[]>([]);
+  const [accountsLoading, setAccountsLoading] = useState(false);
+  const [serviceRoleConfigured, setServiceRoleConfigured] = useState(false);
+  const [accountDraft, setAccountDraft] = useState<AdminAccountDraft>({
+    email: "",
+    password: "",
+    displayName: "",
+  });
 
   // Supabase-backed orders (for the Orders tab)
   const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
@@ -104,6 +131,24 @@ export function AdminDashboard() {
     setSupabaseOrders(fresh.orders);
     saveStoreData(fresh, { notify: false });
     return fresh;
+  }
+
+  async function loadAdminAccounts() {
+    setAccountsLoading(true);
+    setSyncError("");
+    try {
+      const response = await fetch("/api/admin/accounts", { credentials: "include" });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "تعذر تحميل حسابات الأدمن.");
+      }
+      setAdminAccounts(payload.accounts ?? []);
+      setServiceRoleConfigured(!!payload.serviceRoleConfigured);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "تعذر تحميل حسابات الأدمن.");
+    } finally {
+      setAccountsLoading(false);
+    }
   }
 
   // Sync state with remote store data (fallbacks still come from local cache)
@@ -150,6 +195,12 @@ export function AdminDashboard() {
     };
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === "accounts") {
+      void loadAdminAccounts();
+    }
+  }, [activeTab]);
+
   const stats = useMemo(() => {
     const totalSales = data.orders
       .filter((order) => order.status !== "Cancelled")
@@ -161,6 +212,11 @@ export function AdminDashboard() {
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
+    if (!productDraft.images.length) {
+      setSyncError("ارفع صورة واحدة على الأقل للمنتج قبل الحفظ.");
+      return;
+    }
     const nextProduct = productDraft.id
       ? productDraft
       : { ...productDraft, id: uid("prod"), createdAt: new Date().toISOString().slice(0, 10) };
@@ -172,6 +228,11 @@ export function AdminDashboard() {
 
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
+    if (!categoryDraft.imageUrl) {
+      setSyncError("ارفع صورة للتصنيف قبل الحفظ.");
+      return;
+    }
     const nextCategory = categoryDraft.id ? categoryDraft : { ...categoryDraft, id: uid("cat") };
     await upsertCategory(nextCategory);
     await refreshData();
@@ -181,6 +242,11 @@ export function AdminDashboard() {
 
   async function saveBrand(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
+    if (!brandDraft.logoUrl) {
+      setSyncError("ارفع شعار البراند قبل الحفظ.");
+      return;
+    }
     const nextBrand = brandDraft.id ? brandDraft : { ...brandDraft, id: uid("brand") };
     await upsertBrand(nextBrand);
     await refreshData();
@@ -190,6 +256,7 @@ export function AdminDashboard() {
 
   async function saveColor(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
     const nextColor = colorDraft.id ? colorDraft : { ...colorDraft, id: uid("color") };
     await upsertColor(nextColor);
     await refreshData();
@@ -199,6 +266,7 @@ export function AdminDashboard() {
 
   async function saveZone(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
     const nextZone = zoneDraft.id ? zoneDraft : { ...zoneDraft, id: uid("zone") };
     await upsertDeliveryZone(nextZone);
     await refreshData();
@@ -208,6 +276,11 @@ export function AdminDashboard() {
 
   async function saveBanner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
+    if (!bannerDraft.imageUrl) {
+      setSyncError("ارفع صورة البانر قبل الحفظ.");
+      return;
+    }
     const nextBanner = bannerDraft.id ? bannerDraft : { ...bannerDraft, id: uid("banner") };
     await upsertBanner(nextBanner);
     await refreshData();
@@ -217,15 +290,93 @@ export function AdminDashboard() {
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setSyncError("");
     await saveSettingsRemote(settingsDraft);
     await refreshData();
     setSyncMessage("تم حفظ إعدادات المتجر في Supabase.");
+  }
+
+  async function handleSingleAssetUpload(
+    file: File | null,
+    folder: string,
+    applyUrl: (url: string) => void,
+    fieldLabel: string
+  ) {
+    if (!file) return;
+
+    setUploadingField(fieldLabel);
+    setSyncError("");
+    try {
+      const url = await uploadAdminAsset(file, folder);
+      applyUrl(url);
+      setSyncMessage(`تم رفع ${fieldLabel} بنجاح.`);
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : `تعذر رفع ${fieldLabel}.`);
+    } finally {
+      setUploadingField("");
+    }
+  }
+
+  async function handleProductImagesUpload(files: FileList | null) {
+    if (!files?.length) return;
+
+    setUploadingField("صور المنتج");
+    setSyncError("");
+    try {
+      const urls = await uploadAdminAssets(Array.from(files), "products");
+      setProductDraft((current) => ({
+        ...current,
+        images: [...current.images, ...urls],
+      }));
+      setSyncMessage("تم رفع صور المنتج.");
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "تعذر رفع صور المنتج.");
+    } finally {
+      setUploadingField("");
+    }
+  }
+
+  function removeProductImage(index: number) {
+    setProductDraft((current) => ({
+      ...current,
+      images: current.images.filter((_, imageIndex) => imageIndex !== index),
+    }));
+  }
+
+  async function createAdditionalAdmin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setAccountsLoading(true);
+    setSyncError("");
+    try {
+      const response = await fetch("/api/admin/accounts", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(accountDraft),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || "تعذر إنشاء حساب الأدمن.");
+      }
+
+      setAccountDraft({ email: "", password: "", displayName: "" });
+      await loadAdminAccounts();
+      setSyncMessage("تم إنشاء حساب الأدمن الجديد بنجاح.");
+    } catch (error) {
+      setSyncError(error instanceof Error ? error.message : "تعذر إنشاء حساب الأدمن.");
+    } finally {
+      setAccountsLoading(false);
+    }
   }
 
   async function deleteById(
     key: keyof Pick<StoreData, "products" | "categories" | "brands" | "colors" | "deliveryZones" | "banners" | "orders">,
     id: string
   ) {
+    setSyncError("");
     const tableMap = {
       products: "products",
       categories: "categories",
@@ -337,6 +488,7 @@ export function AdminDashboard() {
           <div>
             <p className="eyebrow">Flora Style Control Center</p>
             <h1>{tabs.find((tab) => tab.id === activeTab)?.label}</h1>
+            <p className="admin-header__body">لوحة إدارة أفخم، أسرع، ومتصلة بالكامل مع Supabase للطلبات والمنتجات والوسائط.</p>
           </div>
           <button className="danger-button" onClick={resetDemoData}>
             مزامنة البيانات الابتدائية
@@ -344,10 +496,11 @@ export function AdminDashboard() {
         </header>
 
         {syncMessage ? (
-          <div className="admin-panel" style={{ marginBottom: "18px", padding: "14px 18px", color: "#2ed573" }}>
+          <div className="admin-flash admin-flash--success">
             {syncMessage}
           </div>
         ) : null}
+        {syncError ? <div className="admin-flash admin-flash--error">{syncError}</div> : null}
 
         {activeTab === "overview" ? (
           <>
@@ -439,10 +592,11 @@ export function AdminDashboard() {
                 <Textarea label="الوصف القصير عبري" value={productDraft.descriptionHe} onChange={(value) => setProductDraft({ ...productDraft, descriptionHe: value })} />
                 <Textarea label="قصة المنتج الكاملة عربي (تفاصيل الصفحة)" value={productDraft.storyAr} onChange={(value) => setProductDraft({ ...productDraft, storyAr: value })} />
                 <Textarea label="قصة المنتج الكاملة عبري (تفاصيل الصفحة)" value={productDraft.storyHe} onChange={(value) => setProductDraft({ ...productDraft, storyHe: value })} />
-                <Textarea
-                  label="روابط صور المعرض، كل رابط في سطر منفصل"
-                  value={productDraft.images.join("\n")}
-                  onChange={(value) => setProductDraft({ ...productDraft, images: value.split("\n").filter(Boolean) })}
+                <ProductGalleryField
+                  images={productDraft.images}
+                  isUploading={uploadingField === "صور المنتج"}
+                  onRemove={removeProductImage}
+                  onUpload={handleProductImagesUpload}
                 />
                 <ToggleRow
                   values={[
@@ -537,7 +691,11 @@ export function AdminDashboard() {
             rows={data.categories}
             onEdit={setCategoryDraft}
             onDelete={(id) => deleteById("categories", id)}
-            imageLabel="رابط صورة التصنيف"
+            imageLabel="صورة التصنيف"
+            isUploading={uploadingField === "صورة التصنيف"}
+            onUpload={(file) =>
+              handleSingleAssetUpload(file, "categories", (url) => setCategoryDraft((current) => ({ ...current, imageUrl: url })), "صورة التصنيف")
+            }
           />
         ) : null}
 
@@ -550,7 +708,11 @@ export function AdminDashboard() {
             rows={data.brands}
             onEdit={setBrandDraft}
             onDelete={(id) => deleteById("brands", id)}
-            imageLabel="رابط شعار البراند"
+            imageLabel="شعار البراند"
+            isUploading={uploadingField === "شعار البراند"}
+            onUpload={(file) =>
+              handleSingleAssetUpload(file, "brands", (url) => setBrandDraft((current) => ({ ...current, logoUrl: url })), "شعار البراند")
+            }
           />
         ) : null}
 
@@ -581,8 +743,16 @@ export function AdminDashboard() {
                 <div className="two-col form-grid">
                   {textInput<Banner>("العنوان عربي", bannerDraft.titleAr, "titleAr", setBannerDraft)}
                   {textInput<Banner>("العنوان عبري", bannerDraft.titleHe, "titleHe", setBannerDraft)}
-                  {textInput<Banner>("رابط الصورة", bannerDraft.imageUrl, "imageUrl", setBannerDraft)}
                 </div>
+                <MediaField
+                  isUploading={uploadingField === "صورة البانر"}
+                  label="صورة البانر"
+                  onClear={() => setBannerDraft((current) => ({ ...current, imageUrl: "" }))}
+                  onUpload={(file) =>
+                    handleSingleAssetUpload(file, "banners", (url) => setBannerDraft((current) => ({ ...current, imageUrl: url })), "صورة البانر")
+                  }
+                  value={bannerDraft.imageUrl}
+                />
                 <Textarea label="وصف البانر عربي" value={bannerDraft.subtitleAr} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleAr: value })} />
                 <Textarea label="وصف البانر عبري" value={bannerDraft.subtitleHe} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleHe: value })} />
                 <ToggleRow values={[["فعال", bannerDraft.active, (checked) => setBannerDraft({ ...bannerDraft, active: checked })]]} />
@@ -610,6 +780,54 @@ export function AdminDashboard() {
               <Textarea label="العنوان الجغرافي عبري" value={settingsDraft.addressHe} onChange={(value) => setSettingsDraft({ ...settingsDraft, addressHe: value })} />
               <button className="button">حفظ الإعدادات</button>
             </form>
+          </div>
+        ) : null}
+
+        {activeTab === "accounts" ? (
+          <div className="admin-grid">
+            <div className="admin-panel">
+              <PanelTitle
+                title="الحسابات الإدارية الحالية"
+                hint="كل حساب هنا يمكنه الدخول إلى لوحة الأدمن وإدارة المتجر."
+              />
+              {!serviceRoleConfigured ? (
+                <div className="admin-note admin-note--warning">
+                  لإضافة حسابات أدمن جديدة من داخل اللوحة، أضف المتغير <code>SUPABASE_SERVICE_ROLE_KEY</code> إلى
+                  بيئة السيرفر فقط ثم أعد التشغيل.
+                </div>
+              ) : null}
+              {accountsLoading ? (
+                <div className="empty">جاري تحميل حسابات الأدمن...</div>
+              ) : (
+                <div className="admin-accounts-list">
+                  {adminAccounts.map((account) => (
+                    <div className="admin-account-card" key={account.user_id}>
+                      <div>
+                        <strong>{account.display_name || "Admin User"}</strong>
+                        <span>{account.email}</span>
+                      </div>
+                      <small>{new Date(account.created_at).toLocaleDateString("en-GB")}</small>
+                    </div>
+                  ))}
+                  {!adminAccounts.length ? <div className="empty">لا توجد حسابات أدمن إضافية حتى الآن.</div> : null}
+                </div>
+              )}
+            </div>
+
+            <div className="admin-panel">
+              <PanelTitle
+                title="إضافة حساب أدمن جديد"
+                hint="سيُنشأ المستخدم في Supabase Auth ويُضاف مباشرة إلى جدول الأدمن."
+              />
+              <form className="form-grid" onSubmit={createAdditionalAdmin}>
+                {textInput<AdminAccountDraft>("اسم العرض", accountDraft.displayName, "displayName", setAccountDraft)}
+                {textInput<AdminAccountDraft>("البريد الإلكتروني", accountDraft.email, "email", setAccountDraft)}
+                {textInput<AdminAccountDraft>("كلمة المرور", accountDraft.password, "password", setAccountDraft, "password")}
+                <button className="button" disabled={accountsLoading || !serviceRoleConfigured}>
+                  {accountsLoading ? "جاري الإنشاء..." : "إنشاء حساب أدمن"}
+                </button>
+              </form>
+            </div>
           </div>
         ) : null}
       </section>
@@ -642,7 +860,7 @@ function blankProduct(categoryId = "", brandId = ""): Product {
     storyHe: "",
     price: 0,
     salePrice: undefined,
-    images: ["https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=800&q=88"],
+    images: [],
     bestSeller: false,
     featured: false,
     active: true,
@@ -651,11 +869,11 @@ function blankProduct(categoryId = "", brandId = ""): Product {
 }
 
 function blankCategory(): Category {
-  return { id: "", slug: "", nameAr: "", nameHe: "", descriptionAr: "", descriptionHe: "", imageUrl: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=800&q=88", active: true };
+  return { id: "", slug: "", nameAr: "", nameHe: "", descriptionAr: "", descriptionHe: "", imageUrl: "", active: true };
 }
 
 function blankBrand(): Brand {
-  return { id: "", slug: "", nameAr: "", nameHe: "", descriptionAr: "", descriptionHe: "", logoUrl: "/flora-logo.png", active: true };
+  return { id: "", slug: "", nameAr: "", nameHe: "", descriptionAr: "", descriptionHe: "", logoUrl: "", active: true };
 }
 
 function blankColor(productId: string): ProductColor {
@@ -667,7 +885,7 @@ function blankZone(): DeliveryZone {
 }
 
 function blankBanner(): Banner {
-  return { id: "", titleAr: "", titleHe: "", subtitleAr: "", subtitleHe: "", imageUrl: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1200&q=88", active: true };
+  return { id: "", titleAr: "", titleHe: "", subtitleAr: "", subtitleHe: "", imageUrl: "", active: true };
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -710,6 +928,84 @@ function Textarea({ label, value, onChange }: { label: string; value: string; on
       <span>{label}</span>
       <textarea className="textarea" value={value} onChange={(event) => onChange(event.target.value)} />
     </label>
+  );
+}
+
+function MediaField({
+  label,
+  value,
+  onUpload,
+  onClear,
+  isUploading,
+}: {
+  label: string;
+  value: string;
+  onUpload: (file: File | null) => void;
+  onClear: () => void;
+  isUploading: boolean;
+}) {
+  return (
+    <div className="form-row">
+      <span>{label}</span>
+      <div className="media-field">
+        <label className="media-field__picker">
+          <input accept="image/*" hidden onChange={(event) => onUpload(event.target.files?.[0] ?? null)} type="file" />
+          <span>{isUploading ? "جاري الرفع..." : "رفع صورة"}</span>
+        </label>
+        {value ? (
+          <div className="media-field__preview">
+            <div className="media-field__preview-image">
+              <Image alt={label} fill src={value} sizes="120px" />
+            </div>
+            <div className="media-field__preview-meta">
+              <small>{value}</small>
+              <button className="ghost-button" onClick={onClear} type="button">
+                حذف الصورة
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="media-field__empty">لم يتم رفع صورة بعد.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProductGalleryField({
+  images,
+  onUpload,
+  onRemove,
+  isUploading,
+}: {
+  images: string[];
+  onUpload: (files: FileList | null) => void;
+  onRemove: (index: number) => void;
+  isUploading: boolean;
+}) {
+  return (
+    <div className="form-row">
+      <span>صور المنتج</span>
+      <div className="media-gallery">
+        <label className="media-field__picker">
+          <input accept="image/*" hidden multiple onChange={(event) => onUpload(event.target.files)} type="file" />
+          <span>{isUploading ? "جاري رفع الصور..." : "رفع صور المعرض"}</span>
+        </label>
+        <div className="media-gallery__grid">
+          {images.map((image, index) => (
+            <div className="media-gallery__item" key={`${image}-${index}`}>
+              <div className="media-gallery__image">
+                <Image alt={`Product image ${index + 1}`} fill src={image} sizes="160px" />
+              </div>
+              <button className="danger-button" onClick={() => onRemove(index)} type="button">
+                حذف
+              </button>
+            </div>
+          ))}
+          {!images.length ? <div className="media-field__empty">ارفع صورة واحدة أو أكثر للمنتج.</div> : null}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -984,7 +1280,9 @@ function SimpleEntitySection<T extends Category | Brand>({
   rows,
   onEdit,
   onDelete,
-  imageLabel
+  imageLabel,
+  isUploading,
+  onUpload
 }: {
   title: string;
   draft: T;
@@ -994,6 +1292,8 @@ function SimpleEntitySection<T extends Category | Brand>({
   onEdit: React.Dispatch<React.SetStateAction<any>>;
   onDelete: (id: string) => void;
   imageLabel: string;
+  isUploading: boolean;
+  onUpload: (file: File | null) => void;
 }) {
   const imageValue = "imageUrl" in draft ? draft.imageUrl : draft.logoUrl;
   const setImageValue = (value: string) => {
@@ -1007,11 +1307,14 @@ function SimpleEntitySection<T extends Category | Brand>({
           <div className="two-col form-grid">
             {textInput<T>("الاسم عربي", draft.nameAr, "nameAr", setDraft)}
             {textInput<T>("الاسم عبري", draft.nameHe, "nameHe", setDraft)}
-            <label className="form-row">
-              <span>{imageLabel}</span>
-              <input className="field" value={imageValue} onChange={(event) => setImageValue(event.target.value)} />
-            </label>
           </div>
+          <MediaField
+            isUploading={isUploading}
+            label={imageLabel}
+            onClear={() => setImageValue("")}
+            onUpload={onUpload}
+            value={imageValue}
+          />
           <Textarea label="الوصف عربي" value={draft.descriptionAr} onChange={(value) => setDraft((current: any) => ({ ...current, descriptionAr: value }))} />
           <Textarea label="الوصف عبري" value={draft.descriptionHe} onChange={(value) => setDraft((current: any) => ({ ...current, descriptionHe: value }))} />
           <ToggleRow values={[["فعال", draft.active, (checked) => setDraft((current: any) => ({ ...current, active: checked }))]]} />
@@ -1078,5 +1381,3 @@ function formatCell(value: unknown) {
   if (typeof value === "number") return value.toString();
   return String(value ?? "-");
 }
-
-import React from "react";

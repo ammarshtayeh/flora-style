@@ -63,7 +63,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0b0b0a",
+  themeColor: "#f7f3ee",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -72,7 +72,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="ar" dir="rtl" className={`${arabicFont.variable} ${hebrewFont.variable} ${latinFont.variable}`}>
+    <html
+      lang="ar"
+      dir="rtl"
+      data-theme="light"
+      className={`${arabicFont.variable} ${hebrewFont.variable} ${latinFont.variable}`}
+    >
       <body>
         {children}
         <PwaRegister />

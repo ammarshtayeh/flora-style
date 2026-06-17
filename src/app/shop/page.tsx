@@ -10,7 +10,7 @@ import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
-import { initialStoreData, Language, Product, textByLanguage } from "@/lib/store";
+import { getBrandDisplayName, initialStoreData, Language, Product, textByLanguage } from "@/lib/store";
 
 const shopCopy = {
   ar: {
@@ -189,7 +189,7 @@ function ShopContent() {
     return selectedBrands
       .map((id) => activeBrands.find((brand) => brand.id === id))
       .filter(Boolean)
-      .map((brand) => ({ id: brand!.id, label: textByLanguage(language, brand!.nameAr, brand!.nameHe) }));
+      .map((brand) => ({ id: brand!.id, label: getBrandDisplayName(language, brand!) }));
   }, [activeBrands, language, selectedBrands]);
 
   function selectCategory(id: string) {
@@ -316,8 +316,7 @@ function ShopContent() {
                 onClick={() => toggleBrand(brand.id)}
                 type="button"
               >
-                {brand.logoUrl ? <Image src={brand.logoUrl} alt={textByLanguage(language, brand.nameAr, brand.nameHe)} width={82} height={28} /> : null}
-                <span>{textByLanguage(language, brand.nameAr, brand.nameHe)}</span>
+                <span>{getBrandDisplayName(language, brand)}</span>
                 <small>{brandCounts[brand.id] ?? 0}</small>
               </button>
             ))}
@@ -453,7 +452,7 @@ function ShopFilterPanel({
   selectedBrands,
   toggleBrand
 }: {
-  activeBrands: Array<{ id: string; nameAr: string; nameHe: string; logoUrl?: string }>;
+  activeBrands: Array<{ id: string; slug: string; nameAr: string; nameHe: string; logoUrl?: string }>;
   brandCounts: Record<string, number>;
   brandContext: string;
   brandTitle: string;
@@ -502,16 +501,7 @@ function ShopFilterPanel({
               />
               <em />
               <div className="shop-check__content">
-                {brand.logoUrl ? (
-                  <Image
-                    className="shop-check__logo"
-                    src={brand.logoUrl}
-                    alt={textByLanguage(language, brand.nameAr, brand.nameHe)}
-                    width={88}
-                    height={28}
-                  />
-                ) : null}
-                <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
+                <strong>{getBrandDisplayName(language, brand)}</strong>
                 <small>{brandCounts[brand.id] ?? 0}</small>
               </div>
             </label>

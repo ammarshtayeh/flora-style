@@ -94,7 +94,7 @@ function HeaderInner() {
   const [cartOpen, setCartOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [language, setLanguage] = useState<Language>("ar");
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [theme, setTheme] = useState<"dark" | "light">("light");
   const [searchQuery, setSearchQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const labels = headerCopy[language];
@@ -109,7 +109,7 @@ function HeaderInner() {
       }
 
       const savedTheme = window.localStorage.getItem("flora-theme");
-      const nextTheme = savedTheme === "light" ? "light" : "dark";
+      const nextTheme = savedTheme === "dark" ? "dark" : "light";
       setTheme(nextTheme);
       document.documentElement.dataset.theme = nextTheme;
     }

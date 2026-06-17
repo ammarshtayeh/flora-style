@@ -190,6 +190,14 @@ export function subscribeToOrders(callback: (orders: Order[]) => void) {
       "postgres_changes",
       { event: "*", schema: "public", table: "orders" },
       async () => {
+        const fresh = await fetchOrders();
+        callback(fresh);
+      }
+    )
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "order_items" },
+      async () => {
         // Re-fetch full list with items on any change
         const fresh = await fetchOrders();
         callback(fresh);

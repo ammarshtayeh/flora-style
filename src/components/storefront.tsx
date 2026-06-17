@@ -8,7 +8,7 @@ import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
-import { initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
+import { getBrandDisplayName, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
 
 const copy = {
   ar: {
@@ -292,8 +292,8 @@ export function Storefront() {
           </div>
           <div className="brand-wall">
             {activeBrands.map((brand) => (
-              <Link className="brand-wall__tile" href={`/shop?brand=${brand.id}`} key={brand.id} aria-label={textByLanguage(language, brand.nameAr, brand.nameHe)}>
-                <Image src={brand.logoUrl} alt={textByLanguage(language, brand.nameAr, brand.nameHe)} width={150} height={70} sizes="160px" />
+              <Link className="brand-wall__tile brand-wall__tile--text" href={`/shop?brand=${brand.id}`} key={brand.id} aria-label={getBrandDisplayName(language, brand)}>
+                <strong>{getBrandDisplayName(language, brand)}</strong>
               </Link>
             ))}
           </div>

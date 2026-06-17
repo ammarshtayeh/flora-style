@@ -200,6 +200,73 @@ $$;
 
 GRANT EXECUTE ON FUNCTION is_admin_user(UUID) TO anon, authenticated;
 
+CREATE OR REPLACE FUNCTION bootstrap_admin_account(p_display_name TEXT DEFAULT 'Primary Admin')
+RETURNS public.admins
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    current_user_id UUID := auth.uid();
+    current_email TEXT := auth.jwt() ->> 'email';
+    resolved_display_name TEXT := COALESCE(NULLIF(BTRIM(p_display_name), ''), 'Primary Admin');
+    existing_admin public.admins;
+BEGIN
+    IF current_user_id IS NULL THEN
+        RAISE EXCEPTION 'You must be signed in to bootstrap the first admin account';
+    END IF;
+
+    IF current_email IS NULL OR BTRIM(current_email) = '' THEN
+        RAISE EXCEPTION 'Signed-in account must have an email address';
+    END IF;
+
+    SELECT *
+    INTO existing_admin
+    FROM public.admins
+    WHERE user_id = current_user_id
+    LIMIT 1;
+
+    IF existing_admin.user_id IS NOT NULL THEN
+        RETURN existing_admin;
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.admins
+        WHERE user_id IS NOT NULL
+    ) THEN
+        RAISE EXCEPTION 'An admin account already exists';
+    END IF;
+
+    IF EXISTS (
+        SELECT 1
+        FROM public.admins
+        WHERE user_id IS NULL
+          AND email IS NOT NULL
+          AND LOWER(email) = LOWER(current_email)
+    ) THEN
+        UPDATE public.admins
+        SET user_id = current_user_id,
+            email = current_email,
+            display_name = COALESCE(display_name, resolved_display_name)
+        WHERE user_id IS NULL
+          AND email IS NOT NULL
+          AND LOWER(email) = LOWER(current_email)
+        RETURNING * INTO existing_admin;
+
+        RETURN existing_admin;
+    END IF;
+
+    INSERT INTO public.admins (user_id, email, display_name)
+    VALUES (current_user_id, current_email, resolved_display_name)
+    RETURNING * INTO existing_admin;
+
+    RETURN existing_admin;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION bootstrap_admin_account(TEXT) TO authenticated;
+
 CREATE OR REPLACE FUNCTION set_order_status(p_order_id TEXT, p_status TEXT)
 RETURNS public.orders
 LANGUAGE plpgsql
@@ -258,6 +325,55 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION set_order_status(TEXT, TEXT) TO authenticated;
+
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+GRANT SELECT ON TABLE
+    store_settings,
+    categories,
+    brands,
+    products,
+    product_images,
+    product_colors,
+    delivery_zones,
+    banners
+TO anon, authenticated;
+
+GRANT INSERT ON TABLE
+    orders,
+    order_items
+TO anon, authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
+    admins,
+    store_settings,
+    categories,
+    brands,
+    products,
+    product_images,
+    product_colors,
+    delivery_zones,
+    banners,
+    orders,
+    order_items
+TO authenticated;
+
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+    'flora-assets',
+    'flora-assets',
+    TRUE,
+    10485760,
+    ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+)
+ON CONFLICT (id) DO UPDATE SET
+    public = EXCLUDED.public,
+    file_size_limit = EXCLUDED.file_size_limit,
+    allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+GRANT USAGE ON SCHEMA storage TO anon, authenticated;
+GRANT SELECT ON storage.objects TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON storage.objects TO authenticated;
 
 ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE store_settings ENABLE ROW LEVEL SECURITY;
@@ -350,6 +466,27 @@ DROP POLICY IF EXISTS "admin_read_order_items" ON order_items;
 CREATE POLICY "admin_read_order_items" ON order_items FOR SELECT TO authenticated USING (is_admin_user(auth.uid()));
 DROP POLICY IF EXISTS "admin_write_order_items" ON order_items;
 CREATE POLICY "admin_write_order_items" ON order_items FOR ALL TO authenticated USING (is_admin_user(auth.uid())) WITH CHECK (is_admin_user(auth.uid()));
+
+DROP POLICY IF EXISTS "public_read_flora_assets" ON storage.objects;
+CREATE POLICY "public_read_flora_assets" ON storage.objects
+FOR SELECT TO anon, authenticated
+USING (bucket_id = 'flora-assets');
+
+DROP POLICY IF EXISTS "admin_insert_flora_assets" ON storage.objects;
+CREATE POLICY "admin_insert_flora_assets" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'flora-assets' AND is_admin_user(auth.uid()));
+
+DROP POLICY IF EXISTS "admin_update_flora_assets" ON storage.objects;
+CREATE POLICY "admin_update_flora_assets" ON storage.objects
+FOR UPDATE TO authenticated
+USING (bucket_id = 'flora-assets' AND is_admin_user(auth.uid()))
+WITH CHECK (bucket_id = 'flora-assets' AND is_admin_user(auth.uid()));
+
+DROP POLICY IF EXISTS "admin_delete_flora_assets" ON storage.objects;
+CREATE POLICY "admin_delete_flora_assets" ON storage.objects
+FOR DELETE TO authenticated
+USING (bucket_id = 'flora-assets' AND is_admin_user(auth.uid()));
 
 INSERT INTO store_settings (id, store_name, whatsapp_number, instagram_url, facebook_url, tiktok_url, email, address_ar, address_he)
 VALUES

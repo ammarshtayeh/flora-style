@@ -529,6 +529,30 @@ export function textByLanguage(language: Language, ar: string, he: string) {
   return language === "ar" ? ar : he;
 }
 
+const brandSlugOverrides: Record<string, string> = {
+  ysl: "YSL",
+  "louis-vuitton": "Louis Vuitton",
+  "marc-jacobs": "Marc Jacobs",
+  "michael-kors": "Michael Kors",
+  "miu-miu": "Miu Miu",
+};
+
+function formatBrandSlug(slug: string) {
+  if (brandSlugOverrides[slug]) {
+    return brandSlugOverrides[slug];
+  }
+
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function getBrandDisplayName(language: Language, brand: Pick<Brand, "slug" | "nameHe">) {
+  return language === "he" ? brand.nameHe : formatBrandSlug(brand.slug);
+}
+
 export function getProductBySlug(slug: string) {
   return initialStoreData.products.find((product) => product.slug === slug && product.active);
 }

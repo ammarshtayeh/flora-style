@@ -9,7 +9,7 @@ import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
-import { formatPrice, initialStoreData, Language, Product, ProductColor, textByLanguage } from "@/lib/store";
+import { formatPrice, getBrandDisplayName, initialStoreData, Language, Product, ProductColor, textByLanguage } from "@/lib/store";
 
 type ProductDetailsProps = {
   product: Product;
@@ -160,7 +160,7 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
     const url = window.location.href;
     const message = [
       "Flora Style Product Order",
-      `${labels.brand}: ${brand ? textByLanguage(language, brand.nameAr, brand.nameHe) : "Flora Style"}`,
+      `${labels.brand}: ${brand ? getBrandDisplayName(language, brand) : "Flora Style"}`,
       `${labels.sku}: ${product.sku}`,
       `${textByLanguage(language, product.nameAr, product.nameHe)}`,
       `${labels.color}: ${selectedColor ? textByLanguage(language, selectedColor.nameAr, selectedColor.nameHe) : "-"}`,
@@ -225,7 +225,7 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
           </div>
 
           <motion.aside className="purchase-panel" initial={{ opacity: 0, y: 34 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.75 }}>
-            <p className="luxury-kicker">{brand ? textByLanguage(language, brand.nameAr, brand.nameHe) : "Flora Style"}</p>
+            <p className="luxury-kicker">{brand ? getBrandDisplayName(language, brand) : "Flora Style"}</p>
             <h1>{textByLanguage(language, product.nameAr, product.nameHe)}</h1>
             <p className="purchase-hint">{labels.checkoutHint}</p>
 

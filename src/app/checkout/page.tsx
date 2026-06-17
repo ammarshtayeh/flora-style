@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { CartItem, clearCart, getCart, subscribeToCart } from "@/lib/cart";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, Order, textByLanguage } from "@/lib/store";
+import { isSupabaseEnabled } from "@/lib/supabase/client";
 import { createOrder } from "@/lib/supabase/orders";
 
 const checkoutCopy = {
@@ -77,6 +78,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const labels = checkoutCopy[language];
 
   useEffect(() => {
@@ -122,10 +124,17 @@ export default function CheckoutPage() {
   const deliveryFee = zone?.deliveryFee ?? 0;
   const total = subtotal + deliveryFee;
 
-  function handleSubmit(event: FormEvent) {
+  async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!cartDetails.length || isSubmitting) return;
     setIsSubmitting(true);
+    setSubmitError("");
+
+    if (!isSupabaseEnabled()) {
+      setSubmitError("ربط الطلبات مع Supabase غير مكتمل حالياً، لذلك لا يمكن إرسال الطلب إلى الأدمن الآن.");
+      setIsSubmitting(false);
+      return;
+    }
 
     const orderId = `order-${Date.now()}`;
     const orderNumber = `FL-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -150,14 +159,16 @@ export default function CheckoutPage() {
       }))
     };
 
+    const result = await createOrder(newOrder);
+    if (!result.success) {
+      setSubmitError(result.error || "تعذر إرسال الطلب حالياً. يرجى المحاولة مرة أخرى.");
+      setIsSubmitting(false);
+      return;
+    }
+
     const fresh = loadStoreData();
     fresh.orders = [newOrder, ...fresh.orders];
     saveStoreData(fresh);
-
-    // Persist to Supabase (so the order appears in Admin on any device / browser)
-    createOrder(newOrder).catch(() => {
-      // If it fails we still have the local copy; admin will fall back to local
-    });
 
     clearCart();
     router.push(`/order-success?orderId=${orderId}`);
@@ -231,6 +242,7 @@ export default function CheckoutPage() {
                 <CheckCircle2 size={18} />
                 {isSubmitting ? labels.submitting : labels.submitBtn}
               </button>
+              {submitError ? <p className="checkout-submit-error">{submitError}</p> : null}
             </form>
 
             <aside className="checkout-summary-card">

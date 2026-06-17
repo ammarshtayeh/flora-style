@@ -15,6 +15,8 @@ function getClient() {
   return createBrowserSupabaseClient();
 }
 
+const STORAGE_BUCKET = "flora-assets";
+
 function requireClient() {
   const client = getClient();
   if (!client || !isSupabaseEnabled()) {
@@ -153,6 +155,36 @@ export async function saveSettings(settings: StoreSettings) {
   });
 
   if (error) throw error;
+}
+
+function sanitizeFileName(fileName: string) {
+  return fileName
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+export async function uploadAdminAsset(file: File, folder: string) {
+  const client = requireClient();
+  const safeName = sanitizeFileName(file.name || "asset");
+  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+
+  const { error } = await client.storage.from(STORAGE_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: true,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return data.publicUrl;
+}
+
+export async function uploadAdminAssets(files: File[], folder: string) {
+  return Promise.all(files.map((file) => uploadAdminAsset(file, folder)));
 }
 
 export async function deleteEntity(
