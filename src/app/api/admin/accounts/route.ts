@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAllowedAdminEmail } from "@/lib/admin-access";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { createServiceSupabaseClient, isServiceRoleConfigured } from "@/lib/supabase/service";
 
@@ -14,6 +15,10 @@ async function requireAdmin() {
 
   if (!user) {
     return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+
+  if (!isAllowedAdminEmail(user.email)) {
+    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
   }
 
   const { data: admin } = await supabase

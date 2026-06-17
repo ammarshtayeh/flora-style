@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { isAllowedAdminEmail } from "@/lib/admin-access";
 import { updateSession } from "@/lib/supabase/middleware";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -36,6 +37,14 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("next", pathname);
+    return NextResponse.redirect(url);
+  }
+
+  if (!isAllowedAdminEmail(user.email)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("next", pathname);
+    url.searchParams.set("blocked", "1");
     return NextResponse.redirect(url);
   }
 

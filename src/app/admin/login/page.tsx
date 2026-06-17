@@ -4,6 +4,7 @@ import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ShieldCheck, Lock, Mail, UserPlus } from "lucide-react";
+import { getAllowedAdminEmail, isAllowedAdminEmail } from "@/lib/admin-access";
 import { createBrowserSupabaseClient, isSupabaseEnabled } from "@/lib/supabase/client";
 
 function AdminLoginContent() {
@@ -18,14 +19,15 @@ function AdminLoginContent() {
   const [hasSession, setHasSession] = useState(false);
 
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
+  const allowedAdminEmail = useMemo(() => getAllowedAdminEmail(), []);
   const nextPath = searchParams?.get("next") || "/admin";
   const blocked = searchParams?.get("blocked") === "1";
 
   useEffect(() => {
     if (blocked) {
-      setError("هذا الحساب غير مضاف كأدمن بعد. إذا لم يتم إنشاء أي أدمن بعد، افتح تبويب إنشاء أول أدمن لإكمال الربط بهذا الحساب.");
+      setError(`الدخول إلى الأدمن مسموح فقط للحساب الإداري المحدد: ${allowedAdminEmail}`);
     }
-  }, [blocked]);
+  }, [allowedAdminEmail, blocked]);
 
   useEffect(() => {
     if (!supabase) {
@@ -92,6 +94,12 @@ function AdminLoginContent() {
     setError("");
     setMessage("");
 
+    if (!isAllowedAdminEmail(email)) {
+      setError(`الدخول إلى الأدمن مسموح فقط للحساب: ${allowedAdminEmail}`);
+      setLoading(false);
+      return;
+    }
+
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
@@ -114,6 +122,12 @@ function AdminLoginContent() {
     setLoading(true);
     setError("");
     setMessage("");
+
+    if (!isAllowedAdminEmail(email)) {
+      setError(`إنشاء الأدمن الأول مسموح فقط للحساب: ${allowedAdminEmail}`);
+      setLoading(false);
+      return;
+    }
 
     const {
       data: { user: currentUser },
@@ -172,8 +186,9 @@ function AdminLoginContent() {
           <span className="luxury-kicker">Flora Style Admin</span>
           <h1>تسجيل دخول الأدمن</h1>
           <p>
-            لوحة التحكم محمية عبر Supabase Auth. استخدم حساب الأدمن، أو أنشئ أول أدمن إذا كانت هذه أول
-            مرة.
+            لوحة التحكم محمية عبر Supabase Auth ومقفلة على الحساب الإداري المحدد فقط:
+            {" "}
+            <strong>{allowedAdminEmail}</strong>
           </p>
         </div>
 
