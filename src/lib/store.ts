@@ -484,10 +484,10 @@ export const initialStoreData: StoreData = {
   banners: [
     {
       id: "banner-main",
-      titleAr: "Flora Style",
-      titleHe: "Flora Style",
-      subtitleAr: "اختيارات فاخرة بإحساس عالمي، وطلب سريع عبر واتساب.",
-      subtitleHe: "בחירות יוקרתיות בתחושה בינלאומית, והזמנה מהירה בוואטסאפ.",
+      titleAr: "أناقة تشبهك، بتفاصيل عالمية",
+      titleHe: "אלגנטיות שמרגישה אישית",
+      subtitleAr: "مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.",
+      subtitleHe: "אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.",
       imageUrl: images.hero,
       active: true
     }

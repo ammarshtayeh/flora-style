@@ -36,6 +36,7 @@ import {
 import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
+import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 
 type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts" | "profile";
 
@@ -160,7 +161,7 @@ export function AdminDashboard() {
       setAdminAccounts(payload.accounts ?? []);
       setServiceRoleConfigured(!!payload.serviceRoleConfigured);
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "تعذر تحميل حسابات الأدمن.");
+      setSyncError(formatAdminError(error, "تعذر تحميل حسابات الأدمن."));
     } finally {
       setAccountsLoading(false);
     }
@@ -301,7 +302,7 @@ export function AdminDashboard() {
     await upsertProduct(nextProduct);
     await refreshData();
     setProductDraft(blankProduct(data.categories[0]?.id, data.brands[0]?.id));
-    setSyncMessage("تم حفظ المنتج في Supabase.");
+    setSyncMessage(adminSaveMessage("products"));
   }
 
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
@@ -315,7 +316,7 @@ export function AdminDashboard() {
     await upsertCategory(nextCategory);
     await refreshData();
     setCategoryDraft(blankCategory());
-    setSyncMessage("تم حفظ التصنيف في Supabase.");
+    setSyncMessage(adminSaveMessage("categories"));
   }
 
   async function saveBrand(event: FormEvent<HTMLFormElement>) {
@@ -329,7 +330,7 @@ export function AdminDashboard() {
     await upsertBrand(nextBrand);
     await refreshData();
     setBrandDraft(blankBrand());
-    setSyncMessage("تم حفظ البراند في Supabase.");
+    setSyncMessage(adminSaveMessage("brands"));
   }
 
   async function saveColor(event: FormEvent<HTMLFormElement>) {
@@ -339,7 +340,7 @@ export function AdminDashboard() {
     await upsertColor(nextColor);
     await refreshData();
     setColorDraft(blankColor(data.products[0]?.id ?? ""));
-    setSyncMessage("تم حفظ اللون والمخزون في Supabase.");
+    setSyncMessage(adminSaveMessage("colors"));
   }
 
   async function saveZone(event: FormEvent<HTMLFormElement>) {
@@ -349,7 +350,7 @@ export function AdminDashboard() {
     await upsertDeliveryZone(nextZone);
     await refreshData();
     setZoneDraft(blankZone());
-    setSyncMessage("تم حفظ منطقة التوصيل في Supabase.");
+    setSyncMessage(adminSaveMessage("deliveryZones"));
   }
 
   async function saveBanner(event: FormEvent<HTMLFormElement>) {
@@ -363,7 +364,7 @@ export function AdminDashboard() {
     await upsertBanner(nextBanner);
     await refreshData();
     setBannerDraft(blankBanner());
-    setSyncMessage("تم حفظ البانر في Supabase.");
+    setSyncMessage(adminSaveMessage("banners"));
   }
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
@@ -371,7 +372,7 @@ export function AdminDashboard() {
     setSyncError("");
     await saveSettingsRemote(settingsDraft);
     await refreshData();
-    setSyncMessage("تم حفظ إعدادات المتجر في Supabase.");
+    setSyncMessage(adminSaveMessage("settings"));
   }
 
   async function handleSingleAssetUpload(
@@ -389,7 +390,7 @@ export function AdminDashboard() {
       applyUrl(url);
       setSyncMessage(`تم رفع ${fieldLabel} بنجاح.`);
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : `تعذر رفع ${fieldLabel}.`);
+      setSyncError(formatAdminError(error, `تعذر رفع ${fieldLabel}.`));
     } finally {
       setUploadingField("");
     }
@@ -408,7 +409,7 @@ export function AdminDashboard() {
       }));
       setSyncMessage("تم رفع صور المنتج.");
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "تعذر رفع صور المنتج.");
+      setSyncError(formatAdminError(error, "تعذر رفع صور المنتج."));
     } finally {
       setUploadingField("");
     }
@@ -444,7 +445,7 @@ export function AdminDashboard() {
       await loadAdminAccounts();
       setSyncMessage("تم إنشاء حساب الأدمن الجديد بنجاح.");
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "تعذر إنشاء حساب الأدمن.");
+      setSyncError(formatAdminError(error, "تعذر إنشاء حساب الأدمن."));
     } finally {
       setAccountsLoading(false);
     }
@@ -466,7 +467,7 @@ export function AdminDashboard() {
 
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
-      setSyncError("Supabase غير مفعّل حالياً.");
+      setSyncError("نظام قاعدة البيانات غير متصل حالياً.");
       return;
     }
 
@@ -487,7 +488,7 @@ export function AdminDashboard() {
       }));
       setSyncMessage("تم تغيير كلمة المرور بنجاح.");
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "تعذر تغيير كلمة المرور.");
+      setSyncError(formatAdminError(error, "تعذر تغيير كلمة المرور."));
     } finally {
       setAccountsLoading(false);
     }
@@ -510,7 +511,7 @@ export function AdminDashboard() {
 
     await deleteEntity(tableMap[key], id);
     await refreshData();
-    setSyncMessage("تم حذف السجل من Supabase.");
+    setSyncMessage(adminDeleteMessage(key));
   }
 
   async function updateOrderStatus(orderId: string, status: OrderStatus) {
@@ -571,7 +572,7 @@ export function AdminDashboard() {
     const refreshed = await fetchOrders();
     setSupabaseOrders(refreshed);
     await refreshData();
-    setSyncMessage("تم تحديث حالة الطلب والمخزون في Supabase.");
+    setSyncMessage("تم تحديث حالة الطلب والمخزون في قاعدة البيانات بنجاح.");
   }
 
   async function resetDemoData() {
@@ -579,7 +580,7 @@ export function AdminDashboard() {
     await refreshData();
     setSettingsDraft(initialStoreData.settings);
     setColorDraft(blankColor(initialStoreData.products[0]?.id ?? ""));
-    setSyncMessage("تمت مزامنة بيانات المتجر الحالية إلى Supabase.");
+    setSyncMessage("تمت مزامنة بيانات المتجر مع قاعدة البيانات بنجاح.");
   }
 
   async function handleLogout() {
@@ -604,7 +605,7 @@ export function AdminDashboard() {
       router.replace("/admin/login");
       router.refresh();
     } catch (error) {
-      setSyncError(error instanceof Error ? error.message : "تعذر تسجيل الخروج.");
+      setSyncError(formatAdminError(error, "تعذر تسجيل الخروج."));
       setIsLoggingOut(false);
     }
   }
@@ -662,7 +663,7 @@ export function AdminDashboard() {
           <div>
             <p className="eyebrow">Flora Style Control Center</p>
             <h1>{activeTabMeta?.label}</h1>
-            <p className="admin-header__body">لوحة إدارة أفخم، أسرع، ومتصلة بالكامل مع Supabase للطلبات والمنتجات والوسائط.</p>
+            <p className="admin-header__body">لوحة إدارة متكاملة لإدارة الطلبات والمنتجات والوسائط بشكل مباشر من قاعدة البيانات.</p>
           </div>
           <button className="danger-button" onClick={resetDemoData}>
             مزامنة البيانات الابتدائية
@@ -815,23 +816,23 @@ export function AdminDashboard() {
               title="إدارة الطلبات المستلمة"
               hint={
                 supabaseAvailable
-                  ? "الطلبات من Supabase (مباشرة وفورية). غيّر الحالة وسيتم التحديث عند الزبون والأدمن."
-                  : "Supabase غير مفعّل. الطلبات تُحفظ محلياً فقط (في هذا المتصفح)."
+                  ? "الطلبات تُحدَّث مباشرة من قاعدة البيانات. عند تغيير الحالة سينعكس التحديث فوراً في اللوحة."
+                  : "قاعدة البيانات غير متصلة حالياً. الطلبات ستظهر محلياً في هذا المتصفح فقط."
               }
             />
 
             {supabaseAvailable ? (
               <div className="admin-inline-notice admin-inline-notice--success">
-                ✓ متصل بـ Supabase — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
+                ✓ متصل بقاعدة البيانات — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
               </div>
             ) : (
               <div className="admin-inline-notice admin-inline-notice--warning">
-                أضف متغيرات <code>NEXT_PUBLIC_SUPABASE_URL</code> و <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (أو PUBLISHABLE_KEY) في <code>.env.local</code> ثم أعد تشغيل السيرفر.
+                اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط في السيرفر ثم أعد تشغيل الموقع.
               </div>
             )}
 
             {ordersLoading ? (
-              <div className="admin-loading-state">جاري تحميل الطلبات من Supabase...</div>
+              <div className="admin-loading-state">جاري تحميل الطلبات من قاعدة البيانات...</div>
             ) : (
               <OrdersTable
                 data={{
@@ -959,8 +960,7 @@ export function AdminDashboard() {
               />
               {!serviceRoleConfigured ? (
                 <div className="admin-note admin-note--warning">
-                  لإضافة حسابات أدمن جديدة من داخل اللوحة، أضف المتغير <code>SUPABASE_SERVICE_ROLE_KEY</code> إلى
-                  بيئة السيرفر فقط ثم أعد التشغيل.
+                  لإضافة حسابات أدمن جديدة من داخل اللوحة، يجب إكمال إعدادات السيرفر أولاً ثم إعادة تشغيل الموقع.
                 </div>
               ) : null}
               {accountsLoading ? (
@@ -984,7 +984,7 @@ export function AdminDashboard() {
             <div className="admin-panel">
               <PanelTitle
                 title="إضافة حساب أدمن جديد"
-                hint="سيُنشأ المستخدم في Supabase Auth ويُضاف مباشرة إلى جدول الأدمن."
+                hint="سيُنشأ الحساب الجديد ويُضاف مباشرة إلى صلاحيات لوحة الأدمن."
               />
               <form className="form-grid" onSubmit={createAdditionalAdmin}>
                 {textInput<AdminAccountDraft>("اسم العرض", accountDraft.displayName, "displayName", setAccountDraft)}
@@ -1011,7 +1011,7 @@ export function AdminDashboard() {
                     <strong>البريد الإلكتروني</strong>
                     <span>{profileDraft.email || "-"}</span>
                   </div>
-                  <small>Admin Account</small>
+                  <small>حساب إداري</small>
                 </div>
               </div>
             </div>

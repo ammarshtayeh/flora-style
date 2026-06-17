@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ShieldCheck, Mail } from "lucide-react";
 import { createBrowserSupabaseClient, isSupabaseEnabled } from "@/lib/supabase/client";
+import { formatAdminError } from "@/lib/admin-messages";
 
 function AdminLoginContent() {
   const searchParams = useSearchParams();
@@ -57,7 +58,7 @@ function AdminLoginContent() {
     event.preventDefault();
     if (!supabase || redirectingRef.current) {
       if (!supabase) {
-        setError("Supabase غير مفعّل بعد. تحقق من متغيرات البيئة.");
+        setError("اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط ثم أعد تشغيل الموقع.");
       }
       return;
     }
@@ -68,7 +69,7 @@ function AdminLoginContent() {
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
     if (signInError) {
-      setError(signInError.message === "Email not confirmed" ? "الحساب غير مفعّل بعد." : signInError.message);
+      setError(formatAdminError(signInError, "تعذر تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى."));
       setLoading(false);
       return;
     }
@@ -88,7 +89,7 @@ function AdminLoginContent() {
 
         {!isSupabaseEnabled() ? (
           <div className="admin-auth-message is-error">
-            Supabase غير مفعّل بعد. أضف المتغيرات في <code>.env.local</code> وأعد تشغيل المشروع.
+            اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط في السيرفر ثم أعد تشغيل الموقع.
           </div>
         ) : null}
 

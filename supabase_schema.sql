@@ -621,7 +621,7 @@ ON CONFLICT (id) DO UPDATE SET
 
 INSERT INTO banners (id, title_ar, title_he, subtitle_ar, subtitle_he, image_url, active)
 VALUES
-    ('banner-main', 'Flora Style', 'Flora Style', 'اختيارات فاخرة بإحساس عالمي، وطلب سريع عبر الموقع أولاً ثم واتساب عند الحاجة.', 'בחירות יוקרתיות בתחושה בינלאומית, והזמנה מהירה קודם דרך האתר.', 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=88', TRUE)
+    ('banner-main', 'أناقة تشبهك، بتفاصيل عالمية', 'אלגנטיות שמרגישה אישית', 'مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.', 'אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.', 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=88', TRUE)
 ON CONFLICT (id) DO UPDATE SET
     title_ar = EXCLUDED.title_ar,
     title_he = EXCLUDED.title_he,
