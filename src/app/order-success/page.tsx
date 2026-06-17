@@ -12,8 +12,7 @@ const successCopy = {
   ar: {
     title: "تم استلام طلبك بنجاح!",
     subtitle: "شكراً لتسوقك من Flora Style. تم تسجيل طلبك في نظامنا برقم:",
-    sendWhatsapp: "إرسال تفاصيل الطلب عبر واتساب",
-    whatsappNotice: "يرجى النقر على الزر أعلاه لتأكيد طلبك وتأكيد العنوان مع موظف خدمة العملاء مباشرة عبر واتساب.",
+    adminNotice: "تم إرسال الطلب مباشرة إلى لوحة الأدمن وسيتم مراجعته والتواصل معك إذا لزم أي تفصيل إضافي.",
     orderSummary: "تفاصيل الطلب",
     customerName: "اسم العميل",
     phone: "رقم الهاتف",
@@ -29,8 +28,7 @@ const successCopy = {
   he: {
     title: "ההזמנה התקבלה בהצלחה!",
     subtitle: "תודה שקנית ב-Flora Style. הזמנתך נרשמה במערכת עם מספר:",
-    sendWhatsapp: "שליחת פרטי הזמנה בוואטסאפ",
-    whatsappNotice: "נא ללחוץ על הכפתור למעלה כדי לאשר את ההזמנה והכתובת ישירות מול שירות הלקוחות בוואטסאפ.",
+    adminNotice: "ההזמנה נשלחה ישירות ללוח הניהול ותיבדק בהקדם. ניצור איתך קשר רק אם יידרש פרט נוסף.",
     orderSummary: "פרטי הזמנה",
     customerName: "שם לקוח",
     phone: "טלפון",
@@ -102,33 +100,6 @@ function OrderSuccessContent() {
     return storeData.deliveryZones.find((z) => z.id === order.deliveryZoneId);
   }, [storeData.deliveryZones, order]);
 
-  // Send WhatsApp message handler
-  function handleWhatsAppSend() {
-    if (!order) return;
-
-    const message = [
-      `*تأكيد طلب جديد من متجر Flora Style (#${order.orderNumber})*`,
-      `*الاسم بالكامل:* ${order.customerName}`,
-      `*رقم الهاتف:* ${order.phoneNumber}`,
-      `*المدينة/المنطقة:* ${zone ? textByLanguage(language, zone.nameAr, zone.nameHe) : ""}`,
-      `*العنوان التفصيلي:* ${order.detailedAddress}`,
-      `*الملاحظات:* ${order.notes || "-"}`,
-      "",
-      `*المنتجات المطلوبة:*`,
-      ...order.items.map((item) => {
-        const prod = storeData.products.find((p) => p.id === item.productId);
-        const col = storeData.colors.find((c) => c.id === item.colorId);
-        return `- ${prod ? textByLanguage(language, prod.nameAr, prod.nameHe) : "منتج"} [اللون: ${col ? textByLanguage(language, col.nameAr, col.nameHe) : "-"}] x ${item.quantity} (${formatPrice(item.price * item.quantity)})`;
-      }),
-      "",
-      `*رسوم التوصيل:* ${formatPrice(order.deliveryFee)}`,
-      `*الإجمالي الكلي:* ${formatPrice(order.totalPrice)}`
-    ].join("\n");
-
-    const whatsappUrl = `https://wa.me/${storeData.settings.whatsappNumber}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, "_blank", "noopener,noreferrer");
-  }
-
   return (
     <>
       <Header />
@@ -171,7 +142,6 @@ function OrderSuccessContent() {
                 {labels.subtitle} <strong style={{ color: "var(--gold)" }}>#{order.orderNumber}</strong>
               </p>
 
-              {/* Large WhatsApp Trigger button */}
               <div style={{
                 background: "rgba(22, 22, 21, 0.5)",
                 border: "1px solid var(--line)",
@@ -182,41 +152,8 @@ function OrderSuccessContent() {
                 gap: "16px",
                 justifyItems: "center"
               }}>
-                <button
-                  onClick={handleWhatsAppSend}
-                  style={{
-                    background: "#2ed573",
-                    border: "1px solid #2ed573",
-                    color: "#0b0b0a",
-                    width: "100%",
-                    maxWidth: "400px",
-                    height: "54px",
-                    borderRadius: "27px",
-                    fontWeight: 800,
-                    fontSize: "14px",
-                    letterSpacing: "0.05em",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    boxShadow: "0 4px 15px rgba(46, 213, 115, 0.3)",
-                    transition: "all 0.3s ease"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "#26af5f";
-                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(46, 213, 115, 0.5)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "#2ed573";
-                    e.currentTarget.style.boxShadow = "0 4px 15px rgba(46, 213, 115, 0.3)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                  }}
-                >
-                  🟢 {labels.sendWhatsapp}
-                </button>
                 <span style={{ fontSize: "12px", color: "var(--muted)", lineHeight: 1.6, maxWidth: "420px" }}>
-                  {labels.whatsappNotice}
+                  {labels.adminNotice}
                 </span>
               </div>
 

@@ -32,7 +32,7 @@ const productCopy = {
     color: "اختيار اللون",
     quantity: "الكمية",
     add: "إضافة للسلة",
-    whatsapp: "شراء عبر واتساب",
+    whatsapp: "استفسار عبر واتساب",
     share: "مشاركة المنتج",
     description: "الوصف",
     story: "قصة المنتج",
@@ -44,7 +44,7 @@ const productCopy = {
     pieces: "قطعة",
     copied: "تم نسخ الرابط",
     zoom: "تكبير الصورة",
-    checkoutHint: "اختاري اللون والكمية قبل الإضافة للسلة."
+    checkoutHint: "اختاري اللون والكمية ثم أضيفي القطعة للسلة لإتمام الطلب من الموقع."
   },
   he: {
     back: "חזרה לחנות",
@@ -55,7 +55,7 @@ const productCopy = {
     color: "בחירת צבע",
     quantity: "כמות",
     add: "הוספה לעגלה",
-    whatsapp: "קנייה בוואטסאפ",
+    whatsapp: "שאלה בוואטסאפ",
     share: "שיתוף מוצר",
     description: "תיאור",
     story: "סיפור המוצר",
@@ -67,7 +67,7 @@ const productCopy = {
     pieces: "יחידות",
     copied: "הקישור הועתק",
     zoom: "הגדלת תמונה",
-    checkoutHint: "בחרי צבע וכמות לפני ההוספה לעגלה."
+    checkoutHint: "בחרי צבע וכמות ואז הוסיפי לעגלה כדי להשלים את ההזמנה דרך האתר."
   }
 };
 
@@ -156,10 +156,10 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
     window.dispatchEvent(new CustomEvent("flora-open-cart"));
   }
 
-  function buyViaWhatsApp() {
+  function askViaWhatsApp() {
     const url = window.location.href;
     const message = [
-      "Flora Style Product Order",
+      "Flora Style Product Inquiry",
       `${labels.brand}: ${brand ? getBrandDisplayName(language, brand) : "Flora Style"}`,
       `${labels.sku}: ${product.sku}`,
       `${textByLanguage(language, product.nameAr, product.nameHe)}`,
@@ -283,7 +283,7 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
                 <ShoppingBag size={18} />
                 {labels.add}
               </button>
-              <button disabled={maxStock <= 0} onClick={buyViaWhatsApp}>
+              <button disabled={maxStock <= 0} onClick={askViaWhatsApp}>
                 <Send size={18} />
                 {labels.whatsapp}
               </button>

@@ -55,47 +55,26 @@ function mapOrderRow(row: SupabaseOrderRow, items: SupabaseOrderItemRow[]): Orde
   };
 }
 
-/**
- * Create a new order in Supabase (orders + order_items).
- * This is called from checkout in addition to local save.
- */
 export async function createOrder(order: Order): Promise<{ success: boolean; error?: string }> {
-  if (!isSupabaseEnabled() || !supabase) {
-    // Supabase not configured — silently succeed (local mode handles it)
-    return { success: true };
-  }
-
   try {
-    // 1. Insert main order
-    const { error: orderError } = await supabase.from("orders").insert({
-      id: order.id,
-      order_number: order.orderNumber,
-      customer_name: order.customerName,
-      phone_number: order.phoneNumber,
-      delivery_zone_id: order.deliveryZoneId || null,
-      detailed_address: order.detailedAddress,
-      notes: order.notes || null,
-      subtotal: order.subtotal,
-      delivery_fee: order.deliveryFee,
-      total_price: order.totalPrice,
-      status: order.status,
-      stock_deducted: !!order.stockDeducted,
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(order),
     });
 
-    if (orderError) throw orderError;
+    const payload = (await response.json()) as {
+      success?: boolean;
+      error?: string;
+    };
 
-    // 2. Insert items (if any)
-    if (order.items.length > 0) {
-      const itemsPayload = order.items.map((item) => ({
-        order_id: order.id,
-        product_id: item.productId || null,
-        color_id: item.colorId || null,
-        quantity: item.quantity,
-        price: item.price,
-      }));
-
-      const { error: itemsError } = await supabase.from("order_items").insert(itemsPayload);
-      if (itemsError) throw itemsError;
+    if (!response.ok || !payload.success) {
+      return {
+        success: false,
+        error: payload.error || "Failed to save order to Supabase",
+      };
     }
 
     return { success: true };

@@ -38,9 +38,9 @@ const copy = {
     storyTitle: "قطع مختارة لتعيش أكثر من موسم.",
     storyBody: "نختار القطع التي تبدو راقية، عملية، وسهلة الدمج في الإطلالة اليومية أو المناسبة. الفكرة ليست كثرة الخيارات، بل دقة الاختيار.",
     why: "لماذا Flora Style",
-    concierge: "تنسيق سريع عبر واتساب",
-    conciergeBody: "عندما تكون القطعة قريبة من قرار الشراء، نجعل التواصل أسرع من أي خطوة إضافية. استفسار، تنسيق لون، أو تأكيد طلب خلال لحظات.",
-    conciergeCta: "ابدئي المحادثة",
+    concierge: "الطلب الأساسي من الموقع",
+    conciergeBody: "أضيفي القطع إلى السلة وأرسلي الطلب مباشرة من الموقع. واتساب يبقى فقط للدعم أو الأسئلة السريعة بعد إرسال الطلب.",
+    conciergeCta: "توجهي إلى السلة",
     reviews: "آراء العملاء",
     view: "عرض التفاصيل",
     add: "إضافة",
@@ -53,7 +53,7 @@ const copy = {
       { title: "تصنيفات واضحة", body: "الوصول إلى المنتج يبدأ من تقسيمات مباشرة تسهّل التصفح بدل إرباك المستخدم." },
       { title: "اختيار مدروس", body: "كل قطعة مضافة هنا مختارة لتخدم ذوقاً فاخرًا وواضحاً، لا مجرد تعبئة واجهة." },
       { title: "طلب أسرع", body: "من الصفحة الرئيسية حتى السلة، المسار مباشر وواضح ويقلل الخطوات غير الضرورية." },
-      { title: "دعم عبر واتساب", body: "التواصل المباشر حاضر دائماً عندما يحتاج العميل سؤالاً سريعاً قبل الشراء." }
+      { title: "دعم عند الحاجة", body: "الموقع هو المسار الأساسي للطلب، وواتساب يبقى فقط لأي استفسار سريع أو ملاحظة إضافية." }
     ],
     reviewItems: [
       "التصنيفات واضحة والمنتج وصلني بالضبط مثل الصور.",
@@ -65,8 +65,8 @@ const copy = {
       explore: "استكشف",
       categories: "التصنيفات",
       contact: "التواصل",
-      concierge: "تنسيق سريع عبر واتساب",
-      supportNote: "للأسئلة السريعة أو تنسيق الطلبات الخاصة، فريق Flora Style جاهز مباشرة.",
+      concierge: "ההזמנה הראשית דרך האתר",
+      supportNote: "לשאלות מהירות או פרטים משלימים אחרי ההזמנה, צוות Flora Style זמין ישירות.",
       allProducts: "كل المنتجات",
       bestSellers: "الأكثر طلباً",
       newArrivals: "وصل حديثاً",
@@ -103,9 +103,9 @@ const copy = {
     storyTitle: "פריטים שנבחרו להישאר רלוונטיים יותר מעונה אחת.",
     storyBody: "אנחנו בוחרים פריטים אלגנטיים, שימושיים וקלים לשילוב בלוק יומיומי או לאירוע. לא עודף אפשרויות, אלא בחירה מדויקת.",
     why: "למה Flora Style",
-    concierge: "תיאום מהיר בוואטסאפ",
-    conciergeBody: "כשהלקוחה קרובה להחלטת קנייה, אנחנו הופכים את התקשורת למהירה יותר מכל שלב נוסף. שאלה, התאמת צבע או אישור הזמנה בתוך רגעים.",
-    conciergeCta: "פתיחת שיחה",
+    concierge: "ההזמנה הראשית דרך האתר",
+    conciergeBody: "הוסיפי פריטים לעגלה ושלחי את ההזמנה ישירות מהאתר. וואטסאפ נשאר רק לתמיכה או לשאלה מהירה אחרי שליחת ההזמנה.",
+    conciergeCta: "מעבר לעגלה",
     reviews: "חוות דעת לקוחות",
     view: "לפרטים",
     add: "הוספה",
@@ -118,7 +118,7 @@ const copy = {
       { title: "קטגוריות ברורות", body: "הלקוחה מגיעה מהר יותר למוצר כשהחלוקה ברורה ולא עמוסה." },
       { title: "בחירה מדויקת", body: "כל פריט נבחר כדי לשדר יוקרה אמיתית ולא רק למלא את המסך." },
       { title: "רכישה מהירה", body: "מהעמוד הראשי ועד העגלה, הזרימה ישירה וברורה עם פחות צעדים מיותרים." },
-      { title: "שירות בוואטסאפ", body: "יש מענה ישיר ומהיר לכל שאלה לפני הקנייה." }
+      { title: "תמיכה בעת הצורך", body: "האתר הוא המסלול הראשי להזמנה, ווואטסאפ נשאר רק לשאלה מהירה או פרט נוסף." }
     ],
     reviewItems: [
       "הקטגוריות ברורות והמוצר הגיע בדיוק כמו בתמונות.",
@@ -130,7 +130,7 @@ const copy = {
       explore: "לגלות",
       categories: "קטגוריות",
       contact: "יצירת קשר",
-      concierge: "תיאום מהיר בוואטסאפ",
+      concierge: "הזמנה דרך האתר תחילה",
       supportNote: "לשאלות מהירות או להזמנות מיוחדות, צוות Flora Style זמין ישירות.",
       allProducts: "כל המוצרים",
       bestSellers: "הנמכרים ביותר",
@@ -203,7 +203,6 @@ export function Storefront() {
             {banner ? <Image className="luxury-hero__image" src={banner.imageUrl} alt="Flora Style editorial" fill priority sizes="100vw" /> : null}
           </motion.div>
           <motion.div className="luxury-hero__content flora-home__hero-content" initial="hidden" animate="show" variants={reveal}>
-            <p className="luxury-kicker">{labels.heroEyebrow}</p>
             <h1>{banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}</h1>
             <p>{banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}</p>
             <div className="luxury-actions">
@@ -340,9 +339,7 @@ export function Storefront() {
           </motion.div>
           <motion.a
             className="concierge-banner__action"
-            href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`}
-            rel="noreferrer"
-            target="_blank"
+            href="/checkout"
             initial={{ opacity: 0, y: 26 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}

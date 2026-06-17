@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, MapPin, MessageCircleMore, ShieldCheck } from "lucide-react";
+import { CheckCircle2, Headset, MapPin, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -9,14 +9,13 @@ import { Header } from "@/components/header";
 import { CartItem, clearCart, getCart, subscribeToCart } from "@/lib/cart";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, Order, textByLanguage } from "@/lib/store";
-import { isSupabaseEnabled } from "@/lib/supabase/client";
 import { createOrder } from "@/lib/supabase/orders";
 
 const checkoutCopy = {
   ar: {
     eyebrow: "Checkout",
     title: "خطوة أخيرة، بصياغة أوضح.",
-    body: "أكملي تفاصيل التوصيل مرة واحدة، وسنرتب بقية الخطوات معك بسلاسة عبر الطلب أو واتساب.",
+    body: "أكملي تفاصيل التوصيل مرة واحدة، وسيصل الطلب مباشرة إلى لوحة الأدمن داخل الموقع.",
     customerInfo: "معلومات الشحن والتوصيل",
     name: "الاسم الكامل",
     phone: "رقم الهاتف",
@@ -32,8 +31,8 @@ const checkoutCopy = {
     backToShop: "العودة للتسوق",
     submitting: "جاري تأكيد الطلب...",
     notesPlaceholder: "أي تفاصيل تساعد في التوصيل أو التنسيق السريع...",
-    concierge: "متابعة مباشرة عبر واتساب",
-    conciergeBody: "بعد إرسال الطلب، يصبح التنسيق على المقاس أسهل: وقت التوصيل، تأكيد اللون، أو أي ملاحظة أخيرة.",
+    concierge: "دعم سريع عند الحاجة",
+    conciergeBody: "بعد إرسال الطلب من الموقع، يمكن استخدام واتساب فقط للاستفسار أو متابعة تفصيل إضافي إذا لزم.",
     secure: "بيانات الطلب تبقى داخل المتجر فقط.",
     deliveryZone: "منطقة التوصيل",
     items: "المنتجات",
@@ -42,7 +41,7 @@ const checkoutCopy = {
   he: {
     eyebrow: "Checkout",
     title: "שלב אחרון, בצורה ברורה יותר.",
-    body: "ממלאים את פרטי המשלוח פעם אחת, ואנחנו מסדרים את שאר הצעדים בצורה חלקה דרך ההזמנה או הוואטסאפ.",
+    body: "ממלאים את פרטי המשלוח פעם אחת, וההזמנה מגיעה ישירות ללוח הניהול של החנות.",
     customerInfo: "פרטי משלוח וכתובת",
     name: "שם מלא",
     phone: "טלפון",
@@ -58,8 +57,8 @@ const checkoutCopy = {
     backToShop: "חזרה לחנות",
     submitting: "מאשר הזמנה...",
     notesPlaceholder: "כל פרט שיעזור למשלוח או לתיאום מהיר...",
-    concierge: "ליווי ישיר בוואטסאפ",
-    conciergeBody: "אחרי שליחת ההזמנה, קל יותר לתאם בדיוק: זמן משלוח, אישור צבע או כל הערה אחרונה.",
+    concierge: "תמיכה מהירה בעת הצורך",
+    conciergeBody: "אחרי שליחת ההזמנה דרך האתר, אפשר להשתמש בוואטסאפ רק לשאלה או לפרט נוסף אם צריך.",
     secure: "פרטי ההזמנה נשמרים בתוך החנות בלבד.",
     deliveryZone: "אזור משלוח",
     items: "פריטים",
@@ -129,12 +128,6 @@ export default function CheckoutPage() {
     if (!cartDetails.length || isSubmitting) return;
     setIsSubmitting(true);
     setSubmitError("");
-
-    if (!isSupabaseEnabled()) {
-      setSubmitError("ربط الطلبات مع Supabase غير مكتمل حالياً، لذلك لا يمكن إرسال الطلب إلى الأدمن الآن.");
-      setIsSubmitting(false);
-      return;
-    }
 
     const orderId = `order-${Date.now()}`;
     const orderNumber = `FL-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -232,7 +225,7 @@ export default function CheckoutPage() {
 
               <div className="checkout-support">
                 <div>
-                  <MessageCircleMore size={18} />
+                  <Headset size={18} />
                   <strong>{labels.concierge}</strong>
                 </div>
                 <p>{labels.conciergeBody}</p>
