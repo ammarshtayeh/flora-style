@@ -62,7 +62,10 @@ export function saveStoreData(data: StoreData, options?: { notify?: boolean }): 
   }
 }
 
-export function subscribeToStoreData(callback: (data: StoreData) => void) {
+export function subscribeToStoreData(
+  callback: (data: StoreData) => void,
+  options?: { skipInitialRefresh?: boolean }
+) {
   if (typeof window === "undefined") return () => {};
 
   const handleUpdate = (event?: Event) => {
@@ -82,7 +85,7 @@ export function subscribeToStoreData(callback: (data: StoreData) => void) {
   window.addEventListener("flora-data-updated", handleUpdate);
   window.addEventListener("storage", handleStorage);
 
-  if (isSupabaseEnabled()) {
+  if (isSupabaseEnabled() && !options?.skipInitialRefresh) {
     void refreshStoreDataFromSupabase().then((fresh) => callback(fresh));
   }
 

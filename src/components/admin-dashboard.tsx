@@ -169,10 +169,13 @@ export function AdminDashboard() {
   // Sync state with remote store data (fallbacks still come from local cache)
   useEffect(() => {
     setData(loadStoreData());
-    const unsub = subscribeToStoreData((fresh) => {
-      setData(fresh);
-      setSettingsDraft(fresh.settings);
-    });
+    const unsub = subscribeToStoreData(
+      (fresh) => {
+        setData(fresh);
+        setSettingsDraft(fresh.settings);
+      },
+      { skipInitialRefresh: true }
+    );
     void refreshData();
     return () => unsub();
   }, []);

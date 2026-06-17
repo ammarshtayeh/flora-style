@@ -14,7 +14,7 @@ export async function updateSession(request: NextRequest) {
   });
 
   if (!supabaseUrl || !supabasePublishableKey) {
-    return response;
+    return { response, supabase: null, user: null };
   }
 
   const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
@@ -34,7 +34,9 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  return response;
+  return { response, supabase, user };
 }

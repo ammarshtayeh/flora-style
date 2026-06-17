@@ -1,18 +1,18 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { ShieldCheck, Mail } from "lucide-react";
 import { createBrowserSupabaseClient, isSupabaseEnabled } from "@/lib/supabase/client";
 
 function AdminLoginContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const redirectingRef = useRef(false);
 
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const nextPath = searchParams?.get("next") || "/admin";
@@ -34,42 +34,31 @@ function AdminLoginContent() {
 
     async function syncUserState() {
       const {
-        data: { user },
-      } = await client.auth.getUser();
+        data: { session },
+      } = await client.auth.getSession();
 
-      if (!mounted) {
+      if (!mounted || !session?.user?.email || redirectingRef.current) {
         return;
       }
 
-      if (user?.email) {
-        setEmail((currentEmail) => currentEmail || user.email || "");
-        router.replace(nextPath);
-        router.refresh();
-      }
+      setEmail((currentEmail) => currentEmail || session.user.email || "");
+      redirectingRef.current = true;
+      window.location.assign(nextPath);
     }
 
     void syncUserState();
 
-    const {
-      data: { subscription },
-    } = client.auth.onAuthStateChange((_event, session) => {
-      if (session?.user?.email) {
-        setEmail((currentEmail) => currentEmail || session.user.email || "");
-        router.replace(nextPath);
-        router.refresh();
-      }
-    });
-
     return () => {
       mounted = false;
-      subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [nextPath, supabase]);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
-    if (!supabase) {
-      setError("Supabase غير مفعّل بعد. تحقق من متغيرات البيئة.");
+    if (!supabase || redirectingRef.current) {
+      if (!supabase) {
+        setError("Supabase غير مفعّل بعد. تحقق من متغيرات البيئة.");
+      }
       return;
     }
 
@@ -84,8 +73,8 @@ function AdminLoginContent() {
       return;
     }
 
-    router.replace(nextPath);
-    router.refresh();
+    redirectingRef.current = true;
+    window.location.assign(nextPath);
   }
 
   return (
@@ -128,7 +117,7 @@ function AdminLoginContent() {
           </label>
 
           <button className="button" disabled={loading || !isSupabaseEnabled()} type="submit">
-            {loading ? "جاري المعالجة..." : "دخول"}
+            {loading ? "جاري الدخول..." : "دخول"}
           </button>
         </form>
 

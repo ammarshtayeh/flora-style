@@ -7,9 +7,9 @@ const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 export async function middleware(request: NextRequest) {
-  const response = await updateSession(request);
+  const { response, supabase, user } = await updateSession(request);
 
-  if (!supabaseUrl || !supabasePublishableKey) {
+  if (!supabaseUrl || !supabasePublishableKey || !supabase) {
     return response;
   }
 
@@ -17,20 +17,6 @@ export async function middleware(request: NextRequest) {
   if (!pathname.startsWith("/admin") || pathname.startsWith("/admin/login")) {
     return response;
   }
-
-  const { createServerClient } = await import("@supabase/ssr");
-  const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll() {},
-    },
-  });
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
 
   if (!user) {
     const url = request.nextUrl.clone();
