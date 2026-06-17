@@ -147,6 +147,22 @@ function HeaderInner() {
     setSearchQuery(searchParams?.get("search") || "");
   }, [searchParams]);
 
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const shouldLock = cartOpen || menuOpen;
+    const previousOverflow = document.body.style.overflow;
+    if (shouldLock) {
+      document.body.style.overflow = "hidden";
+    }
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [cartOpen, menuOpen]);
+
   const cartDetails = useMemo(() => {
     return cart
       .map((item) => {
@@ -334,97 +350,106 @@ function HeaderInner() {
 
       <AnimatePresence>
         {cartOpen ? (
-          <motion.aside
-            className="cart-sheet"
-            initial={{ opacity: 0, y: 64 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 64 }}
-            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          <motion.div
+            animate={{ opacity: 1 }}
+            className="cart-overlay"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            onClick={() => setCartOpen(false)}
           >
-            <div className="cart-sheet__head">
-              <div>
-                <span>{labels.concierge}</span>
-                <h2>{labels.cart}</h2>
-                <p>{labels.cartHint}</p>
-              </div>
-              <button onClick={() => setCartOpen(false)} aria-label="Close cart">
-                <X size={20} />
-              </button>
-            </div>
-
-            {cartDetails.length ? (
-              <>
-                <button className="clear-cart-trigger" onClick={clearCart}>
-                  <Trash2 size={15} />
-                  {labels.clearCart}
+            <motion.aside
+              className="cart-sheet"
+              initial={{ opacity: 0, y: 64 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 64 }}
+              onClick={(event) => event.stopPropagation()}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="cart-sheet__head">
+                <div>
+                  <span>{labels.concierge}</span>
+                  <h2>{labels.cart}</h2>
+                  <p>{labels.cartHint}</p>
+                </div>
+                <button onClick={() => setCartOpen(false)} aria-label="Close cart">
+                  <X size={20} />
                 </button>
+              </div>
 
-                <div className="cart-lines">
-                  {cartDetails.map((item) =>
-                    item ? (
-                      <div className="cart-line" key={`${item.productId}-${item.colorId}`}>
-                        <Image
-                          src={item.product.images[0]}
-                          alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
-                          width={68}
-                          height={82}
-                        />
-                        <div>
-                          <strong>{textByLanguage(language, item.product.nameAr, item.product.nameHe)}</strong>
-                          <select
-                            className="cart-color-select"
-                            value={item.colorId}
-                            onChange={(event) => changeCartColor(item.productId, item.colorId, event.target.value)}
-                          >
-                            {item.availableColors.map((color) => (
-                              <option key={color.id} value={color.id}>
-                                {textByLanguage(language, color.nameAr, color.nameHe)}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="qty-control">
-                            <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)}>
-                              <Minus size={14} />
-                            </button>
-                            <span>{item.quantity}</span>
-                            <button
-                              onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
-                              disabled={item.quantity >= item.color.stockQuantity}
+              {cartDetails.length ? (
+                <>
+                  <button className="clear-cart-trigger" onClick={clearCart}>
+                    <Trash2 size={15} />
+                    {labels.clearCart}
+                  </button>
+
+                  <div className="cart-lines">
+                    {cartDetails.map((item) =>
+                      item ? (
+                        <div className="cart-line" key={`${item.productId}-${item.colorId}`}>
+                          <Image
+                            src={item.product.images[0]}
+                            alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
+                            width={68}
+                            height={82}
+                          />
+                          <div>
+                            <strong>{textByLanguage(language, item.product.nameAr, item.product.nameHe)}</strong>
+                            <select
+                              className="cart-color-select"
+                              value={item.colorId}
+                              onChange={(event) => changeCartColor(item.productId, item.colorId, event.target.value)}
                             >
-                              <Plus size={14} />
+                              {item.availableColors.map((color) => (
+                                <option key={color.id} value={color.id}>
+                                  {textByLanguage(language, color.nameAr, color.nameHe)}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="qty-control">
+                              <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)}>
+                                <Minus size={14} />
+                              </button>
+                              <span>{item.quantity}</span>
+                              <button
+                                onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
+                                disabled={item.quantity >= item.color.stockQuantity}
+                              >
+                                <Plus size={14} />
+                              </button>
+                            </div>
+                            <button className="cart-line-remove" onClick={() => removeFromCart(item.productId, item.colorId)}>
+                              <Trash2 size={13} />
+                              {labels.remove}
                             </button>
                           </div>
-                          <button className="cart-line-remove" onClick={() => removeFromCart(item.productId, item.colorId)}>
-                            <Trash2 size={13} />
-                            {labels.remove}
-                          </button>
+                          <b>{formatPrice(item.total)}</b>
                         </div>
-                        <b>{formatPrice(item.total)}</b>
-                      </div>
-                    ) : null
-                  )}
-                </div>
-
-                <div className="cart-checkout-panel">
-                  <div className="cart-total cart-total--grand">
-                    <span>{labels.subtotal}</span>
-                    <b>{formatPrice(subtotal)}</b>
+                      ) : null
+                    )}
                   </div>
-                  <button
-                    onClick={() => {
-                      setCartOpen(false);
-                      router.push("/checkout");
-                    }}
-                  >
-                    <CheckCircle2 size={18} />
-                    {labels.checkoutBtn}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <p className="cart-empty">{labels.empty}</p>
-            )}
-          </motion.aside>
+
+                  <div className="cart-checkout-panel">
+                    <div className="cart-total cart-total--grand">
+                      <span>{labels.subtotal}</span>
+                      <b>{formatPrice(subtotal)}</b>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setCartOpen(false);
+                        router.push("/checkout");
+                      }}
+                    >
+                      <CheckCircle2 size={18} />
+                      {labels.checkoutBtn}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <p className="cart-empty">{labels.empty}</p>
+              )}
+            </motion.aside>
+          </motion.div>
         ) : null}
       </AnimatePresence>
 

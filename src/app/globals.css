@@ -1361,6 +1361,13 @@ html[data-theme="light"] .cart-sheet {
   width: 100%;
 }
 
+.cart-overlay {
+  background: rgba(11, 11, 10, 0.42);
+  inset: 0;
+  position: fixed;
+  z-index: 79;
+}
+
 .cart-toast {
   align-items: center;
   background: rgba(11, 11, 10, 0.92);
@@ -1376,6 +1383,7 @@ html[data-theme="light"] .cart-sheet {
   padding: 12px 18px;
   position: fixed;
   z-index: 120;
+  white-space: normal;
 }
 
 .cart-toast svg {
@@ -5388,7 +5396,7 @@ html[data-theme="light"] select.select option {
 
 @media (max-width: 767px) {
   .flora-header-spacer {
-    height: 158px;
+    height: 148px;
   }
 
   .flora-header__top {
@@ -5424,13 +5432,13 @@ html[data-theme="light"] select.select option {
   }
 
   .flora-header__search {
+    grid-template-columns: auto minmax(0, 1fr);
     min-height: 46px;
     padding-inline: 12px 6px;
   }
 
   .flora-header__search button {
-    min-height: 34px;
-    padding-inline: 14px;
+    display: none;
   }
 
   .shop-page {
@@ -5574,6 +5582,85 @@ html[data-theme="light"] select.select option {
   .mobile-menu-sheet {
     border-radius: 24px 0 0 24px;
     max-width: min(88vw, 380px);
+  }
+
+  .cart-overlay {
+    background: rgba(11, 11, 10, 0.52);
+  }
+
+  .cart-sheet {
+    border-radius: 24px 24px 0 0;
+    inset-inline: 0;
+    left: 0;
+    max-height: 82vh;
+    padding: 18px 16px 20px;
+    transform: none;
+    width: 100vw;
+  }
+
+  .cart-sheet__head {
+    align-items: start;
+    gap: 10px;
+  }
+
+  .cart-sheet__head h2 {
+    font-size: 24px;
+  }
+
+  .cart-lines {
+    max-height: 42vh;
+  }
+
+  .cart-line {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .cart-line > b {
+    grid-column: 2;
+    justify-self: start;
+  }
+
+  .cart-line img {
+    height: 76px;
+    width: 62px;
+  }
+
+  .cart-line strong {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .cart-color-select {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .cart-checkout-panel {
+    gap: 10px;
+    padding-top: 14px;
+  }
+
+  .cart-total--grand {
+    font-size: 18px;
+  }
+
+  .cart-total--grand b {
+    font-size: 20px;
+  }
+
+  .cart-toast {
+    border-radius: 18px;
+    bottom: 96px;
+    gap: 8px;
+    max-width: calc(100vw - 24px);
+    padding: 10px 14px;
+  }
+
+  .cart-toast span,
+  .cart-toast strong {
+    font-size: 12px;
   }
 }
 
