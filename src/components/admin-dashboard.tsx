@@ -68,7 +68,7 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "delivery", label: "التوصيل" },
   { id: "banners", label: "البانرات" },
   { id: "settings", label: "الإعدادات" },
-  { id: "accounts", label: "إدارة حساباتي" },
+  { id: "accounts", label: "حسابات الأدمن" },
   { id: "profile", label: "ملفي الشخصي" }
 ];
 
@@ -106,6 +106,7 @@ function textInput<T extends object>(
 export function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [data, setData] = useState<StoreData>(initialStoreData);
   const [syncMessage, setSyncMessage] = useState("");
   const [syncError, setSyncError] = useState("");
@@ -215,6 +216,10 @@ export function AdminDashboard() {
   }, [activeTab]);
 
   useEffect(() => {
+    setIsMobileNavOpen(false);
+  }, [activeTab]);
+
+  useEffect(() => {
     const supabase = createBrowserSupabaseClient();
     if (!supabase) {
       return;
@@ -237,6 +242,38 @@ export function AdminDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    setProductDraft((current) => {
+      if (current.id) {
+        return current;
+      }
+
+      const nextCategoryId = current.categoryId || data.categories[0]?.id || "";
+      const nextBrandId = current.brandId || data.brands[0]?.id || "";
+
+      if (nextCategoryId === current.categoryId && nextBrandId === current.brandId) {
+        return current;
+      }
+
+      return {
+        ...current,
+        categoryId: nextCategoryId,
+        brandId: nextBrandId,
+      };
+    });
+
+    setColorDraft((current) => {
+      if (current.id || current.productId || !data.products[0]?.id) {
+        return current;
+      }
+
+      return {
+        ...current,
+        productId: data.products[0].id,
+      };
+    });
+  }, [data.brands, data.categories, data.products]);
+
   const stats = useMemo(() => {
     const totalSales = data.orders
       .filter((order) => order.status !== "Cancelled")
@@ -245,6 +282,8 @@ export function AdminDashboard() {
     const outOfStock = data.colors.filter((color) => color.stockQuantity === 0);
     return { totalSales, lowStock, outOfStock };
   }, [data]);
+
+  const activeTabMeta = tabs.find((tab) => tab.id === activeTab);
 
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -569,36 +608,57 @@ export function AdminDashboard() {
 
   return (
     <main className="admin-layout" dir="rtl">
-      <aside className="sidebar">
-        <Link className="brand" href="/">
-          <Image className="brand-logo" src="/flora-logo.png" alt="Flora Style logo" width={48} height={48} priority />
-          <span className="brand-name">
-            <strong>Flora Style</strong>
-            <span>Admin</span>
-          </span>
-        </Link>
-        <nav className="side-nav" aria-label="Admin sections">
-          {tabs.map((tab) => (
-            <button className={activeTab === tab.id ? "is-active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button">
-              {tab.label}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-actions">
-          <Link className="ghost-button" href="/">
-            عرض المتجر
+      <aside className={`sidebar ${isMobileNavOpen ? "is-open" : ""}`}>
+        <div className="sidebar-header">
+          <Link className="brand" href="/">
+            <Image className="brand-logo" src="/flora-logo.png" alt="Flora Style logo" width={48} height={48} priority />
+            <span className="brand-name">
+              <strong>Flora Style</strong>
+              <span>Admin</span>
+            </span>
           </Link>
-          <button className="danger-button sidebar-logout-button" disabled={isLoggingOut} onClick={handleLogout} type="button">
-            {isLoggingOut ? "Logging out..." : "Logout"}
+          <button
+            aria-controls="admin-nav-panel"
+            aria-expanded={isMobileNavOpen}
+            className="icon-button sidebar-toggle"
+            onClick={() => setIsMobileNavOpen((open) => !open)}
+            type="button"
+          >
+            <span>{isMobileNavOpen ? "إغلاق القائمة" : "أقسام اللوحة"}</span>
+            <strong>{activeTabMeta?.label}</strong>
           </button>
         </div>
+        <div className="sidebar-nav-shell" id="admin-nav-panel">
+          <nav className="side-nav" aria-label="Admin sections">
+            {tabs.map((tab) => (
+              <button className={activeTab === tab.id ? "is-active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button">
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+          <div className="sidebar-actions">
+            <Link className="ghost-button" href="/">
+              عرض المتجر
+            </Link>
+            <button className="danger-button sidebar-logout-button" disabled={isLoggingOut} onClick={handleLogout} type="button">
+              {isLoggingOut ? "جاري تسجيل الخروج..." : "تسجيل الخروج"}
+            </button>
+          </div>
+        </div>
       </aside>
+      <button
+        aria-hidden={!isMobileNavOpen}
+        className={`admin-sidebar-backdrop ${isMobileNavOpen ? "is-visible" : ""}`}
+        onClick={() => setIsMobileNavOpen(false)}
+        tabIndex={isMobileNavOpen ? 0 : -1}
+        type="button"
+      />
 
       <section className="admin-main">
         <header className="admin-header">
           <div>
             <p className="eyebrow">Flora Style Control Center</p>
-            <h1>{tabs.find((tab) => tab.id === activeTab)?.label}</h1>
+            <h1>{activeTabMeta?.label}</h1>
             <p className="admin-header__body">لوحة إدارة أفخم، أسرع، ومتصلة بالكامل مع Supabase للطلبات والمنتجات والوسائط.</p>
           </div>
           <button className="danger-button" onClick={resetDemoData}>
@@ -1162,7 +1222,7 @@ function ToggleRow({ values }: { values: Array<[string, boolean, (checked: boole
 
 function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (product: Product) => void; onDelete: (id: string) => void }) {
   return (
-    <div className="table-wrap">
+    <div className="table-wrap admin-mobile-table">
       <table>
         <thead>
           <tr>
@@ -1177,19 +1237,19 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
           {data.products.map((product) => {
             return (
               <tr key={product.id}>
-                <td>
+                <td data-label="المنتج">
                   <strong>{product.nameAr}</strong>
                   <br />
                   <span className="muted">{product.nameHe}</span>
                 </td>
-                <td>{product.sku}</td>
-                <td>{formatPrice(product.salePrice || product.price)}</td>
-                <td>
+                <td data-label="SKU">{product.sku}</td>
+                <td data-label="السعر">{formatPrice(product.salePrice || product.price)}</td>
+                <td data-label="الحالة">
                   <span className={`status-pill ${product.active ? "status-pill--success" : "status-pill--danger"}`}>
                     {product.active ? "نشط" : "معطل"}
                   </span>
                 </td>
-                <td>
+                <td data-label="إجراءات">
                   <div className="table-action-group">
                     <button className="ghost-button" onClick={() => onEdit(product)} type="button">
                     تعديل
@@ -1210,7 +1270,7 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
 
 function InventoryTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (color: ProductColor) => void; onDelete: (id: string) => void }) {
   return (
-    <div className="table-wrap">
+    <div className="table-wrap admin-mobile-table">
       <table>
         <thead>
           <tr>
@@ -1225,18 +1285,18 @@ function InventoryTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (
             const product = data.products.find((entry) => entry.id === color.productId);
             return (
               <tr key={color.id}>
-                <td>{product?.nameAr ?? "-"}</td>
-                <td>
+                <td data-label="المنتج">{product?.nameAr ?? "-"}</td>
+                <td data-label="اللون">
                   <span className="swatch" style={{ background: color.value }} /> {color.nameAr}
                   <br />
                   <small className="muted">{color.nameHe} / {color.value}</small>
                 </td>
-                <td>
+                <td data-label="المخزون">
                   <strong className={color.stockQuantity <= 3 ? "stock-value stock-value--low" : "stock-value"}>
                     {color.stockQuantity}
                   </strong>
                 </td>
-                <td>
+                <td data-label="إجراءات">
                   <div className="table-action-group">
                     <button className="ghost-button" onClick={() => onEdit(color)} type="button">
                     تعديل
@@ -1282,133 +1342,198 @@ function OrdersTable({
   };
 
   return (
-    <div className="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>رقم الطلب</th>
-            <th>الزبون</th>
-            <th>الإجمالي</th>
-            <th>الحالة</th>
-            <th>المنتجات</th>
-            <th>إجراءات</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.orders.map((order) => {
-            const zone = data.deliveryZones.find((z) => z.id === order.deliveryZoneId);
-            const isExpanded = expandedOrderId === order.id;
-            return (
-              <React.Fragment key={order.id}>
-                <tr
-                  onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
-                  style={{ cursor: "pointer", borderBottom: isExpanded ? "none" : "1px solid var(--line)" }}
-                >
-                  <td>
-                    <strong>#{order.orderNumber}</strong>
-                    <br />
-                    <small className="muted">{order.createdAt}</small>
-                  </td>
-                  <td>
-                    <strong>{order.customerName}</strong>
-                    <br />
-                    <span className="muted">{order.phoneNumber}</span>
-                  </td>
-                  <td className="order-total">{formatPrice(order.totalPrice)}</td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <select
-                      className={`select status-select status-select--${getStatusTone(order.status)}`}
-                      value={order.status}
-                      onChange={(event) => onStatusChange(order.id, event.target.value as OrderStatus)}
-                    >
-                      {statuses.map((status) => (
-                        <option key={status} value={status}>
-                          {status}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>{order.items.reduce((sum, item) => sum + item.quantity, 0)} قطع</td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <button className="danger-button" onClick={() => onDelete(order.id)} type="button">
-                      حذف
-                    </button>
-                  </td>
-                </tr>
-                {isExpanded && (
-                  <tr className="order-details-expanded">
-                    <td className="order-details-cell" colSpan={6}>
-                      <div className="order-details-grid">
-                        <div>
-                          <h4 className="order-details-title">
-                            تفاصيل العميل والتوصيل
-                          </h4>
-                          <div className="order-details-copy">
-                            <p><strong>الاسم بالكامل:</strong> {order.customerName}</p>
-                            <p><strong>رقم الهاتف:</strong> {order.phoneNumber}</p>
-                            <p><strong>منطقة التوصيل:</strong> {zone ? zone.nameAr : "-"}</p>
-                            <p><strong>العنوان المفصل:</strong> {order.detailedAddress}</p>
-                            <p><strong>ملاحظات العميل:</strong> {order.notes || "-"}</p>
-                            <p>
-                              <strong>حالة الخصم من المخزون:</strong>{" "}
-                              <span className={`status-pill ${order.stockDeducted ? "status-pill--success" : "status-pill--warning"}`}>
-                                {order.stockDeducted ? "تم الخصم تلقائياً" : "لم يخصم بعد"}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <div>
-                          <h4 className="order-details-title">
-                            المنتجات المطلوبة
-                          </h4>
-                          <div className="order-details-lines">
-                            {order.items.map((item, idx) => {
-                              const prod = data.products.find((p) => p.id === item.productId);
-                              const col = data.colors.find((c) => c.id === item.colorId);
-                              return (
-                                <div className="order-details-line" key={idx}>
-                                  <div>
-                                    <strong>{prod ? prod.nameAr : "منتج غير موجود"}</strong>
-                                    <span className="order-details-meta">
-                                      (اللون: {col ? col.nameAr : "-"})
-                                    </span>
-                                  </div>
-                                  <span className="order-details-price">
-                                    {item.quantity} × {formatPrice(item.price)}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                          <div className="order-details-totals">
-                            <div>
-                              <span>مجموع المنتجات:</span>
-                              <strong>{formatPrice(order.subtotal)}</strong>
-                            </div>
-                            <div>
-                              <span>تكلفة التوصيل:</span>
-                              <strong>{formatPrice(order.deliveryFee)}</strong>
-                            </div>
-                            <div className="order-details-grand-total">
-                              <span>الإجمالي الكلي:</span>
-                              <strong>{formatPrice(order.totalPrice)}</strong>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+    <>
+      <div className="table-wrap admin-desktop-only">
+        <table>
+          <thead>
+            <tr>
+              <th>رقم الطلب</th>
+              <th>الزبون</th>
+              <th>الإجمالي</th>
+              <th>الحالة</th>
+              <th>المنتجات</th>
+              <th>إجراءات</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.orders.map((order) => {
+              const zone = data.deliveryZones.find((z) => z.id === order.deliveryZoneId);
+              const isExpanded = expandedOrderId === order.id;
+              return (
+                <React.Fragment key={order.id}>
+                  <tr
+                    onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                    style={{ cursor: "pointer", borderBottom: isExpanded ? "none" : "1px solid var(--line)" }}
+                  >
+                    <td>
+                      <strong>#{order.orderNumber}</strong>
+                      <br />
+                      <small className="muted">{order.createdAt}</small>
+                    </td>
+                    <td>
+                      <strong>{order.customerName}</strong>
+                      <br />
+                      <span className="muted">{order.phoneNumber}</span>
+                    </td>
+                    <td className="order-total">{formatPrice(order.totalPrice)}</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <select
+                        className={`select status-select status-select--${getStatusTone(order.status)}`}
+                        value={order.status}
+                        onChange={(event) => onStatusChange(order.id, event.target.value as OrderStatus)}
+                      >
+                        {statuses.map((status) => (
+                          <option key={status} value={status}>
+                            {status}
+                          </option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>{order.items.reduce((sum, item) => sum + item.quantity, 0)} قطع</td>
+                    <td onClick={(e) => e.stopPropagation()}>
+                      <button className="danger-button" onClick={() => onDelete(order.id)} type="button">
+                        حذف
+                      </button>
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
+                  {isExpanded && (
+                    <tr className="order-details-expanded">
+                      <td className="order-details-cell" colSpan={6}>
+                        <OrderDetails data={data} order={order} zoneName={zone ? zone.nameAr : "-"} />
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+            {data.orders.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="empty">لا توجد طلبات مستلمة حتى الآن.</td>
+              </tr>
+            ) : null}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="admin-order-cards admin-mobile-only">
+        {data.orders.map((order) => {
+          const zone = data.deliveryZones.find((z) => z.id === order.deliveryZoneId);
+          const isExpanded = expandedOrderId === order.id;
+
+          return (
+            <article className={`admin-order-card ${isExpanded ? "is-expanded" : ""}`} key={order.id}>
+              <button
+                className="admin-order-card__summary"
+                onClick={() => setExpandedOrderId(isExpanded ? null : order.id)}
+                type="button"
+              >
+                <div className="admin-order-card__title">
+                  <strong>#{order.orderNumber}</strong>
+                  <span>{order.createdAt}</span>
+                </div>
+                <div className="admin-order-card__meta">
+                  <strong>{order.customerName}</strong>
+                  <span>{order.phoneNumber}</span>
+                </div>
+                <div className="admin-order-card__badges">
+                  <span className="status-pill">{order.items.reduce((sum, item) => sum + item.quantity, 0)} قطع</span>
+                  <span className="status-pill status-pill--neutral">{formatPrice(order.totalPrice)}</span>
+                </div>
+              </button>
+
+              <div className="admin-order-card__controls">
+                <label className="form-row">
+                  <span>حالة الطلب</span>
+                  <select
+                    className={`select status-select status-select--${getStatusTone(order.status)}`}
+                    value={order.status}
+                    onChange={(event) => onStatusChange(order.id, event.target.value as OrderStatus)}
+                  >
+                    {statuses.map((status) => (
+                      <option key={status} value={status}>
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className="danger-button" onClick={() => onDelete(order.id)} type="button">
+                  حذف
+                </button>
+              </div>
+
+              {isExpanded ? (
+                <div className="admin-order-card__details">
+                  <OrderDetails data={data} order={order} zoneName={zone ? zone.nameAr : "-"} />
+                </div>
+              ) : null}
+            </article>
+          );
+        })}
+        {data.orders.length === 0 ? <div className="empty">لا توجد طلبات مستلمة حتى الآن.</div> : null}
+      </div>
+    </>
+  );
+}
+
+function OrderDetails({ data, order, zoneName }: { data: StoreData; order: Order; zoneName: string }) {
+  return (
+    <div className="order-details-grid">
+      <div>
+        <h4 className="order-details-title">
+          تفاصيل العميل والتوصيل
+        </h4>
+        <div className="order-details-copy">
+          <p><strong>الاسم بالكامل:</strong> {order.customerName}</p>
+          <p><strong>رقم الهاتف:</strong> {order.phoneNumber}</p>
+          <p><strong>منطقة التوصيل:</strong> {zoneName}</p>
+          <p><strong>العنوان المفصل:</strong> {order.detailedAddress}</p>
+          <p><strong>ملاحظات العميل:</strong> {order.notes || "-"}</p>
+          <p>
+            <strong>حالة الخصم من المخزون:</strong>{" "}
+            <span className={`status-pill ${order.stockDeducted ? "status-pill--success" : "status-pill--warning"}`}>
+              {order.stockDeducted ? "تم الخصم تلقائياً" : "لم يخصم بعد"}
+            </span>
+          </p>
+        </div>
+      </div>
+      <div>
+        <h4 className="order-details-title">
+          المنتجات المطلوبة
+        </h4>
+        <div className="order-details-lines">
+          {order.items.map((item, idx) => {
+            const prod = data.products.find((p) => p.id === item.productId);
+            const col = data.colors.find((c) => c.id === item.colorId);
+            return (
+              <div className="order-details-line" key={idx}>
+                <div>
+                  <strong>{prod ? prod.nameAr : "منتج غير موجود"}</strong>
+                  <span className="order-details-meta">
+                    (اللون: {col ? col.nameAr : "-"})
+                  </span>
+                </div>
+                <span className="order-details-price">
+                  {item.quantity} × {formatPrice(item.price)}
+                </span>
+              </div>
             );
           })}
-          {data.orders.length === 0 ? (
-            <tr>
-              <td colSpan={6} className="empty">لا توجد طلبات مستلمة حتى الآن.</td>
-            </tr>
-          ) : null}
-        </tbody>
-      </table>
+        </div>
+        <div className="order-details-totals">
+          <div>
+            <span>مجموع المنتجات:</span>
+            <strong>{formatPrice(order.subtotal)}</strong>
+          </div>
+          <div>
+            <span>تكلفة التوصيل:</span>
+            <strong>{formatPrice(order.deliveryFee)}</strong>
+          </div>
+          <div className="order-details-grand-total">
+            <span>الإجمالي الكلي:</span>
+            <strong>{formatPrice(order.totalPrice)}</strong>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1480,7 +1605,7 @@ function EntityTable<T extends { id: string } & Record<string, unknown>>({
   onDelete: (id: string) => void;
 }) {
   return (
-    <div className="table-wrap">
+    <div className="table-wrap admin-mobile-table">
       <table>
         <thead>
           <tr>
@@ -1494,9 +1619,9 @@ function EntityTable<T extends { id: string } & Record<string, unknown>>({
           {rows.map((row) => (
             <tr key={row.id}>
               {columns.map((column) => (
-                <td key={String(column)}>{formatCell(row[column])}</td>
+                <td data-label={String(column)} key={String(column)}>{formatCell(row[column])}</td>
               ))}
-              <td>
+              <td data-label="إجراءات">
                 <div className="table-action-group">
                   <button className="ghost-button" onClick={() => onEdit(row)} type="button">
                   تعديل

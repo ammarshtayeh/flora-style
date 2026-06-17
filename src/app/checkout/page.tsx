@@ -36,7 +36,8 @@ const checkoutCopy = {
     secure: "بيانات الطلب تبقى داخل المتجر فقط.",
     deliveryZone: "منطقة التوصيل",
     items: "المنتجات",
-    ready: "جاهز للتأكيد"
+    ready: "جاهز للتأكيد",
+    deliveryUnavailable: "لا توجد منطقة توصيل مفعلة حالياً. فعّلي منطقة من لوحة الأدمن قبل استقبال الطلبات."
   },
   he: {
     eyebrow: "Checkout",
@@ -62,7 +63,8 @@ const checkoutCopy = {
     secure: "פרטי ההזמנה נשמרים בתוך החנות בלבד.",
     deliveryZone: "אזור משלוח",
     items: "פריטים",
-    ready: "מוכן לאישור"
+    ready: "מוכן לאישור",
+    deliveryUnavailable: "אין כרגע אזור משלוח פעיל. הפעילי אזור משלוח בלוח הניהול לפני קבלת הזמנות."
   }
 } as const;
 
@@ -101,10 +103,20 @@ export default function CheckoutPage() {
     return () => window.removeEventListener("flora-language-changed", handleLangChange);
   }, []);
 
+  const activeZones = useMemo(() => storeData.deliveryZones.filter((entry) => entry.active), [storeData.deliveryZones]);
+
   useEffect(() => {
-    const activeZones = storeData.deliveryZones.filter((zone) => zone.active);
-    if (!selectedZoneId && activeZones.length) setSelectedZoneId(activeZones[0].id);
-  }, [selectedZoneId, storeData.deliveryZones]);
+    if (!activeZones.length) {
+      if (selectedZoneId) {
+        setSelectedZoneId("");
+      }
+      return;
+    }
+
+    if (!activeZones.some((zone) => zone.id === selectedZoneId)) {
+      setSelectedZoneId(activeZones[0].id);
+    }
+  }, [activeZones, selectedZoneId]);
 
   const cartDetails = useMemo(() => {
     return cart
@@ -126,6 +138,11 @@ export default function CheckoutPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     if (!cartDetails.length || isSubmitting) return;
+    if (!activeZones.length || !selectedZoneId) {
+      setSubmitError(labels.deliveryUnavailable);
+      return;
+    }
+
     setIsSubmitting(true);
     setSubmitError("");
 
@@ -202,10 +219,8 @@ export default function CheckoutPage() {
                 </label>
                 <label className="form-row">
                   <span>{labels.city}</span>
-                  <select className="select" onChange={(event) => setSelectedZoneId(event.target.value)} value={selectedZoneId}>
-                    {storeData.deliveryZones
-                      .filter((entry) => entry.active)
-                      .map((entry) => (
+                  <select className="select" disabled={!activeZones.length} onChange={(event) => setSelectedZoneId(event.target.value)} value={selectedZoneId}>
+                    {activeZones.map((entry) => (
                         <option key={entry.id} value={entry.id}>
                           {textByLanguage(language, entry.nameAr, entry.nameHe)} - {formatPrice(entry.deliveryFee)}
                         </option>
@@ -235,6 +250,7 @@ export default function CheckoutPage() {
                 <CheckCircle2 size={18} />
                 {isSubmitting ? labels.submitting : labels.submitBtn}
               </button>
+              {!activeZones.length ? <p className="checkout-submit-error">{labels.deliveryUnavailable}</p> : null}
               {submitError ? <p className="checkout-submit-error">{submitError}</p> : null}
             </form>
 

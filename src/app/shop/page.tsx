@@ -121,6 +121,21 @@ function ShopContent() {
     () => activeCategories.find((category) => category.id === selectedCategoryId),
     [activeCategories, selectedCategoryId]
   );
+  const productSearchIndex = useMemo(() => {
+    const brandNames = new Map(
+      storeData.brands.map((brand) => [brand.id, `${brand.nameAr} ${brand.nameHe}`.toLowerCase()])
+    );
+    const categoryNames = new Map(
+      storeData.categories.map((category) => [category.id, `${category.nameAr} ${category.nameHe}`.toLowerCase()])
+    );
+    const colorNames = storeData.colors.reduce<Record<string, string>>((acc, color) => {
+      const next = `${color.nameAr} ${color.nameHe}`.toLowerCase();
+      acc[color.productId] = acc[color.productId] ? `${acc[color.productId]} ${next}` : next;
+      return acc;
+    }, {});
+
+    return { brandNames, categoryNames, colorNames };
+  }, [storeData.brands, storeData.categories, storeData.colors]);
 
   const categoryCounts = useMemo(() => {
     return storeData.products.filter((product) => product.active).reduce<Record<string, number>>((acc, product) => {
@@ -162,7 +177,12 @@ function ShopContent() {
         (product) =>
           product.nameAr.toLowerCase().includes(searchQuery) ||
           product.nameHe.toLowerCase().includes(searchQuery) ||
-          product.sku.toLowerCase().includes(searchQuery)
+          product.sku.toLowerCase().includes(searchQuery) ||
+          product.descriptionAr.toLowerCase().includes(searchQuery) ||
+          product.descriptionHe.toLowerCase().includes(searchQuery) ||
+          (productSearchIndex.brandNames.get(product.brandId) || "").includes(searchQuery) ||
+          (productSearchIndex.categoryNames.get(product.categoryId) || "").includes(searchQuery) ||
+          (productSearchIndex.colorNames[product.id] || "").includes(searchQuery)
       );
     }
 
@@ -183,7 +203,7 @@ function ShopContent() {
     }
 
     return result;
-  }, [searchQuery, selectedBrands, selectedCategoryId, sortBy, storeData.products]);
+  }, [productSearchIndex, searchQuery, selectedBrands, selectedCategoryId, sortBy, storeData.products]);
 
   const activeFilterLabels = useMemo(() => {
     return selectedBrands
@@ -212,10 +232,10 @@ function ShopContent() {
 
   function resetAll() {
     setSelectedBrands([]);
+    setSelectedCategoryId("");
     setSortBy("newest");
-    const category = searchParams?.get("category") || "";
-    setSelectedCategoryId(category);
-    pushFilters(category, []);
+    setMobileFiltersOpen(false);
+    router.push("/shop", { scroll: false });
   }
 
   function handleAddToCart(product: Product) {
