@@ -1,27 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/product-details";
-import {
-  formatPrice,
-  getProductBrand,
-  getProductBySlug,
-  getProductCategory,
-  getProductColors,
-  initialStoreData,
-  textByLanguage
-} from "@/lib/store";
+import { formatPrice, initialStoreData, textByLanguage } from "@/lib/store";
+import { fetchProductPageData, fetchProductSlugs } from "@/lib/supabase/catalog";
+import { createStaticSupabaseClient } from "@/lib/supabase/public";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export function generateStaticParams() {
-  return initialStoreData.products.map((product) => ({ slug: product.slug }));
+export async function generateStaticParams() {
+  const supabase = createStaticSupabaseClient();
+  const slugs = await fetchProductSlugs(supabase);
+  return (slugs.length ? slugs : initialStoreData.products.map((product) => product.slug)).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const supabase = createStaticSupabaseClient();
+  const pageData = await fetchProductPageData(slug, supabase);
+  const product = pageData?.product;
   if (!product) return {};
 
   const title = `${product.nameAr} | Flora Style`;
@@ -50,12 +49,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function ProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
-  if (!product) notFound();
+  const supabase = await createServerSupabaseClient();
+  const pageData = await fetchProductPageData(slug, supabase);
+  if (!pageData) notFound();
 
-  const brand = getProductBrand(product);
-  const category = getProductCategory(product);
-  const colors = getProductColors(product.id);
+  const { product, brand, category, colors } = pageData;
   const stock = colors.reduce((sum, color) => sum + color.stockQuantity, 0);
   const price = product.salePrice ?? product.price;
 

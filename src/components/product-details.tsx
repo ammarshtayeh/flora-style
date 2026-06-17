@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
+import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, Product, ProductColor, textByLanguage } from "@/lib/store";
@@ -300,8 +301,8 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
           <p>{textByLanguage(language, product.storyAr, product.storyHe)}</p>
         </section>
 
-        <ProductRow title={labels.related} products={related} language={language} />
-        {recentlyViewed.length ? <ProductRow title={labels.recently} products={recentlyViewed} language={language} /> : null}
+        <ProductRow title={labels.related} products={related} colors={storeData.colors} language={language} />
+        {recentlyViewed.length ? <ProductRow title={labels.recently} products={recentlyViewed} colors={storeData.colors} language={language} /> : null}
 
         <AnimatePresence>
           {viewerOpen && product.images[activeImage] ? (
@@ -318,17 +319,36 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
   );
 }
 
-function ProductRow({ title, products, language }: { title: string; products: Product[]; language: Language }) {
+function ProductRow({
+  title,
+  products,
+  colors,
+  language,
+}: {
+  title: string;
+  products: Product[];
+  colors: ProductColor[];
+  language: Language;
+}) {
   return (
     <section className="product-row">
       <h2>{title}</h2>
       <div className="product-row__grid">
-        {products.map((product) => (
-          <Link href={`/products/${product.slug}`} key={product.id}>
-            <Image src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 700px) 50vw, 25vw" />
-            <span>{textByLanguage(language, product.nameAr, product.nameHe)}</span>
-          </Link>
-        ))}
+        {products.map((product) => {
+          const stock = colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
+          return (
+            <ProductCard
+              addLabel={language === "ar" ? "إضافة" : "הוספה"}
+              compact
+              key={product.id}
+              language={language}
+              product={product}
+              soldOutLabel={language === "ar" ? "نفد" : "אזל"}
+              stock={stock}
+              viewLabel={language === "ar" ? "عرض" : "צפי"}
+            />
+          );
+        })}
       </div>
     </section>
   );

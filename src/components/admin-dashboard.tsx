@@ -18,7 +18,19 @@ import {
   StoreSettings
 } from "@/lib/store";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
-import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders, isSupabaseEnabled } from "@/lib/supabase/orders";
+import {
+  deleteEntity,
+  saveSettings as saveSettingsRemote,
+  seedStoreFromInitialData,
+  upsertBanner,
+  upsertBrand,
+  upsertCategory,
+  upsertColor,
+  upsertDeliveryZone,
+  upsertProduct,
+} from "@/lib/supabase/admin";
+import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
+import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { getSupabaseConfigStatus } from "@/lib/supabase/client";
 
 type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings";
@@ -70,6 +82,7 @@ export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
   const [data, setData] = useState<StoreData>(initialStoreData);
   const [loaded, setLoaded] = useState(false);
+  const [syncMessage, setSyncMessage] = useState("");
   
   const [productDraft, setProductDraft] = useState<Product>(() => blankProduct(data.categories[0]?.id, data.brands[0]?.id));
   const [categoryDraft, setCategoryDraft] = useState<Category>(() => blankCategory());
@@ -84,7 +97,16 @@ export function AdminDashboard() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [supabaseAvailable, setSupabaseAvailable] = useState(false);
 
-  // Sync state with local storage updates
+  async function refreshData() {
+    const fresh = await fetchStoreDataWithOrders();
+    setData(fresh);
+    setSettingsDraft(fresh.settings);
+    setSupabaseOrders(fresh.orders);
+    saveStoreData(fresh, { notify: false });
+    return fresh;
+  }
+
+  // Sync state with remote store data (fallbacks still come from local cache)
   useEffect(() => {
     setData(loadStoreData());
     setLoaded(true);
@@ -92,15 +114,9 @@ export function AdminDashboard() {
       setData(fresh);
       setSettingsDraft(fresh.settings);
     });
+    void refreshData();
     return () => unsub();
   }, []);
-
-  // Save changes locally and notify subscribers
-  useEffect(() => {
-    if (loaded) {
-      saveStoreData(data, { notify: false });
-    }
-  }, [data, loaded]);
 
   // Check if Supabase is configured
   useEffect(() => {
@@ -143,110 +159,90 @@ export function AdminDashboard() {
     return { totalSales, lowStock, outOfStock };
   }, [data]);
 
-  function saveProduct(event: FormEvent<HTMLFormElement>) {
+  async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => {
-      const exists = current.products.some((product) => product.id === productDraft.id);
-      return {
-        ...current,
-        products: exists
-          ? current.products.map((product) => (product.id === productDraft.id ? productDraft : product))
-          : [{ ...productDraft, id: uid("prod"), createdAt: new Date().toISOString().slice(0, 10) }, ...current.products]
-      };
-    });
+    const nextProduct = productDraft.id
+      ? productDraft
+      : { ...productDraft, id: uid("prod"), createdAt: new Date().toISOString().slice(0, 10) };
+    await upsertProduct(nextProduct);
+    await refreshData();
     setProductDraft(blankProduct(data.categories[0]?.id, data.brands[0]?.id));
+    setSyncMessage("تم حفظ المنتج في Supabase.");
   }
 
-  function saveCategory(event: FormEvent<HTMLFormElement>) {
+  async function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => upsert(current, "categories", categoryDraft, blankCategory));
+    const nextCategory = categoryDraft.id ? categoryDraft : { ...categoryDraft, id: uid("cat") };
+    await upsertCategory(nextCategory);
+    await refreshData();
     setCategoryDraft(blankCategory());
+    setSyncMessage("تم حفظ التصنيف في Supabase.");
   }
 
-  function saveBrand(event: FormEvent<HTMLFormElement>) {
+  async function saveBrand(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => upsert(current, "brands", brandDraft, blankBrand));
+    const nextBrand = brandDraft.id ? brandDraft : { ...brandDraft, id: uid("brand") };
+    await upsertBrand(nextBrand);
+    await refreshData();
     setBrandDraft(blankBrand());
+    setSyncMessage("تم حفظ البراند في Supabase.");
   }
 
-  function saveColor(event: FormEvent<HTMLFormElement>) {
+  async function saveColor(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => upsert(current, "colors", colorDraft, () => blankColor(current.products[0]?.id ?? "")));
+    const nextColor = colorDraft.id ? colorDraft : { ...colorDraft, id: uid("color") };
+    await upsertColor(nextColor);
+    await refreshData();
     setColorDraft(blankColor(data.products[0]?.id ?? ""));
+    setSyncMessage("تم حفظ اللون والمخزون في Supabase.");
   }
 
-  function saveZone(event: FormEvent<HTMLFormElement>) {
+  async function saveZone(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => upsert(current, "deliveryZones", zoneDraft, blankZone));
+    const nextZone = zoneDraft.id ? zoneDraft : { ...zoneDraft, id: uid("zone") };
+    await upsertDeliveryZone(nextZone);
+    await refreshData();
     setZoneDraft(blankZone());
+    setSyncMessage("تم حفظ منطقة التوصيل في Supabase.");
   }
 
-  function saveBanner(event: FormEvent<HTMLFormElement>) {
+  async function saveBanner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => upsert(current, "banners", bannerDraft, blankBanner));
+    const nextBanner = bannerDraft.id ? bannerDraft : { ...bannerDraft, id: uid("banner") };
+    await upsertBanner(nextBanner);
+    await refreshData();
     setBannerDraft(blankBanner());
+    setSyncMessage("تم حفظ البانر في Supabase.");
   }
 
-  function saveSettings(event: FormEvent<HTMLFormElement>) {
+  async function saveSettings(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setData((current) => ({ ...current, settings: settingsDraft }));
+    await saveSettingsRemote(settingsDraft);
+    await refreshData();
+    setSyncMessage("تم حفظ إعدادات المتجر في Supabase.");
   }
 
-  function deleteById(key: keyof Pick<StoreData, "products" | "categories" | "brands" | "colors" | "deliveryZones" | "banners" | "orders">, id: string) {
-    setData((current) => ({
-      ...current,
-      [key]: current[key].filter((item: any) => item.id !== id)
-    }));
+  async function deleteById(
+    key: keyof Pick<StoreData, "products" | "categories" | "brands" | "colors" | "deliveryZones" | "banners" | "orders">,
+    id: string
+  ) {
+    const tableMap = {
+      products: "products",
+      categories: "categories",
+      brands: "brands",
+      colors: "product_colors",
+      deliveryZones: "delivery_zones",
+      banners: "banners",
+      orders: "orders",
+    } as const;
+
+    await deleteEntity(tableMap[key], id);
+    await refreshData();
+    setSyncMessage("تم حذف السجل من Supabase.");
   }
 
-  // Automatic Stock Deduction logic when orders are Confirmed
-  function updateOrderStatus(orderId: string, status: OrderStatus) {
-    setData((current) => {
-      const orderIndex = current.orders.findIndex((o) => o.id === orderId);
-      if (orderIndex === -1) return current;
-
-      const order = current.orders[orderIndex];
-      let updatedColors = [...current.colors];
-      let stockDeducted = order.stockDeducted;
-
-      // 1. Deduct stock if status changes to Confirmed and stock was NOT deducted yet
-      if (status === "Confirmed" && !order.stockDeducted) {
-        updatedColors = current.colors.map((color) => {
-          const orderedItem = order.items.find((item) => item.colorId === color.id);
-          if (orderedItem) {
-            return {
-              ...color,
-              stockQuantity: Math.max(0, color.stockQuantity - orderedItem.quantity)
-            };
-          }
-          return color;
-        });
-        stockDeducted = true;
-      }
-      // 2. Restore stock if status changes FROM Confirmed to Cancelled/Pending/etc. and stock was deducted
-      else if (status !== "Confirmed" && order.stockDeducted) {
-        updatedColors = current.colors.map((color) => {
-          const orderedItem = order.items.find((item) => item.colorId === color.id);
-          if (orderedItem) {
-            return {
-              ...color,
-              stockQuantity: color.stockQuantity + orderedItem.quantity
-            };
-          }
-          return color;
-        });
-        stockDeducted = false;
-      }
-
-      const updatedOrder = { ...order, status, stockDeducted };
-      const updatedOrders = current.orders.map((o) => (o.id === orderId ? updatedOrder : o));
-
-      return {
-        ...current,
-        orders: updatedOrders,
-        colors: updatedColors
-      };
-    });
+  async function updateOrderStatus(orderId: string, status: OrderStatus) {
+    await handleSupabaseOrderStatusChange(orderId, status);
   }
 
   // Supabase version of status update (used in the dedicated Orders tab)
@@ -299,15 +295,19 @@ export function AdminDashboard() {
     // 2. Persist to Supabase
     await updateOrderStatusSupabase(orderId, status, newStockDeducted);
 
-    // 3. Refresh the remote list
+    // 3. Refresh canonical DB-backed data
     const refreshed = await fetchOrders();
     setSupabaseOrders(refreshed);
+    await refreshData();
+    setSyncMessage("تم تحديث حالة الطلب والمخزون في Supabase.");
   }
 
-  function resetDemoData() {
-    setData(initialStoreData);
+  async function resetDemoData() {
+    await seedStoreFromInitialData(initialStoreData);
+    await refreshData();
     setSettingsDraft(initialStoreData.settings);
     setColorDraft(blankColor(initialStoreData.products[0]?.id ?? ""));
+    setSyncMessage("تمت مزامنة بيانات المتجر الحالية إلى Supabase.");
   }
 
   return (
@@ -339,9 +339,15 @@ export function AdminDashboard() {
             <h1>{tabs.find((tab) => tab.id === activeTab)?.label}</h1>
           </div>
           <button className="danger-button" onClick={resetDemoData}>
-            إعادة بيانات التجربة
+            مزامنة البيانات الابتدائية
           </button>
         </header>
+
+        {syncMessage ? (
+          <div className="admin-panel" style={{ marginBottom: "18px", padding: "14px 18px", color: "#2ed573" }}>
+            {syncMessage}
+          </div>
+        ) : null}
 
         {activeTab === "overview" ? (
           <>

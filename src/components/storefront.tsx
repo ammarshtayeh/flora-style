@@ -1,16 +1,14 @@
 "use client";
 
 import { motion, useScroll, useTransform, type Variants } from "framer-motion";
-import gsap from "gsap";
-import Lenis from "lenis";
-import { Eye, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
+import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
-import { formatPrice, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
+import { initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
 
 const copy = {
   ar: {
@@ -155,7 +153,7 @@ export function Storefront() {
   const [language, setLanguage] = useState<Language>("ar");
   const heroRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 140]);
+  const heroY = useTransform(scrollYProgress, [0, 1], [0, 90]);
   const labels = copy[language];
 
   useEffect(() => {
@@ -171,33 +169,6 @@ export function Storefront() {
     return () => window.removeEventListener("flora-language-changed", handleLangChange);
   }, []);
 
-  useEffect(() => {
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (isMobile) return;
-
-    const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
-    let frame = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      frame = requestAnimationFrame(raf);
-    };
-    frame = requestAnimationFrame(raf);
-    return () => {
-      cancelAnimationFrame(frame);
-      lenis.destroy();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!heroRef.current) return;
-    const media = heroRef.current.querySelector(".luxury-hero__image");
-    if (!media) return;
-    const tween = gsap.to(media, { scale: 1.08, yPercent: 8, ease: "none" });
-    return () => {
-      tween.kill();
-    };
-  }, []);
-
   const activeProducts = useMemo(() => storeData.products.filter((product) => product.active), [storeData.products]);
   const bestSellers = useMemo(() => {
     const items = activeProducts.filter((product) => product.bestSeller);
@@ -205,9 +176,9 @@ export function Storefront() {
   }, [activeProducts]);
   const newArrivals = useMemo(() => [...activeProducts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4), [activeProducts]);
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
-  const discountedProducts = useMemo(() => activeProducts.filter((product) => typeof product.salePrice === "number").slice(0, 4), [activeProducts]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
+  const featuredCategories = activeCategories.slice(0, 4);
 
   const productsPerCategory = useMemo(() => {
     return activeProducts.reduce<Record<string, number>>((acc, product) => {
@@ -226,12 +197,12 @@ export function Storefront() {
   return (
     <>
       <Header />
-      <main className="luxury-shell" dir="rtl">
-        <section className="luxury-hero" ref={heroRef}>
-          <motion.div className="luxury-hero__media" style={{ y: heroY }}>
+      <main className="luxury-shell flora-home" dir="rtl">
+        <section className="luxury-hero flora-home__hero" ref={heroRef}>
+          <motion.div className="luxury-hero__media flora-home__hero-media" style={{ y: heroY }}>
             {banner ? <Image className="luxury-hero__image" src={banner.imageUrl} alt="Flora Style editorial" fill priority sizes="100vw" /> : null}
           </motion.div>
-          <motion.div className="luxury-hero__content" initial="hidden" animate="show" variants={reveal}>
+          <motion.div className="luxury-hero__content flora-home__hero-content" initial="hidden" animate="show" variants={reveal}>
             <p className="luxury-kicker">{labels.heroEyebrow}</p>
             <h1>{banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}</h1>
             <p>{banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}</p>
@@ -257,35 +228,16 @@ export function Storefront() {
           </div>
         </section>
 
-        <section className="home-category-scroll" aria-label={labels.collections}>
-          {activeCategories.map((category) => (
-            <Link className="home-category-scroll__item" href={`/shop?category=${category.id}`} key={category.id}>
-              <div className="home-category-scroll__media">
-                <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="80px" />
-              </div>
-              <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
-            </Link>
-          ))}
-        </section>
-
         <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
-          <div className="category-directory__intro">
-            <p>{labels.collectionsLead}</p>
-            <Link href="/shop">{labels.shop}</Link>
-          </div>
-          <div className="category-directory__grid">
-            {activeCategories.map((category) => (
-              <Link className="category-directory__card" href={`/shop?category=${category.id}`} key={category.id}>
-                <div className="category-directory__media">
+          <div className="flora-category-grid">
+            {featuredCategories.map((category) => (
+              <Link className="flora-category-card" href={`/shop?category=${category.id}`} key={category.id}>
+                <div className="flora-category-card__image">
                   <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 100vw, 25vw" />
                 </div>
-                <div className="category-directory__content">
-                  <strong>{textByLanguage(language, category.nameAr, category.nameHe)}</strong>
-                  <p>{textByLanguage(language, category.descriptionAr, category.descriptionHe)}</p>
-                  <div>
-                    <span>{productsPerCategory[category.id] ?? 0}</span>
-                    <small>{labels.categoryCta}</small>
-                  </div>
+                <div className="flora-category-card__body">
+                  <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
+                  <strong>{productsPerCategory[category.id] ?? 0}</strong>
                 </div>
               </Link>
             ))}
@@ -293,44 +245,47 @@ export function Storefront() {
         </AnimatedSection>
 
         <AnimatedSection id="best-sellers" eyebrow="02" title={labels.bestSellers}>
-          <ProductRail
-            products={bestSellers}
-            language={language}
-            onAdd={handleAddToCart}
-            viewLabel={labels.view}
-            addLabel={labels.add}
-            colorsList={storeData.colors}
-            soldOutLabel={labels.soldOut}
-          />
+          <div className="luxury-product-grid product-rail--scroll">
+            {bestSellers.map((product) => {
+              const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
+              return (
+                <ProductCard
+                  addLabel={labels.add}
+                  key={product.id}
+                  language={language}
+                  onAdd={handleAddToCart}
+                  product={product}
+                  showDescription
+                  soldOutLabel={labels.soldOut}
+                  stock={stock}
+                  viewLabel={labels.view}
+                />
+              );
+            })}
+          </div>
         </AnimatedSection>
 
         <AnimatedSection id="new-arrivals" eyebrow="03" title={labels.newArrivals}>
-          <ProductRail
-            products={newArrivals}
-            language={language}
-            onAdd={handleAddToCart}
-            viewLabel={labels.view}
-            addLabel={labels.add}
-            colorsList={storeData.colors}
-            soldOutLabel={labels.soldOut}
-          />
+          <div className="luxury-product-grid product-rail--scroll">
+            {newArrivals.map((product) => {
+              const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
+              return (
+                <ProductCard
+                  addLabel={labels.add}
+                  key={product.id}
+                  language={language}
+                  onAdd={handleAddToCart}
+                  product={product}
+                  soldOutLabel={labels.soldOut}
+                  stock={stock}
+                  viewLabel={labels.view}
+                />
+              );
+            })}
+          </div>
         </AnimatedSection>
 
-        {discountedProducts.length ? (
-          <AnimatedSection id="discounted" eyebrow="04" title={labels.discounted}>
-            <ProductRail
-              products={discountedProducts}
-              language={language}
-              onAdd={handleAddToCart}
-              viewLabel={labels.view}
-              addLabel={labels.add}
-              colorsList={storeData.colors}
-              soldOutLabel={labels.soldOut}
-            />
-          </AnimatedSection>
-        ) : null}
-
-        <AnimatedSection id="brands" eyebrow="05" title={labels.brands}>
+        <AnimatedSection id="brands" eyebrow="04" title={labels.brands}>
           <div className="brand-wall__lead">
             <p>{labels.brandsLead}</p>
             <Link href="/shop">{labels.shop}</Link>
@@ -344,7 +299,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="reviews" eyebrow="06" title={labels.reviews}>
+        <AnimatedSection id="reviews" eyebrow="05" title={labels.reviews}>
           <div className="review-grid">
             {labels.reviewItems.map((quote, index) => (
               <blockquote key={quote}>
@@ -355,7 +310,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <section className="brand-story" id="story">
+        <section className="brand-story flora-home__story" id="story">
           <motion.div initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.3 }} variants={reveal}>
             <p className="luxury-kicker">Brand Story</p>
             <h2>{labels.storyTitle}</h2>
@@ -464,61 +419,5 @@ function AnimatedSection({ id, eyebrow, title, children }: { id?: string; eyebro
       </div>
       {children}
     </motion.section>
-  );
-}
-
-function ProductRail({
-  products,
-  language,
-  onAdd,
-  viewLabel,
-  addLabel,
-  colorsList,
-  soldOutLabel,
-  className = ""
-}: {
-  products: Product[];
-  language: Language;
-  onAdd: (product: Product) => void;
-  viewLabel: string;
-  addLabel: string;
-  colorsList: Array<{ productId: string; stockQuantity: number }>;
-  soldOutLabel: string;
-  className?: string;
-}) {
-  return (
-    <div className={`luxury-product-grid ${className}`.trim()}>
-      {products.map((product) => {
-        const colors = colorsList.filter((color) => color.productId === product.id);
-        const stock = colors.reduce((sum, color) => sum + color.stockQuantity, 0);
-        return (
-          <motion.article className="luxury-product" key={product.id} whileHover={{ y: -8 }} transition={{ duration: 0.45 }}>
-            <Link className="luxury-product__image" href={`/products/${product.slug}`}>
-              <Image className="primary" src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 900px) 100vw, 33vw" />
-              <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 100vw, 33vw" />
-            </Link>
-            <div className="luxury-product__meta">
-              <Link href={`/products/${product.slug}`}>
-                <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
-              </Link>
-              <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p>
-              <div className="luxury-product__bottom">
-                <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-              </div>
-            </div>
-            <div className="floating-actions">
-              <Link href={`/products/${product.slug}`}>
-                <Eye size={15} />
-                {viewLabel}
-              </Link>
-              <button onClick={() => onAdd(product)} disabled={stock <= 0}>
-                <ShoppingBag size={15} />
-                {addLabel}
-              </button>
-            </div>
-          </motion.article>
-        );
-      })}
-    </div>
   );
 }

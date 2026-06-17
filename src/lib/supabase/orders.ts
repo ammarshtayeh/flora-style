@@ -160,10 +160,10 @@ export async function updateOrderStatus(
   }
 
   try {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status, stock_deducted: stockDeducted })
-      .eq("id", orderId);
+    const { error } = await supabase.rpc("set_order_status", {
+      p_order_id: orderId,
+      p_status: status,
+    });
 
     if (error) throw error;
     return { success: true };
@@ -200,4 +200,32 @@ export function subscribeToOrders(callback: (orders: Order[]) => void) {
   return () => {
     supabase?.removeChannel(channel);
   };
+}
+
+export async function fetchOrderById(orderId: string): Promise<Order | null> {
+  if (!isSupabaseEnabled() || !supabase) {
+    return null;
+  }
+
+  try {
+    const { data: orderRow, error: orderErr } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .maybeSingle();
+
+    if (orderErr || !orderRow) return null;
+
+    const { data: itemsRows, error: itemsErr } = await supabase
+      .from("order_items")
+      .select("*")
+      .eq("order_id", orderId);
+
+    if (itemsErr) return null;
+
+    return mapOrderRow(orderRow as SupabaseOrderRow, (itemsRows ?? []) as SupabaseOrderItemRow[]);
+  } catch (error) {
+    console.error("[Supabase] fetchOrderById failed", error);
+    return null;
+  }
 }

@@ -1,15 +1,16 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { Eye, RotateCcw, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
+import { RotateCcw, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
+import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
-import { formatPrice, initialStoreData, Language, Product, textByLanguage } from "@/lib/store";
+import { initialStoreData, Language, Product, textByLanguage } from "@/lib/store";
 
 const shopCopy = {
   ar: {
@@ -238,7 +239,7 @@ function ShopContent() {
   return (
     <>
       <Header />
-      <main className="shop-page" dir="rtl">
+      <main className="shop-page flora-shop-page" dir="rtl">
         <section className="shop-hero">
           <p className="luxury-kicker">{labels.eyebrow}</p>
           <h1>{pageTitle}</h1>
@@ -258,7 +259,7 @@ function ShopContent() {
         </section>
 
         {!selectedCategoryId ? (
-          <section className="shop-category-strip">
+          <section className="shop-category-strip flora-shop-categories">
             <div className="shop-category-strip__head">
               <div>
                 <span>{labels.pickCategory}</span>
@@ -291,7 +292,7 @@ function ShopContent() {
         )}
 
         {visibleBrands.length ? (
-          <section className="brand-filter-bar">
+          <section className="brand-filter-bar flora-brand-filter-bar">
             <button className={!selectedBrands.length ? "is-active" : ""} onClick={resetBrands} type="button">
               {labels.allBrands}
             </button>
@@ -302,7 +303,8 @@ function ShopContent() {
                 onClick={() => toggleBrand(brand.id)}
                 type="button"
               >
-                {textByLanguage(language, brand.nameAr, brand.nameHe)}
+                {brand.logoUrl ? <Image src={brand.logoUrl} alt={textByLanguage(language, brand.nameAr, brand.nameHe)} width={82} height={28} /> : null}
+                <span>{textByLanguage(language, brand.nameAr, brand.nameHe)}</span>
                 <small>{brandCounts[brand.id] ?? 0}</small>
               </button>
             ))}
@@ -367,31 +369,16 @@ function ShopContent() {
                     .reduce((sum, color) => sum + color.stockQuantity, 0);
 
                   return (
-                    <article className="luxury-product" key={product.id}>
-                      <Link className="luxury-product__image" href={`/products/${product.slug}`}>
-                        <Image className="primary" src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 900px) 50vw, 25vw" />
-                        <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 50vw, 25vw" />
-                      </Link>
-                      <div className="luxury-product__meta">
-                        <Link href={`/products/${product.slug}`}>
-                          <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
-                        </Link>
-                        <div className="luxury-product__bottom">
-                          <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-                          <span>{stock > 0 ? labels.available : labels.soldOut}</span>
-                        </div>
-                      </div>
-                      <div className="floating-actions">
-                        <Link href={`/products/${product.slug}`}>
-                          <Eye size={15} />
-                          {labels.view}
-                        </Link>
-                        <button disabled={stock <= 0} onClick={() => handleAddToCart(product)}>
-                          <ShoppingBag size={15} />
-                          {labels.add}
-                        </button>
-                      </div>
-                    </article>
+                    <ProductCard
+                      addLabel={labels.add}
+                      key={product.id}
+                      language={language}
+                      onAdd={handleAddToCart}
+                      product={product}
+                      soldOutLabel={labels.soldOut}
+                      stock={stock}
+                      viewLabel={labels.view}
+                    />
                   );
                 })}
               </div>

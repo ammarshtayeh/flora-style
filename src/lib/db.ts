@@ -1,4 +1,6 @@
 import { initialStoreData, StoreData } from "./store";
+import { fetchStoreData } from "./supabase/catalog";
+import { isSupabaseEnabled } from "./supabase/client";
 
 const storageKey = "flora-style-admin-data-v2";
 
@@ -34,6 +36,22 @@ export function loadStoreData(): StoreData {
   }
 }
 
+export async function refreshStoreDataFromSupabase(): Promise<StoreData> {
+  if (typeof window === "undefined" || !isSupabaseEnabled()) {
+    return loadStoreData();
+  }
+
+  try {
+    const fresh = normalizeStoreData(await fetchStoreData());
+    window.localStorage.setItem(storageKey, JSON.stringify(fresh));
+    window.dispatchEvent(new CustomEvent("flora-data-updated", { detail: fresh }));
+    return fresh;
+  } catch (error) {
+    console.error("[StoreData] refresh from Supabase failed", error);
+    return loadStoreData();
+  }
+}
+
 export function saveStoreData(data: StoreData, options?: { notify?: boolean }): void {
   if (typeof window === "undefined") return;
   const nextData = normalizeStoreData(data);
@@ -63,6 +81,10 @@ export function subscribeToStoreData(callback: (data: StoreData) => void) {
 
   window.addEventListener("flora-data-updated", handleUpdate);
   window.addEventListener("storage", handleStorage);
+
+  if (isSupabaseEnabled()) {
+    void refreshStoreDataFromSupabase().then((fresh) => callback(fresh));
+  }
 
   return () => {
     window.removeEventListener("flora-data-updated", handleUpdate);

@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
-import { formatPrice, initialStoreData, Language, Order, textByLanguage } from "@/lib/store";
+import { formatPrice, initialStoreData, Language, textByLanguage } from "@/lib/store";
 import { loadStoreData } from "@/lib/db";
-import { fetchOrders } from "@/lib/supabase/orders";
+import { fetchOrderById } from "@/lib/supabase/orders";
 
 const successCopy = {
   ar: {
@@ -66,23 +66,21 @@ function OrderSuccessContent() {
     return () => window.removeEventListener("flora-language-changed", handleLangChange);
   }, []);
 
-  // Reload storeData to get the latest saved order
-  // Also try to fetch from Supabase as a fallback (in case viewed from another device)
+  // Reload storeData to get the latest saved order.
+  // If it's not in local cache, try to fetch the exact order from Supabase.
   useEffect(() => {
     setStoreData(loadStoreData());
 
     async function tryFetchFromSupabase() {
       try {
-        const remote = await fetchOrders();
-        if (remote.length) {
-          // Merge remote orders into the local view just for this success page
-          setStoreData((prev) => {
-            const merged = [...prev.orders];
-            remote.forEach((ro) => {
-              if (!merged.some((lo) => lo.id === ro.id)) merged.push(ro);
-            });
-            return { ...prev, orders: merged };
-          });
+        const remoteOrder = await fetchOrderById(orderId);
+        if (remoteOrder) {
+          setStoreData((prev) => ({
+            ...prev,
+            orders: prev.orders.some((entry) => entry.id === remoteOrder.id)
+              ? prev.orders
+              : [remoteOrder, ...prev.orders],
+          }));
         }
       } catch {
         /* ignore */

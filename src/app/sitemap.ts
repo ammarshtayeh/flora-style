@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 import { initialStoreData } from "@/lib/store";
+import { fetchProductSlugs } from "@/lib/supabase/catalog";
+import { createStaticSupabaseClient } from "@/lib/supabase/public";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = "https://flora-style.vercel.app";
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
@@ -9,10 +11,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/checkout`, changeFrequency: "monthly", priority: 0.5 }
   ];
 
-  const productRoutes: MetadataRoute.Sitemap = initialStoreData.products
-    .filter((product) => product.active)
-    .map((product) => ({
-      url: `${baseUrl}/products/${product.slug}`,
+  const supabase = createStaticSupabaseClient();
+  const slugs = await fetchProductSlugs(supabase);
+  const finalSlugs = slugs.length ? slugs : initialStoreData.products.filter((product) => product.active).map((product) => product.slug);
+
+  const productRoutes: MetadataRoute.Sitemap = finalSlugs.map((slug) => ({
+      url: `${baseUrl}/products/${slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.8
     }));

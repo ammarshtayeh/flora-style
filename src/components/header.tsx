@@ -2,9 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft,
   CheckCircle2,
-  ChevronLeft,
   Globe2,
   LayoutDashboard,
   Menu,
@@ -15,13 +13,21 @@ import {
   ShoppingBag,
   SunMedium,
   Trash2,
-  X
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
-import { CartItem, changeCartColor, clearCart, getCart, removeFromCart, subscribeToCart, updateCartQty } from "@/lib/cart";
+import {
+  CartItem,
+  changeCartColor,
+  clearCart,
+  getCart,
+  removeFromCart,
+  subscribeToCart,
+  updateCartQty,
+} from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, textByLanguage } from "@/lib/store";
 
@@ -163,8 +169,7 @@ function HeaderInner() {
   const subtotal = cartDetails.reduce((sum, item) => sum + (item?.total ?? 0), 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
-  const bagsCategory = useMemo(() => activeCategories.find((category) => category.slug === "handbags"), [activeCategories]);
-  const watchesCategory = useMemo(() => activeCategories.find((category) => category.slug === "watches"), [activeCategories]);
+  const activeCategoryId = searchParams?.get("category") || "";
 
   function handleLanguageSwitch() {
     const nextLang = language === "ar" ? "he" : "ar";
@@ -190,91 +195,65 @@ function HeaderInner() {
 
   return (
     <>
-      <header className="luxury-command">
-        <div className="luxury-command__top">
-          <Link className="luxury-brand" href="/" aria-label="Flora Style home">
-            <Image src="/flora-logo.png" alt="Flora Style" width={46} height={46} priority />
-            <span>Flora Style</span>
+      <header className="flora-header">
+        <div className="flora-header__top">
+          <button
+            aria-expanded={menuOpen}
+            aria-label={labels.filters}
+            className="flora-header__menu"
+            onClick={() => setMenuOpen(true)}
+            type="button"
+          >
+            <Menu size={18} />
+          </button>
+
+          <Link className="flora-header__brand" href="/" aria-label="Flora Style home">
+            <Image src="/flora-logo.png" alt="Flora Style" width={44} height={44} priority />
+            <div>
+              <strong>Flora Style</strong>
+              <span>Luxury Curated Store</span>
+            </div>
           </Link>
 
-          <form className="luxury-search" onSubmit={handleSearchSubmit} role="search">
+          <form className="flora-header__search" onSubmit={handleSearchSubmit} role="search">
             <Search aria-hidden="true" size={18} />
             <input
               aria-label={labels.search}
+              onChange={(event) => setSearchQuery(event.target.value)}
               placeholder={labels.searchPlaceholder}
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
             />
             <button type="submit">{labels.search}</button>
           </form>
 
-          <div className="luxury-command__actions">
-            <button
-              className="luxury-icon-action luxury-icon-action--mobile-only"
-              onClick={() => setMenuOpen(true)}
-              aria-label={labels.filters}
-              aria-expanded={menuOpen}
-            >
-              <Menu size={18} />
-            </button>
-            <button className="luxury-icon-action luxury-icon-action--desktop-only" onClick={handleLanguageSwitch} aria-label={labels.language}>
-              <Globe2 size={18} />
+          <div className="flora-header__actions">
+            <button className="flora-header__action desktop-only" onClick={handleLanguageSwitch} type="button">
+              <Globe2 size={16} />
               <span>{language === "ar" ? "עברית" : "العربية"}</span>
             </button>
-            <button className="luxury-icon-action luxury-icon-action--desktop-only" onClick={handleThemeSwitch} aria-label={labels.theme}>
-              {theme === "dark" ? <SunMedium size={18} /> : <Moon size={18} />}
+            <button className="flora-header__action desktop-only" onClick={handleThemeSwitch} type="button">
+              {theme === "dark" ? <SunMedium size={16} /> : <Moon size={16} />}
               <span>{theme === "dark" ? labels.light : labels.dark}</span>
             </button>
-            <button className="luxury-cart-trigger" onClick={() => setCartOpen(true)} aria-label={labels.cart}>
-              <ShoppingBag size={19} />
+            <Link className="flora-header__action desktop-only" href="/admin">
+              <LayoutDashboard size={16} />
+              <span>{labels.admin}</span>
+            </Link>
+            <button className="flora-header__cart" onClick={() => setCartOpen(true)} type="button">
+              <ShoppingBag size={18} />
               <span>{labels.cart}</span>
               <b>{cartItemsCount}</b>
             </button>
-            <Link className="luxury-icon-link luxury-icon-link--admin luxury-icon-action--desktop-only" href="/admin" aria-label={labels.admin}>
-              <LayoutDashboard size={18} />
-              <span>{labels.admin}</span>
-            </Link>
           </div>
         </div>
 
-        <nav className="luxury-category-ribbon" aria-label={labels.filters}>
-          <span>{labels.filters}</span>
-          <div className="luxury-category-ribbon__links">
-            <Link className={searchParams?.get("category") ? "" : "is-active"} href="/shop">
-              {labels.menuShop}
-            </Link>
-            {bagsCategory ? (
-              <Link className={searchParams?.get("category") === bagsCategory.id ? "is-active" : ""} href={`/shop?category=${bagsCategory.id}`}>
-                {labels.menuBags}
-              </Link>
-            ) : null}
-            {watchesCategory ? (
-              <Link className={searchParams?.get("category") === watchesCategory.id ? "is-active" : ""} href={`/shop?category=${watchesCategory.id}`}>
-                {labels.menuWatches}
-              </Link>
-            ) : null}
-            <Link className={!searchParams?.get("category") ? "is-active" : ""} href="/shop">
-              {labels.all}
-            </Link>
-            {activeCategories.map((category) => (
-              <Link
-                className={searchParams?.get("category") === category.id ? "is-active" : ""}
-                href={`/shop?category=${category.id}`}
-                key={category.id}
-              >
-                {textByLanguage(language, category.nameAr, category.nameHe)}
-              </Link>
-            ))}
-          </div>
-        </nav>
-
-        <div className="luxury-mobile-categories" aria-label={labels.filters}>
-          <Link className={!searchParams?.get("category") ? "is-active" : ""} href="/shop">
+        <div className="flora-header__nav">
+          <Link className={!activeCategoryId ? "is-active" : ""} href="/shop">
             {labels.all}
           </Link>
           {activeCategories.map((category) => (
             <Link
-              className={searchParams?.get("category") === category.id ? "is-active" : ""}
+              className={activeCategoryId === category.id ? "is-active" : ""}
               href={`/shop?category=${category.id}`}
               key={category.id}
             >
@@ -282,11 +261,9 @@ function HeaderInner() {
             </Link>
           ))}
         </div>
-
-
       </header>
 
-      <div className="luxury-command-spacer" />
+      <div className="flora-header-spacer" />
 
       <AnimatePresence>
         {menuOpen ? (
@@ -316,39 +293,18 @@ function HeaderInner() {
               </div>
 
               <Link className="mobile-menu-home" href="/" onClick={() => setMenuOpen(false)}>
-                <ArrowLeft size={18} />
                 {labels.menuHome}
               </Link>
 
               <div className="mobile-menu-section">
                 <span>{labels.filters}</span>
                 <nav className="mobile-menu-links" aria-label={labels.filters}>
-                  {bagsCategory ? (
-                    <Link href={`/shop?category=${bagsCategory.id}`} onClick={() => setMenuOpen(false)}>
-                      <span>{labels.menuBags}</span>
-                      <ChevronLeft size={18} />
-                    </Link>
-                  ) : null}
-                  {watchesCategory ? (
-                    <Link href={`/shop?category=${watchesCategory.id}`} onClick={() => setMenuOpen(false)}>
-                      <span>{labels.menuWatches}</span>
-                      <ChevronLeft size={18} />
-                    </Link>
-                  ) : null}
-                </nav>
-              </div>
-
-              <div className="mobile-menu-section">
-                <span>{labels.menuShop}</span>
-                <nav className="mobile-menu-links" aria-label={labels.filters}>
                   <Link href="/shop" onClick={() => setMenuOpen(false)}>
                     <span>{labels.browseAll}</span>
-                    <ChevronLeft size={18} />
                   </Link>
                   {activeCategories.map((category) => (
                     <Link href={`/shop?category=${category.id}`} key={category.id} onClick={() => setMenuOpen(false)}>
                       <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
-                      <ChevronLeft size={18} />
                     </Link>
                   ))}
                 </nav>
@@ -493,7 +449,7 @@ function HeaderInner() {
 
 export function Header() {
   return (
-    <Suspense fallback={<div className="luxury-command-spacer" />}>
+    <Suspense fallback={<div className="flora-header-spacer" />}>
       <HeaderInner />
     </Suspense>
   );
