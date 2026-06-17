@@ -29,6 +29,7 @@ export function ProductCard({
   showDescription = false,
   compact = false,
 }: ProductCardProps) {
+  const isSoldOut = stock <= 0;
   const body = (
     <>
       <Link className={`luxury-product__image ${compact ? "luxury-product__image--compact" : ""}`.trim()} href={`/products/${product.slug}`}>
@@ -54,7 +55,7 @@ export function ProductCard({
         {showDescription ? <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p> : null}
         <div className="luxury-product__bottom">
           <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-          <span>{stock > 0 ? "" : soldOutLabel}</span>
+          {isSoldOut ? <span>{soldOutLabel}</span> : null}
         </div>
       </div>
       <div className="floating-actions">
