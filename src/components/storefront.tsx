@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import gsap from "gsap";
 import Lenis from "lenis";
-import { Eye, ShoppingBag } from "lucide-react";
+import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -16,9 +16,19 @@ const copy = {
   ar: {
     shop: "تسوق المجموعة",
     browseCategories: "تصفح التصنيفات",
+    discovery: "ابدئي أسرع",
+    discoveryLead: "وجهنا مسار الصفحة الرئيسية ليقودك إلى التصنيف أو المنتج المناسب بخطوات قليلة وواضحة.",
+    discoveryCards: [
+      { title: "كل المنتجات", body: "دخول مباشر إلى المجموعة كاملة مع تصفح أسرع.", href: "/shop" },
+      { title: "التصنيفات", body: "ابدئي من الحقائب أو الساعات أو الإكسسوارات بدون تشتت.", href: "#collections" },
+      { title: "الأكثر طلباً", body: "قطع يتكرر اختيارها لأنها واضحة وناجحة في الإطلالات اليومية.", href: "#best-sellers" },
+      { title: "وصل حديثاً", body: "شاهدي أحدث الإضافات قبل أن تصبح قطعاً مطلوبة.", href: "#new-arrivals" }
+    ],
     heroEyebrow: "Luxury pieces, quietly curated",
     heroTitle: "أناقة تشبهك، بتفاصيل عالمية",
     heroBody: "Flora Style تجربة تسوق فاخرة للحقائب والإكسسوارات والساعات المختارة بعناية، مع طلب سريع وواجهة واضحة تقودك مباشرة إلى ما تبحثين عنه.",
+    editorialTitle: "مجموعات موسمية بلمسة بوتيك عالمية",
+    editorialBody: "تنسيق أقرب لتجربة luxury e-commerce: هدوء بصري، إبراز واضح للقطع الأساسية، ومسار شراء سريع.",
     collections: "التصنيفات",
     collectionsLead: "ابدئي من التصنيف المناسب أولاً حتى تكون الرحلة أوضح وأسرع.",
     featured: "مختارات مميزة",
@@ -71,9 +81,19 @@ const copy = {
   he: {
     shop: "גלי את הקולקציה",
     browseCategories: "צפי בקטגוריות",
+    discovery: "התחילו מהר",
+    discoveryLead: "סידרנו את דף הבית כך שתגיעו מהר יותר אל הקטגוריה או המוצר הנכון.",
+    discoveryCards: [
+      { title: "כל המוצרים", body: "כניסה ישירה לאוסף המלא עם גלישה מהירה יותר.", href: "/shop" },
+      { title: "קטגוריות", body: "התחילו מתיקים, שעונים או אקססוריז בלי בלבול.", href: "#collections" },
+      { title: "הכי נמכרים", body: "פריטים שנבחרים שוב ושוב כי הם ברורים ונכונים ללוק היומיומי.", href: "#best-sellers" },
+      { title: "הגיע עכשיו", body: "צפו בהוספות החדשות ביותר לפני שהן הופכות לפריטים מבוקשים.", href: "#new-arrivals" }
+    ],
     heroEyebrow: "Luxury pieces, quietly curated",
     heroTitle: "אלגנטיות שמרגישה אישית",
     heroBody: "Flora Style היא חוויית קנייה יוקרתית לתיקים, אביזרים ושעונים שנבחרו בקפידה, עם מסלול ברור שמוביל מהר למה שהלקוחה מחפשת.",
+    editorialTitle: "קולקציות עונתיות בגישת בוטיק גלובלית",
+    editorialBody: "מראה קרוב יותר לחוויית luxury e-commerce: שקט ויזואלי, הדגשה לפריטים המרכזיים, וזרימת רכישה מהירה.",
     collections: "קטגוריות",
     collectionsLead: "התחילי מהקטגוריה הנכונה כדי שהניווט יהיה ברור ומהיר יותר.",
     featured: "בחירות מודגשות",
@@ -152,6 +172,9 @@ export function Storefront() {
   }, []);
 
   useEffect(() => {
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (isMobile) return;
+
     const lenis = new Lenis({ duration: 1.15, smoothWheel: true });
     let frame = 0;
     const raf = (time: number) => {
@@ -189,6 +212,9 @@ export function Storefront() {
   const discountedProducts = useMemo(() => activeProducts.filter((product) => typeof product.salePrice === "number").slice(0, 4), [activeProducts]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
+  const bagsCategory = useMemo(() => activeCategories.find((category) => category.slug === "handbags"), [activeCategories]);
+  const watchesCategory = useMemo(() => activeCategories.find((category) => category.slug === "watches"), [activeCategories]);
+  const topBrands = useMemo(() => activeBrands.slice(0, 3), [activeBrands]);
 
   const productsPerCategory = useMemo(() => {
     return activeProducts.reduce<Record<string, number>>((acc, product) => {
@@ -230,6 +256,91 @@ export function Storefront() {
           </motion.div>
         </section>
 
+        <section className="luxury-stat-band">
+          <div>
+            <strong>{activeProducts.length}</strong>
+            <span>{labels.statProducts}</span>
+          </div>
+          <div>
+            <strong>{storeData.deliveryZones.length}</strong>
+            <span>{labels.statZones}</span>
+          </div>
+          <div>
+            <strong>{activeBrands.length}</strong>
+            <span>{labels.statBrands}</span>
+          </div>
+        </section>
+
+        <section className="luxury-editorial">
+          <div className="luxury-editorial__lead">
+            <p className="luxury-kicker">Editorial Selection</p>
+            <h2>{labels.editorialTitle}</h2>
+            <p>{labels.editorialBody}</p>
+            <div className="luxury-actions">
+              <Link href="/shop">{labels.shop}</Link>
+              {bagsCategory ? <Link href={`/shop?category=${bagsCategory.id}`}>{labels.collections}</Link> : null}
+            </div>
+          </div>
+          <div className="luxury-editorial__cards">
+            {bagsCategory ? (
+              <Link className="luxury-editorial__card" href={`/shop?category=${bagsCategory.id}`}>
+                <span>{labels.collections}</span>
+                <strong>{textByLanguage(language, bagsCategory.nameAr, bagsCategory.nameHe)}</strong>
+                <small>{productsPerCategory[bagsCategory.id] ?? 0}</small>
+              </Link>
+            ) : null}
+            {watchesCategory ? (
+              <Link className="luxury-editorial__card" href={`/shop?category=${watchesCategory.id}`}>
+                <span>{labels.collections}</span>
+                <strong>{textByLanguage(language, watchesCategory.nameAr, watchesCategory.nameHe)}</strong>
+                <small>{productsPerCategory[watchesCategory.id] ?? 0}</small>
+              </Link>
+            ) : null}
+            {topBrands.map((brand) => (
+              <Link className="luxury-editorial__card" href={`/shop?brand=${brand.id}`} key={brand.id}>
+                <span>{labels.brands}</span>
+                <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
+                <small>{productsPerBrand[brand.id] ?? 0}</small>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <section className="home-category-scroll" aria-label={labels.collections}>
+          {activeCategories.map((category) => (
+            <Link className="home-category-scroll__item" href={`/shop?category=${category.id}`} key={category.id}>
+              <div className="home-category-scroll__media">
+                <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="80px" />
+              </div>
+              <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
+            </Link>
+          ))}
+        </section>
+
+        <motion.section
+          className="luxury-entry-map"
+          id="discovery"
+          initial="hidden"
+          viewport={{ once: true, amount: 0.2 }}
+          whileInView="show"
+          variants={reveal}
+        >
+          <div className="luxury-entry-map__lead">
+            <span>{labels.discovery}</span>
+            <h2>{labels.browseCategories}</h2>
+            <p>{labels.discoveryLead}</p>
+          </div>
+          <div className="luxury-entry-map__grid">
+            {labels.discoveryCards.map((item) => (
+              <Link className="luxury-entry-card" href={item.href} key={item.href}>
+                <span>{item.title}</span>
+                <p>{item.body}</p>
+                <ArrowLeft size={16} />
+              </Link>
+            ))}
+          </div>
+        </motion.section>
+
         <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
           <div className="category-directory__intro">
             <p>{labels.collectionsLead}</p>
@@ -256,6 +367,7 @@ export function Storefront() {
 
         <AnimatedSection id="featured" eyebrow="02" title={labels.featured}>
           <ProductRail
+            className="product-rail--scroll"
             products={featuredProducts}
             language={language}
             onAdd={handleAddToCart}
@@ -312,13 +424,37 @@ export function Storefront() {
             </div>
             <div className="brand-salon__grid">
               {activeBrands.map((brand) => (
-                <div className="brand-salon__card" key={brand.id}>
+                <Link className="brand-salon__card" href={`/shop?brand=${brand.id}`} key={brand.id}>
                   <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
                   <p>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</p>
                   <span>{productsPerBrand[brand.id] ?? 0}</span>
-                </div>
+                </Link>
               ))}
             </div>
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection id="why" eyebrow="07" title={labels.why}>
+          <div className="why-grid">
+            {labels.whyItems.map((item, index) => (
+              <article className="why-item" key={item.title}>
+                <span />
+                <h3>{item.title}</h3>
+                <p>{item.body}</p>
+                <small>0{index + 1}</small>
+              </article>
+            ))}
+          </div>
+        </AnimatedSection>
+
+        <AnimatedSection id="reviews" eyebrow="08" title={labels.reviews}>
+          <div className="review-grid">
+            {labels.reviewItems.map((quote, index) => (
+              <blockquote key={quote}>
+                <p>&ldquo;{quote}&rdquo;</p>
+                <cite>Flora Style · 0{index + 1}</cite>
+              </blockquote>
+            ))}
           </div>
         </AnimatedSection>
 
@@ -441,7 +577,8 @@ function ProductRail({
   viewLabel,
   addLabel,
   colorsList,
-  soldOutLabel
+  soldOutLabel,
+  className = ""
 }: {
   products: Product[];
   language: Language;
@@ -450,9 +587,10 @@ function ProductRail({
   addLabel: string;
   colorsList: Array<{ productId: string; stockQuantity: number }>;
   soldOutLabel: string;
+  className?: string;
 }) {
   return (
-    <div className="luxury-product-grid">
+    <div className={`luxury-product-grid ${className}`.trim()}>
       {products.map((product) => {
         const colors = colorsList.filter((color) => color.productId === product.id);
         const stock = colors.reduce((sum, color) => sum + color.stockQuantity, 0);

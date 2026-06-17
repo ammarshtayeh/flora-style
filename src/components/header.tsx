@@ -2,16 +2,17 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowLeft,
   CheckCircle2,
-  ChevronDown,
+  ChevronLeft,
   Globe2,
   LayoutDashboard,
+  Menu,
   Minus,
   Moon,
   Plus,
   Search,
   ShoppingBag,
-  SlidersHorizontal,
   SunMedium,
   Trash2,
   X
@@ -44,7 +45,12 @@ const headerCopy = {
     light: "فاتح",
     dark: "داكن",
     concierge: "تسوق فاخر عبر واتساب",
-    cartHint: "راجعي القطع قبل الانتقال لإتمام الطلب."
+    cartHint: "راجعي القطع قبل الانتقال لإتمام الطلب.",
+    menuShop: "التسوق",
+    menuSettings: "الإعدادات",
+    menuHome: "الرئيسية",
+    menuBags: "الشنط",
+    menuWatches: "الساعات"
   },
   he: {
     searchPlaceholder: "חפשי תיק, שעון, צבע או מותג...",
@@ -65,7 +71,12 @@ const headerCopy = {
     light: "בהיר",
     dark: "כהה",
     concierge: "קנייה יוקרתית בוואטסאפ",
-    cartHint: "בדקי את הפריטים לפני המשך ההזמנה."
+    cartHint: "בדקי את הפריטים לפני המשך ההזמנה.",
+    menuShop: "קנייה",
+    menuSettings: "הגדרות",
+    menuHome: "בית",
+    menuBags: "תיקים",
+    menuWatches: "שעונים"
   }
 };
 
@@ -75,7 +86,7 @@ function HeaderInner() {
   const [storeData, setStoreData] = useState(initialStoreData);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [language, setLanguage] = useState<Language>("ar");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [searchQuery, setSearchQuery] = useState("");
@@ -152,6 +163,8 @@ function HeaderInner() {
   const subtotal = cartDetails.reduce((sum, item) => sum + (item?.total ?? 0), 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
+  const bagsCategory = useMemo(() => activeCategories.find((category) => category.slug === "handbags"), [activeCategories]);
+  const watchesCategory = useMemo(() => activeCategories.find((category) => category.slug === "watches"), [activeCategories]);
 
   function handleLanguageSwitch() {
     const nextLang = language === "ar" ? "he" : "ar";
@@ -198,18 +211,17 @@ function HeaderInner() {
           <div className="luxury-command__actions">
             <button
               className="luxury-icon-action luxury-icon-action--mobile-only"
-              onClick={() => setFiltersOpen((open) => !open)}
+              onClick={() => setMenuOpen(true)}
               aria-label={labels.filters}
+              aria-expanded={menuOpen}
             >
-              <SlidersHorizontal size={18} />
-              <span>{labels.filters}</span>
-              <ChevronDown className={filtersOpen ? "is-rotated" : ""} size={15} />
+              <Menu size={18} />
             </button>
-            <button className="luxury-icon-action" onClick={handleLanguageSwitch} aria-label={labels.language}>
+            <button className="luxury-icon-action luxury-icon-action--desktop-only" onClick={handleLanguageSwitch} aria-label={labels.language}>
               <Globe2 size={18} />
               <span>{language === "ar" ? "עברית" : "العربية"}</span>
             </button>
-            <button className="luxury-icon-action" onClick={handleThemeSwitch} aria-label={labels.theme}>
+            <button className="luxury-icon-action luxury-icon-action--desktop-only" onClick={handleThemeSwitch} aria-label={labels.theme}>
               {theme === "dark" ? <SunMedium size={18} /> : <Moon size={18} />}
               <span>{theme === "dark" ? labels.light : labels.dark}</span>
             </button>
@@ -218,20 +230,33 @@ function HeaderInner() {
               <span>{labels.cart}</span>
               <b>{cartItemsCount}</b>
             </button>
-            <Link className="luxury-icon-link luxury-icon-link--admin" href="/admin" aria-label={labels.admin}>
+            <Link className="luxury-icon-link luxury-icon-link--admin luxury-icon-action--desktop-only" href="/admin" aria-label={labels.admin}>
               <LayoutDashboard size={18} />
               <span>{labels.admin}</span>
             </Link>
           </div>
         </div>
 
-        <div className="luxury-category-ribbon">
+        <nav className="luxury-category-ribbon" aria-label={labels.filters}>
           <span>{labels.filters}</span>
           <div className="luxury-category-ribbon__links">
+            <Link className={searchParams?.get("category") ? "" : "is-active"} href="/shop">
+              {labels.menuShop}
+            </Link>
+            {bagsCategory ? (
+              <Link className={searchParams?.get("category") === bagsCategory.id ? "is-active" : ""} href={`/shop?category=${bagsCategory.id}`}>
+                {labels.menuBags}
+              </Link>
+            ) : null}
+            {watchesCategory ? (
+              <Link className={searchParams?.get("category") === watchesCategory.id ? "is-active" : ""} href={`/shop?category=${watchesCategory.id}`}>
+                {labels.menuWatches}
+              </Link>
+            ) : null}
             <Link className={!searchParams?.get("category") ? "is-active" : ""} href="/shop">
               {labels.all}
             </Link>
-            {activeCategories.slice(0, 6).map((category) => (
+            {activeCategories.map((category) => (
               <Link
                 className={searchParams?.get("category") === category.id ? "is-active" : ""}
                 href={`/shop?category=${category.id}`}
@@ -240,39 +265,116 @@ function HeaderInner() {
                 {textByLanguage(language, category.nameAr, category.nameHe)}
               </Link>
             ))}
-            <Link className="luxury-category-ribbon__shop-link" href="/shop">
-              {labels.browseAll}
-            </Link>
           </div>
+        </nav>
+
+        <div className="luxury-mobile-categories" aria-label={labels.filters}>
+          <Link className={!searchParams?.get("category") ? "is-active" : ""} href="/shop">
+            {labels.all}
+          </Link>
+          {activeCategories.map((category) => (
+            <Link
+              className={searchParams?.get("category") === category.id ? "is-active" : ""}
+              href={`/shop?category=${category.id}`}
+              key={category.id}
+            >
+              {textByLanguage(language, category.nameAr, category.nameHe)}
+            </Link>
+          ))}
         </div>
 
-        <AnimatePresence initial={false}>
-          {filtersOpen ? (
-            <motion.div
-              className="luxury-filter-bar"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Link className={!searchParams?.get("category") ? "is-active" : ""} href="/shop">
-                {labels.all}
-              </Link>
-              {activeCategories.map((category) => (
-                  <Link
-                    className={searchParams?.get("category") === category.id ? "is-active" : ""}
-                    href={`/shop?category=${category.id}`}
-                    key={category.id}
-                  >
-                    {textByLanguage(language, category.nameAr, category.nameHe)}
-                  </Link>
-                ))}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+
       </header>
 
       <div className="luxury-command-spacer" />
+
+      <AnimatePresence>
+        {menuOpen ? (
+          <motion.div
+            animate={{ opacity: 1 }}
+            className="mobile-menu-overlay"
+            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            onClick={() => setMenuOpen(false)}
+          >
+            <motion.aside
+              animate={{ x: 0 }}
+              className="mobile-menu-sheet"
+              exit={{ x: "100%" }}
+              initial={{ x: "100%" }}
+              onClick={(event) => event.stopPropagation()}
+              transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="mobile-menu-sheet__head">
+                <div>
+                  <span>{labels.concierge}</span>
+                  <h2>Flora Style</h2>
+                </div>
+                <button onClick={() => setMenuOpen(false)} aria-label="Close menu">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <Link className="mobile-menu-home" href="/" onClick={() => setMenuOpen(false)}>
+                <ArrowLeft size={18} />
+                {labels.menuHome}
+              </Link>
+
+              <div className="mobile-menu-section">
+                <span>{labels.filters}</span>
+                <nav className="mobile-menu-links" aria-label={labels.filters}>
+                  {bagsCategory ? (
+                    <Link href={`/shop?category=${bagsCategory.id}`} onClick={() => setMenuOpen(false)}>
+                      <span>{labels.menuBags}</span>
+                      <ChevronLeft size={18} />
+                    </Link>
+                  ) : null}
+                  {watchesCategory ? (
+                    <Link href={`/shop?category=${watchesCategory.id}`} onClick={() => setMenuOpen(false)}>
+                      <span>{labels.menuWatches}</span>
+                      <ChevronLeft size={18} />
+                    </Link>
+                  ) : null}
+                </nav>
+              </div>
+
+              <div className="mobile-menu-section">
+                <span>{labels.menuShop}</span>
+                <nav className="mobile-menu-links" aria-label={labels.filters}>
+                  <Link href="/shop" onClick={() => setMenuOpen(false)}>
+                    <span>{labels.browseAll}</span>
+                    <ChevronLeft size={18} />
+                  </Link>
+                  {activeCategories.map((category) => (
+                    <Link href={`/shop?category=${category.id}`} key={category.id} onClick={() => setMenuOpen(false)}>
+                      <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
+                      <ChevronLeft size={18} />
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="mobile-menu-section">
+                <span>{labels.menuSettings}</span>
+                <div className="mobile-menu-actions">
+                  <button onClick={handleLanguageSwitch} type="button">
+                    <Globe2 size={18} />
+                    <span>{language === "ar" ? "עברית" : "العربية"}</span>
+                  </button>
+                  <button onClick={handleThemeSwitch} type="button">
+                    {theme === "dark" ? <SunMedium size={18} /> : <Moon size={18} />}
+                    <span>{theme === "dark" ? labels.light : labels.dark}</span>
+                  </button>
+                  <Link href="/admin" onClick={() => setMenuOpen(false)}>
+                    <LayoutDashboard size={18} />
+                    <span>{labels.admin}</span>
+                  </Link>
+                </div>
+              </div>
+            </motion.aside>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
 
       <AnimatePresence>
         {cartOpen ? (
@@ -396,3 +498,5 @@ export function Header() {
     </Suspense>
   );
 }
+
+

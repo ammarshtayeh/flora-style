@@ -18,11 +18,6 @@
       "name": "Shop",
       "short_name": "Shop",
       "url": "/shop"
-    },
-    {
-      "name": "Admin",
-      "short_name": "Admin",
-      "url": "/admin"
     }
   ],
   "icons": [

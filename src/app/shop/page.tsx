@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Eye, RotateCcw, ShoppingBag, SlidersHorizontal, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
@@ -14,74 +14,67 @@ import { formatPrice, initialStoreData, Language, Product, textByLanguage } from
 const shopCopy = {
   ar: {
     eyebrow: "Luxury Catalog",
-    title: "تسوقي حسب الذوق، لا حسب الفوضى.",
-    body: "كل ما تحتاجه Flora Style في مساحة أوضح: تصنيفات مباشرة، فلترة دقيقة، ونتائج تساعدك على الوصول بسرعة.",
-    filters: "التصفية",
-    categories: "التصنيفات",
+    titleAll: "كل المنتجات",
+    bodyAll: "تصفحي المجموعة كاملة — اختاري التصنيف ثم دققي بالماركة.",
     brands: "البراندات",
-    priceRange: "نطاق السعر",
-    minPrice: "من",
-    maxPrice: "إلى",
     sortBy: "الترتيب",
     sortNewest: "الأحدث",
     sortPriceDesc: "السعر من الأعلى",
     sortPriceAsc: "السعر من الأقل",
     noProducts: "لا توجد منتجات مطابقة حالياً.",
-    view: "عرض التفاصيل",
+    view: "عرض",
     add: "إضافة",
     soldOut: "نفد",
-    clearAll: "تصفير الفلاتر",
+    clearAll: "تصفير",
     searchLabel: "نتائج البحث",
     results: "نتيجة",
-    available: "جاهز للطلب",
+    available: "جاهز",
     pieces: "قطعة",
-    allProducts: "كل المنتجات",
-    matching: "النتائج الحالية",
-    spotlight: "ابدئي من التصنيف الأقرب لك",
-    spotlightBody: "اختاري التصنيف أولاً ثم دققي بالبراند والسعر للوصول الأسرع.",
-    activeFilters: "الفلاتر المفعلة"
+    allProducts: "الكل",
+    allBrands: "كل البراندات",
+    matching: "النتائج",
+    pickCategory: "اختاري التصنيف",
+    pickCategoryBody: "ابدئي من التصنيف المناسب ثم فلتري بالماركة.",
+    activeFilters: "الفلاتر المفعلة",
+    filters: "الفلترة"
   },
   he: {
     eyebrow: "Luxury Catalog",
-    title: "קנייה לפי טעם, לא לפי עומס.",
-    body: "כל מה שצריך מ-Flora Style במבנה ברור יותר: קטגוריות ישירות, סינון מדויק ותוצאות שמובילות מהר לפריט הנכון.",
-    filters: "סינון",
-    categories: "קטגוריות",
+    titleAll: "כל המוצרים",
+    bodyAll: "עברי על כל האוסף — בחרי קטגוריה ואז סנני לפי מותג.",
     brands: "מותגים",
-    priceRange: "טווח מחיר",
-    minPrice: "מ",
-    maxPrice: "עד",
     sortBy: "מיון",
     sortNewest: "חדש באתר",
     sortPriceDesc: "מחיר מהגבוה לנמוך",
     sortPriceAsc: "מחיר מהנמוך לגבוה",
     noProducts: "לא נמצאו מוצרים תואמים כרגע.",
-    view: "לפרטים",
+    view: "צפי",
     add: "הוספה",
     soldOut: "אזל",
-    clearAll: "איפוס סינון",
+    clearAll: "איפוס",
     searchLabel: "תוצאות חיפוש",
     results: "תוצאות",
-    available: "מוכן להזמנה",
+    available: "זמין",
     pieces: "יחידות",
-    allProducts: "כל המוצרים",
-    matching: "התוצאות הנוכחיות",
-    spotlight: "התחילי מהקטגוריה הקרובה לך",
-    spotlightBody: "בחרי קודם קטגוריה ואז דייקי לפי מותג ומחיר כדי להגיע מהר יותר.",
-    activeFilters: "פילטרים פעילים"
+    allProducts: "הכל",
+    allBrands: "כל המותגים",
+    matching: "תוצאות",
+    pickCategory: "בחרי קטגוריה",
+    pickCategoryBody: "התחילי מהקטגוריה המתאימה ואז סנני לפי מותג.",
+    activeFilters: "פילטרים פעילים",
+    filters: "סינון"
   }
 } as const;
 
 type ShopLabels = (typeof shopCopy)[Language];
 
 function ShopContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [storeData, setStoreData] = useState(initialStoreData);
   const [language, setLanguage] = useState<Language>("ar");
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const labels = shopCopy[language];
@@ -102,13 +95,31 @@ function ShopContent() {
   }, []);
 
   useEffect(() => {
-    const categoryParam = searchParams?.get("category");
-    setSelectedCategories(categoryParam ? [categoryParam] : []);
+    setSelectedCategoryId(searchParams?.get("category") || "");
+    const brandParam = searchParams?.get("brand");
+    setSelectedBrands(brandParam ? brandParam.split(",").filter(Boolean) : []);
   }, [searchParams]);
+
+  const pushFilters = useCallback(
+    (categoryId: string, brands: string[]) => {
+      const params = new URLSearchParams();
+      const search = searchParams?.get("search");
+      if (search) params.set("search", search);
+      if (categoryId) params.set("category", categoryId);
+      if (brands.length) params.set("brand", brands.join(","));
+      const query = params.toString();
+      router.push(query ? `/shop?${query}` : "/shop", { scroll: false });
+    },
+    [router, searchParams]
+  );
 
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const searchQuery = (searchParams?.get("search") || "").trim().toLowerCase();
+  const currentCategory = useMemo(
+    () => activeCategories.find((category) => category.id === selectedCategoryId),
+    [activeCategories, selectedCategoryId]
+  );
 
   const categoryCounts = useMemo(() => {
     return storeData.products.filter((product) => product.active).reduce<Record<string, number>>((acc, product) => {
@@ -116,6 +127,20 @@ function ShopContent() {
       return acc;
     }, {});
   }, [storeData.products]);
+
+  const brandCounts = useMemo(() => {
+    return storeData.products
+      .filter((product) => product.active && (!selectedCategoryId || product.categoryId === selectedCategoryId))
+      .reduce<Record<string, number>>((acc, product) => {
+        acc[product.brandId] = (acc[product.brandId] ?? 0) + 1;
+        return acc;
+      }, {});
+  }, [selectedCategoryId, storeData.products]);
+
+  const visibleBrands = useMemo(
+    () => activeBrands.filter((brand) => (brandCounts[brand.id] ?? 0) > 0),
+    [activeBrands, brandCounts]
+  );
 
   const filteredProducts = useMemo(() => {
     let result = storeData.products.filter((product) => product.active);
@@ -129,20 +154,12 @@ function ShopContent() {
       );
     }
 
-    if (selectedCategories.length) {
-      result = result.filter((product) => selectedCategories.includes(product.categoryId));
+    if (selectedCategoryId) {
+      result = result.filter((product) => product.categoryId === selectedCategoryId);
     }
 
     if (selectedBrands.length) {
       result = result.filter((product) => selectedBrands.includes(product.brandId));
-    }
-
-    if (minPrice) {
-      result = result.filter((product) => (product.salePrice ?? product.price) >= Number(minPrice));
-    }
-
-    if (maxPrice) {
-      result = result.filter((product) => (product.salePrice ?? product.price) <= Number(maxPrice));
     }
 
     if (sortBy === "price-desc") {
@@ -154,44 +171,39 @@ function ShopContent() {
     }
 
     return result;
-  }, [maxPrice, minPrice, searchQuery, selectedBrands, selectedCategories, sortBy, storeData.products]);
+  }, [searchQuery, selectedBrands, selectedCategoryId, sortBy, storeData.products]);
 
   const activeFilterLabels = useMemo(() => {
-    const categoryEntries = selectedCategories
-      .map((id) => activeCategories.find((category) => category.id === id))
-      .filter(Boolean)
-      .map((category) => ({ id: category!.id, type: "category" as const, label: textByLanguage(language, category!.nameAr, category!.nameHe) }));
-
-    const brandEntries = selectedBrands
+    return selectedBrands
       .map((id) => activeBrands.find((brand) => brand.id === id))
       .filter(Boolean)
-      .map((brand) => ({ id: brand!.id, type: "brand" as const, label: textByLanguage(language, brand!.nameAr, brand!.nameHe) }));
+      .map((brand) => ({ id: brand!.id, label: textByLanguage(language, brand!.nameAr, brand!.nameHe) }));
+  }, [activeBrands, language, selectedBrands]);
 
-    return [...categoryEntries, ...brandEntries];
-  }, [activeBrands, activeCategories, language, selectedBrands, selectedCategories]);
-
-  function toggleCategory(id: string) {
-    setSelectedCategories((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+  function selectCategory(id: string) {
+    const next = selectedCategoryId === id ? "" : id;
+    setSelectedCategoryId(next);
+    setSelectedBrands([]);
+    pushFilters(next, []);
   }
 
   function toggleBrand(id: string) {
-    setSelectedBrands((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
+    const next = selectedBrands.includes(id) ? selectedBrands.filter((item) => item !== id) : [...selectedBrands, id];
+    setSelectedBrands(next);
+    pushFilters(selectedCategoryId, next);
   }
 
-  function resetFilters() {
-    setSelectedCategories(searchParams?.get("category") ? [searchParams.get("category") as string] : []);
+  function resetBrands() {
     setSelectedBrands([]);
-    setMinPrice("");
-    setMaxPrice("");
-    setSortBy("newest");
+    pushFilters(selectedCategoryId, []);
   }
 
-  function removeActiveFilter(type: "category" | "brand", id: string) {
-    if (type === "category") {
-      setSelectedCategories((current) => current.filter((item) => item !== id));
-      return;
-    }
-    setSelectedBrands((current) => current.filter((item) => item !== id));
+  function resetAll() {
+    setSelectedBrands([]);
+    setSortBy("newest");
+    const category = searchParams?.get("category") || "";
+    setSelectedCategoryId(category);
+    pushFilters(category, []);
   }
 
   function handleAddToCart(product: Product) {
@@ -201,23 +213,25 @@ function ShopContent() {
     window.dispatchEvent(new CustomEvent("flora-open-cart"));
   }
 
+  const pageTitle = currentCategory
+    ? textByLanguage(language, currentCategory.nameAr, currentCategory.nameHe)
+    : labels.titleAll;
+
+  const pageBody = currentCategory
+    ? textByLanguage(language, currentCategory.descriptionAr, currentCategory.descriptionHe)
+    : labels.bodyAll;
+
   const filterPanel = (
     <ShopFilterPanel
-      activeBrands={activeBrands}
-      activeCategories={activeCategories}
-      categoryCounts={categoryCounts}
+      activeBrands={visibleBrands}
+      brandCounts={brandCounts}
+      brandTitle={currentCategory ? `${labels.brands} · ${textByLanguage(language, currentCategory.nameAr, currentCategory.nameHe)}` : labels.brands}
       labels={labels}
       language={language}
-      maxPrice={maxPrice}
-      minPrice={minPrice}
       onClose={() => setMobileFiltersOpen(false)}
-      resetFilters={resetFilters}
+      resetFilters={resetBrands}
       selectedBrands={selectedBrands}
-      selectedCategories={selectedCategories}
-      setMaxPrice={setMaxPrice}
-      setMinPrice={setMinPrice}
       toggleBrand={toggleBrand}
-      toggleCategory={toggleCategory}
     />
   );
 
@@ -227,8 +241,8 @@ function ShopContent() {
       <main className="shop-page" dir="rtl">
         <section className="shop-hero">
           <p className="luxury-kicker">{labels.eyebrow}</p>
-          <h1>{labels.title}</h1>
-          <p>{labels.body}</p>
+          <h1>{pageTitle}</h1>
+          <p>{pageBody}</p>
           <div className="shop-hero__meta">
             <span>
               <ShoppingBag size={15} />
@@ -239,41 +253,61 @@ function ShopContent() {
                 <SlidersHorizontal size={15} />
                 {labels.searchLabel}: {searchQuery}
               </span>
-            ) : (
-              <span>
-                <SlidersHorizontal size={15} />
-                {labels.allProducts}
-              </span>
-            )}
+            ) : null}
           </div>
         </section>
 
-        <section className="shop-category-strip">
-          <div className="shop-category-strip__head">
-            <div>
-              <span>{labels.spotlight}</span>
-              <p>{labels.spotlightBody}</p>
+        {!selectedCategoryId ? (
+          <section className="shop-category-strip">
+            <div className="shop-category-strip__head">
+              <div>
+                <span>{labels.pickCategory}</span>
+                <p>{labels.pickCategoryBody}</p>
+              </div>
             </div>
-            <button className="shop-reset" onClick={resetFilters} type="button">
-              <RotateCcw size={15} />
-              {labels.clearAll}
-            </button>
-          </div>
-          <div className="shop-category-strip__grid">
+            <div className="shop-category-strip__grid">
+              {activeCategories.map((category) => (
+                <button className="" key={category.id} onClick={() => selectCategory(category.id)} type="button">
+                  <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 50vw, 20vw" />
+                  <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
+                  <small>{categoryCounts[category.id] ?? 0}</small>
+                </button>
+              ))}
+            </div>
+          </section>
+        ) : (
+          <section className="shop-category-tabs">
             {activeCategories.map((category) => (
               <button
-                className={selectedCategories.includes(category.id) ? "is-active" : ""}
+                className={selectedCategoryId === category.id ? "is-active" : ""}
                 key={category.id}
-                onClick={() => toggleCategory(category.id)}
+                onClick={() => selectCategory(category.id)}
                 type="button"
               >
-                <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 50vw, 20vw" />
-                <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
-                <small>{categoryCounts[category.id] ?? 0}</small>
+                {textByLanguage(language, category.nameAr, category.nameHe)}
               </button>
             ))}
-          </div>
-        </section>
+          </section>
+        )}
+
+        {visibleBrands.length ? (
+          <section className="brand-filter-bar">
+            <button className={!selectedBrands.length ? "is-active" : ""} onClick={resetBrands} type="button">
+              {labels.allBrands}
+            </button>
+            {visibleBrands.map((brand) => (
+              <button
+                className={selectedBrands.includes(brand.id) ? "is-active" : ""}
+                key={brand.id}
+                onClick={() => toggleBrand(brand.id)}
+                type="button"
+              >
+                {textByLanguage(language, brand.nameAr, brand.nameHe)}
+                <small>{brandCounts[brand.id] ?? 0}</small>
+              </button>
+            ))}
+          </section>
+        ) : null}
 
         <div className="shop-shell">
           <aside className="shop-sidebar">{filterPanel}</aside>
@@ -282,9 +316,10 @@ function ShopContent() {
             <div className="shop-toolbar">
               <div>
                 <span>{labels.matching}</span>
-                <h2>
+                <h2>{pageTitle}</h2>
+                <p className="shop-toolbar__count">
                   {filteredProducts.length} {labels.results}
-                </h2>
+                </p>
               </div>
               <div className="shop-toolbar__actions">
                 <label className="shop-sort">
@@ -295,24 +330,31 @@ function ShopContent() {
                     <option value="price-asc">{labels.sortPriceAsc}</option>
                   </select>
                 </label>
-                <button className="shop-mobile-filter-trigger" onClick={() => setMobileFiltersOpen(true)} type="button">
-                  <SlidersHorizontal size={16} />
-                  {labels.filters}
-                </button>
+                {selectedCategoryId ? (
+                  <button className="shop-mobile-filter-trigger" onClick={() => setMobileFiltersOpen(true)} type="button">
+                    <SlidersHorizontal size={16} />
+                    {labels.filters}
+                  </button>
+                ) : null}
+                {selectedBrands.length ? (
+                  <button className="shop-reset shop-reset--ghost" onClick={resetBrands} type="button">
+                    <RotateCcw size={15} />
+                    {labels.clearAll}
+                  </button>
+                ) : null}
               </div>
             </div>
 
-            {activeFilterLabels.length || minPrice || maxPrice ? (
+            {activeFilterLabels.length ? (
               <div className="shop-active-filters">
                 <span>{labels.activeFilters}</span>
                 <div>
                   {activeFilterLabels.map((filter) => (
-                    <button key={`${filter.type}-${filter.id}`} onClick={() => removeActiveFilter(filter.type, filter.id)} type="button">
+                    <button key={filter.id} onClick={() => toggleBrand(filter.id)} type="button">
                       {filter.label}
+                      <X size={12} />
                     </button>
                   ))}
-                  {minPrice ? <button onClick={() => setMinPrice("")} type="button">{labels.minPrice}: {minPrice}</button> : null}
-                  {maxPrice ? <button onClick={() => setMaxPrice("")} type="button">{labels.maxPrice}: {maxPrice}</button> : null}
                 </div>
               </div>
             ) : null}
@@ -327,17 +369,16 @@ function ShopContent() {
                   return (
                     <article className="luxury-product" key={product.id}>
                       <Link className="luxury-product__image" href={`/products/${product.slug}`}>
-                        <Image className="primary" src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 900px) 100vw, 33vw" />
-                        <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 100vw, 33vw" />
+                        <Image className="primary" src={product.images[0]} alt={textByLanguage(language, product.nameAr, product.nameHe)} fill sizes="(max-width: 900px) 50vw, 25vw" />
+                        <Image className="secondary" src={product.images[1] ?? product.images[0]} alt="" fill sizes="(max-width: 900px) 50vw, 25vw" />
                       </Link>
                       <div className="luxury-product__meta">
                         <Link href={`/products/${product.slug}`}>
                           <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
                         </Link>
-                        <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p>
                         <div className="luxury-product__bottom">
                           <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-                          <span>{stock > 0 ? `${labels.available} · ${stock} ${labels.pieces}` : labels.soldOut}</span>
+                          <span>{stock > 0 ? labels.available : labels.soldOut}</span>
                         </div>
                       </div>
                       <div className="floating-actions">
@@ -357,7 +398,7 @@ function ShopContent() {
             ) : (
               <div className="shop-empty">
                 <strong>{labels.noProducts}</strong>
-                <button className="shop-reset" onClick={resetFilters} type="button">
+                <button className="shop-reset" onClick={resetAll} type="button">
                   {labels.clearAll}
                 </button>
               </div>
@@ -402,41 +443,29 @@ export default function ShopPage() {
 
 function ShopFilterPanel({
   activeBrands,
-  activeCategories,
-  categoryCounts,
+  brandCounts,
+  brandTitle,
   labels,
   language,
-  maxPrice,
-  minPrice,
   onClose,
   resetFilters,
   selectedBrands,
-  selectedCategories,
-  setMaxPrice,
-  setMinPrice,
-  toggleBrand,
-  toggleCategory
+  toggleBrand
 }: {
-  activeBrands: Array<{ id: string; nameAr: string; nameHe: string; descriptionAr: string; descriptionHe: string }>;
-  activeCategories: Array<{ id: string; nameAr: string; nameHe: string }>;
-  categoryCounts: Record<string, number>;
+  activeBrands: Array<{ id: string; nameAr: string; nameHe: string }>;
+  brandCounts: Record<string, number>;
+  brandTitle: string;
   labels: ShopLabels;
   language: Language;
-  maxPrice: string;
-  minPrice: string;
   onClose?: () => void;
   resetFilters: () => void;
   selectedBrands: string[];
-  selectedCategories: string[];
-  setMaxPrice: (value: string) => void;
-  setMinPrice: (value: string) => void;
   toggleBrand: (id: string) => void;
-  toggleCategory: (id: string) => void;
 }) {
   return (
     <div className="shop-filter-panel">
       <div className="shop-sidebar__head">
-        <h2>{labels.filters}</h2>
+        <h2>{brandTitle}</h2>
         <div className="shop-sidebar__head-actions">
           <button className="shop-reset shop-reset--ghost" onClick={resetFilters} type="button">
             {labels.clearAll}
@@ -450,42 +479,24 @@ function ShopFilterPanel({
       </div>
 
       <div className="shop-filter-group">
-        <span>{labels.categories}</span>
         <div className="shop-filter-list">
-          {activeCategories.map((category) => (
-            <label className="shop-check" key={category.id}>
-              <input checked={selectedCategories.includes(category.id)} onChange={() => toggleCategory(category.id)} type="checkbox" />
-              <em />
-              <div>
-                <strong>{textByLanguage(language, category.nameAr, category.nameHe)}</strong>
-                <small>{categoryCounts[category.id] ?? 0}</small>
-              </div>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div className="shop-filter-group">
-        <span>{labels.brands}</span>
-        <div className="shop-filter-list">
+          <label className="shop-check">
+            <input checked={!selectedBrands.length} onChange={resetFilters} type="checkbox" />
+            <em />
+            <div>
+              <strong>{labels.allBrands}</strong>
+            </div>
+          </label>
           {activeBrands.map((brand) => (
             <label className="shop-check" key={brand.id}>
               <input checked={selectedBrands.includes(brand.id)} onChange={() => toggleBrand(brand.id)} type="checkbox" />
               <em />
               <div>
                 <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
-                <small>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</small>
+                <small>{brandCounts[brand.id] ?? 0}</small>
               </div>
             </label>
           ))}
-        </div>
-      </div>
-
-      <div className="shop-filter-group">
-        <span>{labels.priceRange}</span>
-        <div className="shop-price-fields">
-          <input className="field" onChange={(event) => setMinPrice(event.target.value)} placeholder={labels.minPrice} type="number" value={minPrice} />
-          <input className="field" onChange={(event) => setMaxPrice(event.target.value)} placeholder={labels.maxPrice} type="number" value={maxPrice} />
         </div>
       </div>
     </div>

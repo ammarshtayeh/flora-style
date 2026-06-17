@@ -80,7 +80,7 @@ export function PwaRegister() {
   return installPrompt && !dismissed && readyToShow && pathname === "/" && !pathname?.startsWith("/admin") ? (
     <div className="install-prompt">
       <div>
-        <span>Install Flora Style</span>
+        <span>{language === "ar" ? "ثبّتي Flora Style" : "התקיני Flora Style"}</span>
         <p>{language === "ar" ? "احفظي المتجر على جهازك لتجربة أسرع وأقرب لتطبيق فعلي." : "שמרי את החנות על המכשיר לחוויה מהירה וקרובה יותר לאפליקציה."}</p>
       </div>
       <div className="install-prompt__actions">
