@@ -9,6 +9,7 @@ import { Header } from "@/components/header";
 import { CartItem, clearCart, getCart, subscribeToCart } from "@/lib/cart";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, Order, textByLanguage } from "@/lib/store";
+import { createOrder } from "@/lib/supabase/orders";
 
 const checkoutCopy = {
   ar: {
@@ -152,6 +153,12 @@ export default function CheckoutPage() {
     const fresh = loadStoreData();
     fresh.orders = [newOrder, ...fresh.orders];
     saveStoreData(fresh);
+
+    // Persist to Supabase (so the order appears in Admin on any device / browser)
+    createOrder(newOrder).catch(() => {
+      // If it fails we still have the local copy; admin will fall back to local
+    });
+
     clearCart();
     router.push(`/order-success?orderId=${orderId}`);
   }

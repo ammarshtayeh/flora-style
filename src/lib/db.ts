@@ -1,6 +1,6 @@
 import { initialStoreData, StoreData } from "./store";
 
-const storageKey = "flora-style-admin-data";
+const storageKey = "flora-style-admin-data-v2";
 
 function normalizeStoreData(data: StoreData): StoreData {
   return {

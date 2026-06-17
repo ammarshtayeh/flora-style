@@ -3,7 +3,7 @@
 import { motion, useScroll, useTransform, type Variants } from "framer-motion";
 import gsap from "gsap";
 import Lenis from "lenis";
-import { ArrowLeft, Eye, ShoppingBag } from "lucide-react";
+import { Eye, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -203,29 +203,15 @@ export function Storefront() {
     const items = activeProducts.filter((product) => product.bestSeller);
     return items.length ? items : activeProducts.slice(0, 4);
   }, [activeProducts]);
-  const featuredProducts = useMemo(() => {
-    const items = activeProducts.filter((product) => product.featured);
-    return items.length ? items : activeProducts.slice(0, 4);
-  }, [activeProducts]);
   const newArrivals = useMemo(() => [...activeProducts].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4), [activeProducts]);
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
   const discountedProducts = useMemo(() => activeProducts.filter((product) => typeof product.salePrice === "number").slice(0, 4), [activeProducts]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
-  const bagsCategory = useMemo(() => activeCategories.find((category) => category.slug === "handbags"), [activeCategories]);
-  const watchesCategory = useMemo(() => activeCategories.find((category) => category.slug === "watches"), [activeCategories]);
-  const topBrands = useMemo(() => activeBrands.slice(0, 3), [activeBrands]);
 
   const productsPerCategory = useMemo(() => {
     return activeProducts.reduce<Record<string, number>>((acc, product) => {
       acc[product.categoryId] = (acc[product.categoryId] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [activeProducts]);
-
-  const productsPerBrand = useMemo(() => {
-    return activeProducts.reduce<Record<string, number>>((acc, product) => {
-      acc[product.brandId] = (acc[product.brandId] ?? 0) + 1;
       return acc;
     }, {});
   }, [activeProducts]);
@@ -271,41 +257,6 @@ export function Storefront() {
           </div>
         </section>
 
-        <section className="luxury-editorial">
-          <div className="luxury-editorial__lead">
-            <p className="luxury-kicker">Editorial Selection</p>
-            <h2>{labels.editorialTitle}</h2>
-            <p>{labels.editorialBody}</p>
-            <div className="luxury-actions">
-              <Link href="/shop">{labels.shop}</Link>
-              {bagsCategory ? <Link href={`/shop?category=${bagsCategory.id}`}>{labels.collections}</Link> : null}
-            </div>
-          </div>
-          <div className="luxury-editorial__cards">
-            {bagsCategory ? (
-              <Link className="luxury-editorial__card" href={`/shop?category=${bagsCategory.id}`}>
-                <span>{labels.collections}</span>
-                <strong>{textByLanguage(language, bagsCategory.nameAr, bagsCategory.nameHe)}</strong>
-                <small>{productsPerCategory[bagsCategory.id] ?? 0}</small>
-              </Link>
-            ) : null}
-            {watchesCategory ? (
-              <Link className="luxury-editorial__card" href={`/shop?category=${watchesCategory.id}`}>
-                <span>{labels.collections}</span>
-                <strong>{textByLanguage(language, watchesCategory.nameAr, watchesCategory.nameHe)}</strong>
-                <small>{productsPerCategory[watchesCategory.id] ?? 0}</small>
-              </Link>
-            ) : null}
-            {topBrands.map((brand) => (
-              <Link className="luxury-editorial__card" href={`/shop?brand=${brand.id}`} key={brand.id}>
-                <span>{labels.brands}</span>
-                <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
-                <small>{productsPerBrand[brand.id] ?? 0}</small>
-              </Link>
-            ))}
-          </div>
-        </section>
-
         <section className="home-category-scroll" aria-label={labels.collections}>
           {activeCategories.map((category) => (
             <Link className="home-category-scroll__item" href={`/shop?category=${category.id}`} key={category.id}>
@@ -316,30 +267,6 @@ export function Storefront() {
             </Link>
           ))}
         </section>
-
-        <motion.section
-          className="luxury-entry-map"
-          id="discovery"
-          initial="hidden"
-          viewport={{ once: true, amount: 0.2 }}
-          whileInView="show"
-          variants={reveal}
-        >
-          <div className="luxury-entry-map__lead">
-            <span>{labels.discovery}</span>
-            <h2>{labels.browseCategories}</h2>
-            <p>{labels.discoveryLead}</p>
-          </div>
-          <div className="luxury-entry-map__grid">
-            {labels.discoveryCards.map((item) => (
-              <Link className="luxury-entry-card" href={item.href} key={item.href}>
-                <span>{item.title}</span>
-                <p>{item.body}</p>
-                <ArrowLeft size={16} />
-              </Link>
-            ))}
-          </div>
-        </motion.section>
 
         <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
           <div className="category-directory__intro">
@@ -365,20 +292,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="featured" eyebrow="02" title={labels.featured}>
-          <ProductRail
-            className="product-rail--scroll"
-            products={featuredProducts}
-            language={language}
-            onAdd={handleAddToCart}
-            viewLabel={labels.view}
-            addLabel={labels.add}
-            colorsList={storeData.colors}
-            soldOutLabel={labels.soldOut}
-          />
-        </AnimatedSection>
-
-        <AnimatedSection id="best-sellers" eyebrow="03" title={labels.bestSellers}>
+        <AnimatedSection id="best-sellers" eyebrow="02" title={labels.bestSellers}>
           <ProductRail
             products={bestSellers}
             language={language}
@@ -390,7 +304,7 @@ export function Storefront() {
           />
         </AnimatedSection>
 
-        <AnimatedSection id="new-arrivals" eyebrow="04" title={labels.newArrivals}>
+        <AnimatedSection id="new-arrivals" eyebrow="03" title={labels.newArrivals}>
           <ProductRail
             products={newArrivals}
             language={language}
@@ -403,7 +317,7 @@ export function Storefront() {
         </AnimatedSection>
 
         {discountedProducts.length ? (
-          <AnimatedSection id="discounted" eyebrow="05" title={labels.discounted}>
+          <AnimatedSection id="discounted" eyebrow="04" title={labels.discounted}>
             <ProductRail
               products={discountedProducts}
               language={language}
@@ -416,38 +330,21 @@ export function Storefront() {
           </AnimatedSection>
         ) : null}
 
-        <AnimatedSection id="brands" eyebrow="06" title={labels.brands}>
-          <div className="brand-salon">
-            <div className="brand-salon__lead">
-              <p>{labels.brandsLead}</p>
-              <Link href="/shop">{labels.shop}</Link>
-            </div>
-            <div className="brand-salon__grid">
-              {activeBrands.map((brand) => (
-                <Link className="brand-salon__card" href={`/shop?brand=${brand.id}`} key={brand.id}>
-                  <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
-                  <p>{textByLanguage(language, brand.descriptionAr, brand.descriptionHe)}</p>
-                  <span>{productsPerBrand[brand.id] ?? 0}</span>
-                </Link>
-              ))}
-            </div>
+        <AnimatedSection id="brands" eyebrow="05" title={labels.brands}>
+          <div className="brand-wall__lead">
+            <p>{labels.brandsLead}</p>
+            <Link href="/shop">{labels.shop}</Link>
           </div>
-        </AnimatedSection>
-
-        <AnimatedSection id="why" eyebrow="07" title={labels.why}>
-          <div className="why-grid">
-            {labels.whyItems.map((item, index) => (
-              <article className="why-item" key={item.title}>
-                <span />
-                <h3>{item.title}</h3>
-                <p>{item.body}</p>
-                <small>0{index + 1}</small>
-              </article>
+          <div className="brand-wall">
+            {activeBrands.map((brand) => (
+              <Link className="brand-wall__tile" href={`/shop?brand=${brand.id}`} key={brand.id} aria-label={textByLanguage(language, brand.nameAr, brand.nameHe)}>
+                <Image src={brand.logoUrl} alt={textByLanguage(language, brand.nameAr, brand.nameHe)} width={150} height={70} sizes="160px" />
+              </Link>
             ))}
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="reviews" eyebrow="08" title={labels.reviews}>
+        <AnimatedSection id="reviews" eyebrow="06" title={labels.reviews}>
           <div className="review-grid">
             {labels.reviewItems.map((quote, index) => (
               <blockquote key={quote}>

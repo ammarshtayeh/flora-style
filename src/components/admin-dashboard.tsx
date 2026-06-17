@@ -10,6 +10,7 @@ import {
   DeliveryZone,
   formatPrice,
   initialStoreData,
+  Order,
   OrderStatus,
   Product,
   ProductColor,
@@ -17,6 +18,8 @@ import {
   StoreSettings
 } from "@/lib/store";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
+import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders, isSupabaseEnabled } from "@/lib/supabase/orders";
+import { getSupabaseConfigStatus } from "@/lib/supabase/client";
 
 type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings";
 
@@ -76,6 +79,11 @@ export function AdminDashboard() {
   const [bannerDraft, setBannerDraft] = useState<Banner>(() => blankBanner());
   const [settingsDraft, setSettingsDraft] = useState<StoreSettings>(data.settings);
 
+  // Supabase-backed orders (for the Orders tab)
+  const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [supabaseAvailable, setSupabaseAvailable] = useState(false);
+
   // Sync state with local storage updates
   useEffect(() => {
     setData(loadStoreData());
@@ -93,6 +101,38 @@ export function AdminDashboard() {
       saveStoreData(data, { notify: false });
     }
   }, [data, loaded]);
+
+  // Check if Supabase is configured
+  useEffect(() => {
+    const status = getSupabaseConfigStatus();
+    setSupabaseAvailable(status.hasUrl && status.hasKey);
+  }, []);
+
+  // Load orders from Supabase when the Orders tab is opened
+  useEffect(() => {
+    let unsub: (() => void) | null = null;
+
+    async function loadRemoteOrders() {
+      if (activeTab !== "orders") return;
+      setOrdersLoading(true);
+      const remote = await fetchOrders();
+      setSupabaseOrders(remote);
+      setOrdersLoading(false);
+    }
+
+    if (activeTab === "orders") {
+      loadRemoteOrders();
+
+      // Realtime updates (live new orders / status changes)
+      unsub = subscribeToOrders((freshOrders) => {
+        setSupabaseOrders(freshOrders);
+      });
+    }
+
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [activeTab]);
 
   const stats = useMemo(() => {
     const totalSales = data.orders
@@ -209,6 +249,61 @@ export function AdminDashboard() {
     });
   }
 
+  // Supabase version of status update (used in the dedicated Orders tab)
+  async function handleSupabaseOrderStatusChange(orderId: string, status: OrderStatus) {
+    // 1. Find the order in our supabase list (or fall back to local)
+    const order = supabaseOrders.find((o) => o.id === orderId) || data.orders.find((o) => o.id === orderId);
+    if (!order) return;
+
+    let newStockDeducted = order.stockDeducted ?? false;
+
+      // Apply same stock logic locally so inventory numbers update immediately
+    setData((current) => {
+      let updatedColors = [...current.colors];
+      const targetOrder = current.orders.find((o) => o.id === orderId) || order;
+
+      if (status === "Confirmed" && !targetOrder.stockDeducted) {
+        updatedColors = current.colors.map((color) => {
+          const orderedItem = targetOrder.items.find((item: any) => item.colorId === color.id);
+          if (orderedItem) {
+            return {
+              ...color,
+              stockQuantity: Math.max(0, color.stockQuantity - orderedItem.quantity),
+            };
+          }
+          return color;
+        });
+        newStockDeducted = true;
+      } else if (status !== "Confirmed" && targetOrder.stockDeducted) {
+        updatedColors = current.colors.map((color) => {
+          const orderedItem = targetOrder.items.find((item: any) => item.colorId === color.id);
+          if (orderedItem) {
+            return {
+              ...color,
+              stockQuantity: color.stockQuantity + orderedItem.quantity,
+            };
+          }
+          return color;
+        });
+        newStockDeducted = false;
+      }
+
+      // Also update local copy of this order if it exists
+      const updatedLocalOrders = current.orders.map((o) =>
+        o.id === orderId ? { ...o, status, stockDeducted: newStockDeducted } : o
+      );
+
+      return { ...current, orders: updatedLocalOrders, colors: updatedColors };
+    });
+
+    // 2. Persist to Supabase
+    await updateOrderStatusSupabase(orderId, status, newStockDeducted);
+
+    // 3. Refresh the remote list
+    const refreshed = await fetchOrders();
+    setSupabaseOrders(refreshed);
+  }
+
   function resetDemoData() {
     setData(initialStoreData);
     setSettingsDraft(initialStoreData.settings);
@@ -259,7 +354,17 @@ export function AdminDashboard() {
             <div className="admin-grid">
               <div className="admin-panel">
                 <PanelTitle title="آخر الطلبات" hint="اضغط على الطلب لعرض كامل التفاصيل والعنوان." />
-                <OrdersTable data={data} onDelete={(id) => deleteById("orders", id)} onStatusChange={updateOrderStatus} />
+                <OrdersTable
+                  data={{
+                    ...data,
+                    orders:
+                      supabaseAvailable && supabaseOrders.length > 0
+                        ? supabaseOrders.slice(0, 6)
+                        : data.orders,
+                  }}
+                  onDelete={(id) => deleteById("orders", id)}
+                  onStatusChange={updateOrderStatus}
+                />
               </div>
               <div className="admin-panel">
                 <PanelTitle title="تنبيهات المخزون" hint="الألوان التي تحتاج متابعة." />
@@ -379,8 +484,41 @@ export function AdminDashboard() {
 
         {activeTab === "orders" ? (
           <div className="admin-panel">
-            <PanelTitle title="إدارة الطلبات المستلمة" hint="اضغط على صف الطلب لعرض كامل تفاصيله، عنوانه والمنتجات المطلوبة بداخل السلة." />
-            <OrdersTable data={data} onDelete={(id) => deleteById("orders", id)} onStatusChange={updateOrderStatus} />
+            <PanelTitle
+              title="إدارة الطلبات المستلمة"
+              hint={
+                supabaseAvailable
+                  ? "الطلبات من Supabase (مباشرة وفورية). غيّر الحالة وسيتم التحديث عند الزبون والأدمن."
+                  : "Supabase غير مفعّل. الطلبات تُحفظ محلياً فقط (في هذا المتصفح)."
+              }
+            />
+
+            {supabaseAvailable ? (
+              <div style={{ margin: "12px 0 20px", padding: "10px 14px", background: "rgba(46,213,115,0.1)", border: "1px solid rgba(46,213,115,0.35)", borderRadius: 10, fontSize: 13, color: "#2ed573" }}>
+                ✓ متصل بـ Supabase — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
+              </div>
+            ) : (
+              <div style={{ margin: "12px 0 20px", padding: "12px 16px", background: "rgba(255,170,0,0.08)", border: "1px solid rgba(255,170,0,0.3)", borderRadius: 10, fontSize: 13 }}>
+                أضف متغيرات <code>NEXT_PUBLIC_SUPABASE_URL</code> و <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> (أو PUBLISHABLE_KEY) في <code>.env.local</code> ثم أعد تشغيل السيرفر.
+              </div>
+            )}
+
+            {ordersLoading ? (
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "var(--muted)" }}>جاري تحميل الطلبات من Supabase...</div>
+            ) : (
+              <OrdersTable
+                data={{
+                  ...data,
+                  orders: supabaseAvailable && supabaseOrders.length > 0 ? supabaseOrders : data.orders,
+                }}
+                onDelete={(id) => {
+                  // For Supabase orders we don't delete from local only
+                  // We keep delete local for demo data. In real usage you can add a delete function.
+                  deleteById("orders", id);
+                }}
+                onStatusChange={handleSupabaseOrderStatusChange}
+              />
+            )}
           </div>
         ) : null}
 

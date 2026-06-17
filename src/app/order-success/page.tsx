@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/header";
-import { formatPrice, initialStoreData, Language, textByLanguage } from "@/lib/store";
+import { formatPrice, initialStoreData, Language, Order, textByLanguage } from "@/lib/store";
 import { loadStoreData } from "@/lib/db";
+import { fetchOrders } from "@/lib/supabase/orders";
 
 const successCopy = {
   ar: {
@@ -66,8 +67,31 @@ function OrderSuccessContent() {
   }, []);
 
   // Reload storeData to get the latest saved order
+  // Also try to fetch from Supabase as a fallback (in case viewed from another device)
   useEffect(() => {
     setStoreData(loadStoreData());
+
+    async function tryFetchFromSupabase() {
+      try {
+        const remote = await fetchOrders();
+        if (remote.length) {
+          // Merge remote orders into the local view just for this success page
+          setStoreData((prev) => {
+            const merged = [...prev.orders];
+            remote.forEach((ro) => {
+              if (!merged.some((lo) => lo.id === ro.id)) merged.push(ro);
+            });
+            return { ...prev, orders: merged };
+          });
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (orderId) {
+      tryFetchFromSupabase();
+    }
   }, [orderId]);
 
   // Load order details
@@ -141,7 +165,7 @@ function OrderSuccessContent() {
                 ✓
               </div>
 
-              <h2 style={{ fontSize: "30px", fontWeight: 300, color: "#fff", margin: 0 }}>
+              <h2 style={{ fontSize: "30px", fontWeight: 300, color: "var(--ink)", margin: 0 }}>
                 {labels.title}
               </h2>
 
