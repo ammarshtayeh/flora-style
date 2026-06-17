@@ -138,10 +138,21 @@ function ShopContent() {
       }, {});
   }, [selectedCategoryId, storeData.products]);
 
-  const visibleBrands = useMemo(
-    () => activeBrands.filter((brand) => (brandCounts[brand.id] ?? 0) > 0),
-    [activeBrands, brandCounts]
-  );
+  const orderedBrands = useMemo(() => {
+    return [...activeBrands].sort((a, b) => {
+      const aCount = brandCounts[a.id] ?? 0;
+      const bCount = brandCounts[b.id] ?? 0;
+
+      if ((aCount > 0) !== (bCount > 0)) {
+        return aCount > 0 ? -1 : 1;
+      }
+
+      return textByLanguage(language, a.nameAr, a.nameHe).localeCompare(
+        textByLanguage(language, b.nameAr, b.nameHe),
+        language === "ar" ? "ar" : "he"
+      );
+    });
+  }, [activeBrands, brandCounts, language]);
 
   const filteredProducts = useMemo(() => {
     let result = storeData.products.filter((product) => product.active);
@@ -224,9 +235,10 @@ function ShopContent() {
 
   const filterPanel = (
     <ShopFilterPanel
-      activeBrands={visibleBrands}
+      activeBrands={orderedBrands}
       brandCounts={brandCounts}
-      brandTitle={currentCategory ? `${labels.brands} · ${textByLanguage(language, currentCategory.nameAr, currentCategory.nameHe)}` : labels.brands}
+      brandContext={currentCategory ? textByLanguage(language, currentCategory.nameAr, currentCategory.nameHe) : labels.allProducts}
+      brandTitle={labels.brands}
       labels={labels}
       language={language}
       onClose={() => setMobileFiltersOpen(false)}
@@ -291,14 +303,15 @@ function ShopContent() {
           </section>
         )}
 
-        {visibleBrands.length ? (
+        {orderedBrands.length ? (
           <section className="brand-filter-bar flora-brand-filter-bar">
             <button className={!selectedBrands.length ? "is-active" : ""} onClick={resetBrands} type="button">
               {labels.allBrands}
             </button>
-            {visibleBrands.map((brand) => (
+            {orderedBrands.map((brand) => (
               <button
-                className={selectedBrands.includes(brand.id) ? "is-active" : ""}
+                className={`${selectedBrands.includes(brand.id) ? "is-active" : ""} ${(brandCounts[brand.id] ?? 0) === 0 ? "is-muted" : ""}`.trim()}
+                disabled={(brandCounts[brand.id] ?? 0) === 0}
                 key={brand.id}
                 onClick={() => toggleBrand(brand.id)}
                 type="button"
@@ -431,6 +444,7 @@ export default function ShopPage() {
 function ShopFilterPanel({
   activeBrands,
   brandCounts,
+  brandContext,
   brandTitle,
   labels,
   language,
@@ -439,8 +453,9 @@ function ShopFilterPanel({
   selectedBrands,
   toggleBrand
 }: {
-  activeBrands: Array<{ id: string; nameAr: string; nameHe: string }>;
+  activeBrands: Array<{ id: string; nameAr: string; nameHe: string; logoUrl?: string }>;
   brandCounts: Record<string, number>;
+  brandContext: string;
   brandTitle: string;
   labels: ShopLabels;
   language: Language;
@@ -452,7 +467,10 @@ function ShopFilterPanel({
   return (
     <div className="shop-filter-panel">
       <div className="shop-sidebar__head">
-        <h2>{brandTitle}</h2>
+        <div className="shop-sidebar__title">
+          <span>{brandContext}</span>
+          <h2>{brandTitle}</h2>
+        </div>
         <div className="shop-sidebar__head-actions">
           <button className="shop-reset shop-reset--ghost" onClick={resetFilters} type="button">
             {labels.clearAll}
@@ -466,7 +484,7 @@ function ShopFilterPanel({
       </div>
 
       <div className="shop-filter-group">
-        <div className="shop-filter-list">
+        <div className="shop-filter-list shop-filter-list--brands">
           <label className="shop-check">
             <input checked={!selectedBrands.length} onChange={resetFilters} type="checkbox" />
             <em />
@@ -475,10 +493,24 @@ function ShopFilterPanel({
             </div>
           </label>
           {activeBrands.map((brand) => (
-            <label className="shop-check" key={brand.id}>
-              <input checked={selectedBrands.includes(brand.id)} onChange={() => toggleBrand(brand.id)} type="checkbox" />
+            <label className={`shop-check ${(brandCounts[brand.id] ?? 0) === 0 ? "is-disabled" : ""}`.trim()} key={brand.id}>
+              <input
+                checked={selectedBrands.includes(brand.id)}
+                disabled={(brandCounts[brand.id] ?? 0) === 0}
+                onChange={() => toggleBrand(brand.id)}
+                type="checkbox"
+              />
               <em />
-              <div>
+              <div className="shop-check__content">
+                {brand.logoUrl ? (
+                  <Image
+                    className="shop-check__logo"
+                    src={brand.logoUrl}
+                    alt={textByLanguage(language, brand.nameAr, brand.nameHe)}
+                    width={88}
+                    height={28}
+                  />
+                ) : null}
                 <strong>{textByLanguage(language, brand.nameAr, brand.nameHe)}</strong>
                 <small>{brandCounts[brand.id] ?? 0}</small>
               </div>

@@ -24,6 +24,20 @@ CREATE TABLE IF NOT EXISTS admins (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+ALTER TABLE admins
+    ADD COLUMN IF NOT EXISTS user_id UUID,
+    ADD COLUMN IF NOT EXISTS email TEXT,
+    ADD COLUMN IF NOT EXISTS display_name TEXT,
+    ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_user_id_unique
+ON admins(user_id)
+WHERE user_id IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_admins_email_unique
+ON admins(email)
+WHERE email IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS categories (
     id TEXT PRIMARY KEY,
     slug TEXT UNIQUE NOT NULL,
@@ -268,7 +282,11 @@ FOR INSERT TO authenticated
 WITH CHECK (
     user_id = auth.uid()
     AND email = COALESCE(auth.jwt() ->> 'email', email)
-    AND NOT EXISTS (SELECT 1 FROM public.admins)
+    AND NOT EXISTS (
+        SELECT 1
+        FROM public.admins
+        WHERE user_id IS NOT NULL
+    )
 );
 
 DROP POLICY IF EXISTS "admins_full_access_for_admins" ON admins;

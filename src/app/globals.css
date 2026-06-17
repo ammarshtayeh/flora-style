@@ -20,7 +20,7 @@
 /* Luxury Clean rebuild */
 .flora-header {
   backdrop-filter: blur(18px);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  background: color-mix(in srgb, var(--linen) 88%, transparent);
   border-bottom: 1px solid rgba(212, 175, 55, 0.12);
   inset-inline: 0;
   position: fixed;
@@ -5167,5 +5167,355 @@ html[data-theme="light"] select.select option {
   .install-prompt__actions button {
     flex: 1;
     justify-content: center;
+  }
+}
+
+/* Final shop and mobile cleanup */
+.shop-sidebar__title {
+  display: grid;
+  gap: 6px;
+}
+
+.shop-sidebar__title span {
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.shop-sidebar__head h2 {
+  font-size: clamp(22px, 2.4vw, 34px);
+  line-height: 1.15;
+}
+
+.shop-filter-list--brands {
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.shop-check__content {
+  align-items: start;
+  display: grid;
+  gap: 6px;
+}
+
+.shop-check__logo {
+  filter: grayscale(1);
+  height: auto;
+  max-height: 24px;
+  object-fit: contain;
+  width: auto;
+}
+
+.shop-check:hover .shop-check__logo,
+.shop-check input:checked ~ .shop-check__content .shop-check__logo {
+  filter: grayscale(0);
+}
+
+.shop-check.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.shop-check.is-disabled strong,
+.shop-check.is-disabled small {
+  color: var(--muted);
+}
+
+.flora-brand-filter-bar {
+  align-items: stretch;
+  gap: 12px;
+}
+
+.flora-brand-filter-bar button {
+  align-items: center;
+  display: inline-flex;
+  gap: 10px;
+  min-height: 46px;
+  padding-inline: 16px;
+}
+
+.flora-brand-filter-bar button span {
+  display: inline;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.flora-brand-filter-bar button small {
+  font-size: 12px;
+}
+
+.flora-brand-filter-bar button.is-muted {
+  opacity: 0.45;
+}
+
+.flora-brand-filter-bar button:disabled {
+  cursor: not-allowed;
+}
+
+.flora-brand-filter-bar button img {
+  flex: 0 0 auto;
+  max-height: 18px;
+}
+
+.shop-toolbar {
+  align-items: end;
+  gap: 18px;
+}
+
+.shop-toolbar h2 {
+  font-size: clamp(22px, 3vw, 38px);
+  line-height: 1.1;
+}
+
+.shop-toolbar__actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.shop-sort {
+  min-width: 220px;
+}
+
+.shop-sort span {
+  min-width: fit-content;
+}
+
+.shop-hero h1 {
+  font-size: clamp(36px, 7vw, 72px);
+  line-height: 0.98;
+  max-width: 12ch;
+}
+
+.shop-hero p:not(.luxury-kicker) {
+  max-width: 62ch;
+}
+
+.shop-shell {
+  align-items: start;
+}
+
+.shop-product-grid {
+  gap: 18px;
+}
+
+.luxury-product__meta h3 {
+  line-height: 1.2;
+}
+
+.mobile-menu-sheet {
+  width: min(430px, calc(100vw - 18px));
+}
+
+@media (max-width: 1024px) {
+  .shop-filter-list--brands {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-toolbar {
+    align-items: start;
+    flex-direction: column;
+  }
+
+  .shop-toolbar__actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .flora-header-spacer {
+    height: 158px;
+  }
+
+  .flora-header__top {
+    gap: 8px;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    padding-inline: 12px;
+  }
+
+  .flora-header__brand {
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .flora-header__brand div {
+    min-width: 0;
+  }
+
+  .flora-header__brand strong {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+  }
+
+  .flora-header__nav {
+    gap: 8px;
+    padding-inline: 12px;
+    padding-bottom: 12px;
+  }
+
+  .flora-header__nav a {
+    font-size: 11px;
+    min-height: 34px;
+    padding: 7px 12px;
+  }
+
+  .flora-header__search {
+    min-height: 46px;
+    padding-inline: 12px 6px;
+  }
+
+  .flora-header__search button {
+    min-height: 34px;
+    padding-inline: 14px;
+  }
+
+  .shop-page {
+    padding-inline: 14px;
+  }
+
+  .shop-hero {
+    padding-top: 6px;
+  }
+
+  .shop-hero h1 {
+    font-size: clamp(28px, 11vw, 48px);
+    max-width: 100%;
+  }
+
+  .shop-hero__meta {
+    gap: 8px;
+  }
+
+  .shop-hero__meta span {
+    font-size: 11px;
+    min-height: 34px;
+    padding-inline: 12px;
+  }
+
+  .shop-category-strip__head p {
+    max-width: 100%;
+  }
+
+  .flora-shop-categories .shop-category-strip__grid,
+  .shop-product-grid,
+  .product-row__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shop-category-tabs {
+    gap: 8px;
+    padding-bottom: 14px;
+  }
+
+  .flora-brand-filter-bar {
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .flora-brand-filter-bar button {
+    min-height: 40px;
+    padding-inline: 12px;
+  }
+
+  .flora-brand-filter-bar button img {
+    max-height: 16px;
+  }
+
+  .flora-brand-filter-bar button span {
+    display: inline;
+    font-size: 12px;
+  }
+
+  .flora-brand-filter-bar button small {
+    font-size: 11px;
+  }
+
+  .shop-toolbar h2 {
+    font-size: clamp(22px, 8vw, 34px);
+  }
+
+  .shop-toolbar__actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .shop-sort {
+    grid-column: 1 / -1;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .shop-active-filters {
+    gap: 10px;
+    padding-top: 16px;
+  }
+
+  .shop-active-filters button {
+    font-size: 12px;
+    min-height: 32px;
+    padding-inline: 12px;
+  }
+
+  .shop-mobile-filter-sheet {
+    border-radius: 24px 24px 0 0;
+    max-height: 82vh;
+    padding: 16px 14px 20px;
+    width: calc(100vw - 8px);
+  }
+
+  .shop-sidebar__head {
+    align-items: center;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .shop-sidebar__head-actions {
+    flex: 0 0 auto;
+  }
+
+  .shop-sidebar__head h2 {
+    font-size: 22px;
+  }
+
+  .shop-filter-list--brands {
+    grid-template-columns: 1fr;
+  }
+
+  .shop-check {
+    border-radius: 14px;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .shop-check__logo {
+    max-height: 22px;
+  }
+
+  .luxury-product__meta {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .shop-product-grid .luxury-product__meta h3 {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  .shop-product-grid .luxury-product__bottom {
+    align-items: start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .shop-product-grid .floating-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .mobile-menu-sheet {
+    border-radius: 24px 0 0 24px;
+    max-width: min(88vw, 380px);
   }
 }
