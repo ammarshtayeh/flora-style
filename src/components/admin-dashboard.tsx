@@ -86,13 +86,15 @@ function textInput<T extends object>(
   value: string | number,
   field: keyof T,
   setDraft: React.Dispatch<React.SetStateAction<any>>,
-  type = "text"
+  type = "text",
+  placeholder?: string
 ) {
   return (
     <label className="form-row">
       <span>{label}</span>
       <input
         className="field"
+        placeholder={placeholder}
         type={type}
         value={value}
         onChange={(event) =>
@@ -102,6 +104,95 @@ function textInput<T extends object>(
           }))
         }
       />
+    </label>
+  );
+}
+
+function AdminPicker({
+  emptyLabel = "اختر من القائمة",
+  label,
+  onChange,
+  options,
+  searchable = false,
+  value,
+}: {
+  emptyLabel?: string;
+  label: string;
+  onChange: (id: string) => void;
+  options: Array<{ id: string; label: string }>;
+  searchable?: boolean;
+  value: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const controlRef = React.useRef<HTMLDivElement>(null);
+  const selected = options.find((option) => option.id === value);
+
+  const filteredOptions = useMemo(() => {
+    const normalized = query.trim().toLowerCase();
+    if (!normalized) return options;
+    return options.filter((option) => option.label.toLowerCase().includes(normalized));
+  }, [options, query]);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!controlRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    return () => document.removeEventListener("mousedown", handlePointerDown);
+  }, [open]);
+
+  return (
+    <label className="form-row admin-picker">
+      <span>{label}</span>
+      <div className={`admin-picker__control${open ? " is-open" : ""}`} ref={controlRef}>
+        <button
+          aria-expanded={open}
+          className="admin-picker__trigger"
+          onClick={() => setOpen((current) => !current)}
+          type="button"
+        >
+          <span>{selected?.label ?? emptyLabel}</span>
+        </button>
+        {open ? (
+          <div className="admin-picker__menu">
+            {searchable ? (
+              <input
+                className="field admin-picker__search"
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="ابحثي عن براند..."
+                type="search"
+                value={query}
+              />
+            ) : null}
+            <ul className="admin-picker__list" role="listbox">
+              {filteredOptions.map((option) => (
+                <li key={option.id}>
+                  <button
+                    className={option.id === value ? "is-active" : ""}
+                    onClick={() => {
+                      onChange(option.id);
+                      setOpen(false);
+                      setQuery("");
+                    }}
+                    role="option"
+                    type="button"
+                  >
+                    {option.label}
+                  </button>
+                </li>
+              ))}
+              {!filteredOptions.length ? <li className="admin-picker__empty">لا توجد نتائج مطابقة</li> : null}
+            </ul>
+          </div>
+        ) : null}
+      </div>
     </label>
   );
 }
@@ -748,29 +839,30 @@ export function AdminDashboard() {
                 <div className="two-col form-grid">
                   {textInput<Product>("اسم المنتج عربي", productDraft.nameAr, "nameAr", setProductDraft)}
                   {textInput<Product>("اسم المنتج عبري", productDraft.nameHe, "nameHe", setProductDraft)}
-                  {textInput<Product>("SKU", productDraft.sku, "sku", setProductDraft)}
+                  {textInput<Product>(
+                    "رمز المنتج (كود المخزون)",
+                    productDraft.sku,
+                    "sku",
+                    setProductDraft,
+                    "text",
+                    "مثال: FL-BAG-001"
+                  )}
                   {textInput<Product>("السعر", productDraft.price, "price", setProductDraft, "number")}
                   {textInput<Product>("سعر التخفيض (اختياري)", productDraft.salePrice ?? "", "salePrice", setProductDraft, "number")}
-                  <label className="form-row">
-                    <span>التصنيف</span>
-                    <select className="select" value={productDraft.categoryId} onChange={(event) => setProductDraft({ ...productDraft, categoryId: event.target.value })}>
-                      {data.categories.map((category) => (
-                        <option key={category.id} value={category.id}>
-                          {category.nameAr}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="form-row">
-                    <span>البراند</span>
-                    <select className="select" value={productDraft.brandId} onChange={(event) => setProductDraft({ ...productDraft, brandId: event.target.value })}>
-                      {data.brands.map((brand) => (
-                        <option key={brand.id} value={brand.id}>
-                          {brand.nameAr}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                  <AdminPicker
+                    label="التصنيف"
+                    onChange={(categoryId) => setProductDraft({ ...productDraft, categoryId })}
+                    options={data.categories.map((category) => ({ id: category.id, label: category.nameAr }))}
+                    value={productDraft.categoryId}
+                  />
+                  <AdminPicker
+                    emptyLabel="اختر براند"
+                    label="البراند"
+                    onChange={(brandId) => setProductDraft({ ...productDraft, brandId })}
+                    options={data.brands.map((brand) => ({ id: brand.id, label: brand.nameAr }))}
+                    searchable
+                    value={productDraft.brandId}
+                  />
                 </div>
                 <Textarea label="الوصف القصير عربي" value={productDraft.descriptionAr} onChange={(value) => setProductDraft({ ...productDraft, descriptionAr: value })} />
                 <Textarea label="الوصف القصير عبري" value={productDraft.descriptionHe} onChange={(value) => setProductDraft({ ...productDraft, descriptionHe: value })} />
@@ -1246,7 +1338,7 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
         <thead>
           <tr>
             <th>المنتج</th>
-            <th>SKU</th>
+            <th>رمز المنتج</th>
             <th>السعر</th>
             <th>الحالة</th>
             <th>إجراءات</th>
@@ -1261,7 +1353,7 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
                   <br />
                   <span className="muted">{product.nameHe}</span>
                 </td>
-                <td data-label="SKU">{product.sku}</td>
+                <td data-label="رمز المنتج">{product.sku}</td>
                 <td data-label="السعر">{formatPrice(product.salePrice || product.price)}</td>
                 <td data-label="الحالة">
                   <span className={`status-pill ${product.active ? "status-pill--success" : "status-pill--danger"}`}>

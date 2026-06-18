@@ -185,6 +185,21 @@ function HeaderInner() {
   const subtotal = cartDetails.reduce((sum, item) => sum + (item?.total ?? 0), 0);
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
+  const [cartPanelAxis, setCartPanelAxis] = useState<"x" | "y">("y");
+  const [cartPanelDirection, setCartPanelDirection] = useState(1);
+
+  useEffect(() => {
+    const updateCartPanelMotion = () => {
+      const mobile = window.matchMedia("(max-width: 767px)").matches;
+      const rtl = document.documentElement.dir === "rtl";
+      setCartPanelAxis(mobile ? "y" : "x");
+      setCartPanelDirection(mobile ? 1 : rtl ? -1 : 1);
+    };
+
+    updateCartPanelMotion();
+    window.addEventListener("resize", updateCartPanelMotion);
+    return () => window.removeEventListener("resize", updateCartPanelMotion);
+  }, [language]);
   const activeCategoryId = searchParams?.get("category") || "";
 
   function handleLanguageSwitch() {
@@ -255,12 +270,19 @@ function HeaderInner() {
               <LayoutDashboard size={16} />
               <span>{labels.admin}</span>
             </Link>
-            <button className="flora-header__cart" onClick={() => setCartOpen(true)} type="button">
-              <ShoppingBag size={18} />
-              <span>{labels.cart}</span>
-              <b>{cartItemsCount}</b>
-            </button>
           </div>
+
+          <button
+            aria-expanded={cartOpen}
+            aria-haspopup="dialog"
+            className="flora-header__cart"
+            onClick={() => setCartOpen(true)}
+            type="button"
+          >
+            <ShoppingBag size={18} />
+            <span>{labels.cart}</span>
+            <b>{cartItemsCount}</b>
+          </button>
         </div>
 
         <div className="flora-header__nav">
@@ -358,12 +380,22 @@ function HeaderInner() {
             onClick={() => setCartOpen(false)}
           >
             <motion.aside
+              aria-label={labels.cart}
               className="cart-sheet"
-              initial={{ opacity: 0, y: 64 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 64 }}
+              role="dialog"
+              initial={
+                cartPanelAxis === "y"
+                  ? { opacity: 0, y: "100%" }
+                  : { opacity: 0, x: `${cartPanelDirection * 100}%` }
+              }
+              animate={{ opacity: 1, x: 0, y: 0 }}
+              exit={
+                cartPanelAxis === "y"
+                  ? { opacity: 0, y: "100%" }
+                  : { opacity: 0, x: `${cartPanelDirection * 100}%` }
+              }
               onClick={(event) => event.stopPropagation()}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="cart-sheet__head">
                 <div>
