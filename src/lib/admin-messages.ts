@@ -30,6 +30,8 @@ export function adminDeleteMessage(entity: AdminEntityKey) {
 const knownErrorMessages: Record<string, string> = {
   Unauthorized: "غير مصرح لك بتنفيذ هذا الإجراء.",
   Forbidden: "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
+  "هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.":
+    "هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.",
   "Invalid login credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
   "Email not confirmed": "الحساب غير مفعّل بعد.",
   "User already registered": "هذا البريد الإلكتروني مستخدم مسبقاً.",
@@ -69,6 +71,18 @@ export function formatAdminError(error: unknown, fallback: string) {
 
   if (lowered.includes("jwt") || lowered.includes("token")) {
     return "انتهت صلاحية الجلسة. سجّل الدخول مرة أخرى.";
+  }
+
+  if (lowered.includes("row-level security") || lowered.includes("not allowed")) {
+    return "ليس لديك صلاحية لتنفيذ هذا الإجراء. سجّل الدخول بحساب أدمن معتمد.";
+  }
+
+  if (lowered.includes("mime") || lowered.includes("content type")) {
+    return "نوع الصورة غير مدعوم. استخدمي PNG أو JPG أو WEBP أو HEIC.";
+  }
+
+  if (lowered.includes("bucket") && lowered.includes("not found")) {
+    return "مساحة تخزين الصور غير مهيأة بعد في قاعدة البيانات.";
   }
 
   return raw;

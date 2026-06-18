@@ -1,32 +1,14 @@
 import { NextResponse } from "next/server";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { requireAdminAccess } from "@/lib/supabase/admin-access";
 import { createServiceSupabaseClient, isServiceRoleConfigured } from "@/lib/supabase/service";
 
 async function requireAdmin() {
-  const supabase = await createServerSupabaseClient();
-  if (!supabase) {
-    return { error: NextResponse.json({ error: "Supabase is not configured." }, { status: 500 }) };
+  const access = await requireAdminAccess();
+  if (access.error) {
+    return { error: access.error };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
-  }
-
-  const { data: admin } = await supabase
-    .from("admins")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!admin) {
-    return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
-  }
-
-  return { user };
+  return { user: access.user, supabase: access.supabase };
 }
 
 export async function GET() {
@@ -35,7 +17,7 @@ export async function GET() {
     return access.error;
   }
 
-  const supabase = await createServerSupabaseClient();
+  const { supabase } = access;
   if (!supabase) {
     return NextResponse.json({ error: "Supabase is not configured." }, { status: 500 });
   }

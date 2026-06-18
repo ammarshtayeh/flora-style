@@ -7,6 +7,23 @@ import { ShieldCheck, Mail } from "lucide-react";
 import { createBrowserSupabaseClient, isSupabaseEnabled } from "@/lib/supabase/client";
 import { formatAdminError } from "@/lib/admin-messages";
 
+async function ensureRegisteredAdmin(
+  client: NonNullable<ReturnType<typeof createBrowserSupabaseClient>>,
+  userId: string
+) {
+  const { data: adminRecord, error } = await client
+    .from("admins")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  return !!adminRecord;
+}
+
 function AdminLoginContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
@@ -21,7 +38,7 @@ function AdminLoginContent() {
 
   useEffect(() => {
     if (blocked) {
-      setError("هذا الحساب غير مصرح له بدخول لوحة الأدمن.");
+      setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
     }
   }, [blocked]);
 
@@ -38,7 +55,16 @@ function AdminLoginContent() {
         data: { session },
       } = await client.auth.getSession();
 
-      if (!mounted || !session?.user?.email || redirectingRef.current) {
+      if (!mounted || !session?.user?.id || redirectingRef.current) {
+        return;
+      }
+
+      const isAdmin = await ensureRegisteredAdmin(client, session.user.id);
+      if (!isAdmin) {
+        await client.auth.signOut();
+        if (mounted) {
+          setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
+        }
         return;
       }
 
@@ -66,10 +92,18 @@ function AdminLoginContent() {
     setLoading(true);
     setError("");
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (signInError) {
+    if (signInError || !signInData.user) {
       setError(formatAdminError(signInError, "تعذر تسجيل الدخول. تحقق من البيانات وحاول مرة أخرى."));
+      setLoading(false);
+      return;
+    }
+
+    const isAdmin = await ensureRegisteredAdmin(supabase, signInData.user.id);
+    if (!isAdmin) {
+      await supabase.auth.signOut();
+      setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
       setLoading(false);
       return;
     }
@@ -84,7 +118,7 @@ function AdminLoginContent() {
         <div className="admin-auth-card__head">
           <span className="luxury-kicker">Flora Style Admin</span>
           <h1>تسجيل دخول الأدمن</h1>
-          <p>ادخل إلى لوحة التحكم باستخدام بيانات الأدمن المعتمدة.</p>
+          <p>الدخول متاح فقط لحسابات الأدمن المسجّلة مسبقاً في لوحة التحكم.</p>
         </div>
 
         {!isSupabaseEnabled() ? (

@@ -364,7 +364,7 @@ VALUES (
     'flora-assets',
     TRUE,
     10485760,
-    ARRAY['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml']
+    ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/pjpeg', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif', 'image/avif']
 )
 ON CONFLICT (id) DO UPDATE SET
     public = EXCLUDED.public,
@@ -393,17 +393,6 @@ FOR SELECT TO authenticated
 USING (user_id = auth.uid());
 
 DROP POLICY IF EXISTS "admins_bootstrap_first_admin" ON admins;
-CREATE POLICY "admins_bootstrap_first_admin" ON admins
-FOR INSERT TO authenticated
-WITH CHECK (
-    user_id = auth.uid()
-    AND email = COALESCE(auth.jwt() ->> 'email', email)
-    AND NOT EXISTS (
-        SELECT 1
-        FROM public.admins
-        WHERE user_id IS NOT NULL
-    )
-);
 
 DROP POLICY IF EXISTS "admins_full_access_for_admins" ON admins;
 CREATE POLICY "admins_full_access_for_admins" ON admins

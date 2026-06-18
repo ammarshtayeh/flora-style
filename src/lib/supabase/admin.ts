@@ -15,8 +15,6 @@ function getClient() {
   return createBrowserSupabaseClient();
 }
 
-const STORAGE_BUCKET = "flora-assets";
-
 function requireClient() {
   const client = getClient();
   if (!client || !isSupabaseEnabled()) {
@@ -157,30 +155,23 @@ export async function saveSettings(settings: StoreSettings) {
   if (error) throw error;
 }
 
-function sanitizeFileName(fileName: string) {
-  return fileName
-    .toLowerCase()
-    .replace(/[^a-z0-9.-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function uploadAdminAsset(file: File, folder: string) {
-  const client = requireClient();
-  const safeName = sanitizeFileName(file.name || "asset");
-  const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("folder", folder);
 
-  const { error } = await client.storage.from(STORAGE_BUCKET).upload(path, file, {
-    cacheControl: "3600",
-    upsert: true,
+  const response = await fetch("/api/admin/upload", {
+    method: "POST",
+    body: formData,
+    credentials: "include",
   });
 
-  if (error) {
-    throw error;
+  const payload = (await response.json().catch(() => ({}))) as { url?: string; error?: string };
+  if (!response.ok || !payload.url) {
+    throw new Error(payload.error || "تعذر رفع الصورة.");
   }
 
-  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(path);
-  return data.publicUrl;
+  return payload.url;
 }
 
 export async function uploadAdminAssets(files: File[], folder: string) {

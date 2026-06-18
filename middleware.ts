@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
     .maybeSingle();
 
   if (!adminRecord) {
+    await supabase.auth.signOut();
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("next", pathname);
