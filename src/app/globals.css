@@ -4469,6 +4469,20 @@ button {
   color: #fff;
 }
 
+.admin-header__actions {
+  align-items: center;
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.admin-header .ghost-button {
+  min-height: 44px;
+  padding-inline: 18px;
+}
+
 /* Dashboard Stats Grid */
 .stats-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));

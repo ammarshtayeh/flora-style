@@ -24,10 +24,16 @@ export function loadStoreData(): StoreData {
   if (typeof window === "undefined") return initialStoreData;
   const raw = window.localStorage.getItem(storageKey);
   if (!raw) {
-    // Initialize with demo data if empty
-    const seeded = normalizeStoreData(initialStoreData);
-    window.localStorage.setItem(storageKey, JSON.stringify(seeded));
-    return seeded;
+    const emptyCatalog = normalizeStoreData({
+      ...initialStoreData,
+      products: [],
+      colors: [],
+      orders: [],
+    });
+    if (!isSupabaseEnabled()) {
+      window.localStorage.setItem(storageKey, JSON.stringify(emptyCatalog));
+    }
+    return emptyCatalog;
   }
   try {
     return normalizeStoreData(JSON.parse(raw) as StoreData);

@@ -69,7 +69,7 @@ CREATE TABLE IF NOT EXISTS products (
     slug TEXT UNIQUE NOT NULL,
     sku TEXT UNIQUE NOT NULL,
     category_id TEXT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
-    brand_id TEXT NOT NULL REFERENCES brands(id) ON DELETE RESTRICT,
+    brand_id TEXT REFERENCES brands(id) ON DELETE SET NULL,
     name_ar TEXT NOT NULL,
     name_he TEXT NOT NULL,
     description_ar TEXT DEFAULT '',
@@ -548,64 +548,14 @@ ON CONFLICT (id) DO UPDATE SET
     logo_url = EXCLUDED.logo_url,
     active = EXCLUDED.active;
 
-INSERT INTO products (id, slug, sku, category_id, brand_id, name_ar, name_he, description_ar, description_he, story_ar, story_he, price, sale_price, best_seller, featured, active, created_at)
-VALUES
-    ('prod-black-bag', 'dior-black-handbag', 'FL-BAG-001', 'cat-bags', 'brand-celine', 'حقيبة سيلين سوداء', 'תיק סלין שחור', 'حقيبة سوداء بخطوط كلاسيكية وملمس فاخر، مصممة للاستخدام اليومي والمناسبات.', 'תיק שחור בקווים קלאסיים ובמרקם יוקרתי, מתאים ליומיום ולאירועים.', 'صُممت لتبدو هادئة من بعيد وغنية بالتفاصيل عند الاقتراب. مساحة منظمة، حضور أنثوي، وتشطيب يليق بإطلالة فاخرة.', 'עוצב להיראות שקט מרחוק ועשיר בפרטים מקרוב. חלל מאורגן, נוכחות נשית וגימור שמתאים למראה יוקרתי.', 290, 249, TRUE, TRUE, TRUE, '2026-06-01'),
-    ('prod-gold-set', 'chanel-gold-accessory-set', 'FL-ACC-014', 'cat-accessories', 'brand-chanel', 'طقم شانيل الذهبي', 'סט שאנל זהב', 'طقم إكسسوارات ذهبي ناعم يمنح الإطلالة لمعة راقية دون مبالغة.', 'סט אביזרי זהב עדין שמוסיף ברק יוקרתי בלי עומס.', 'اختيار مناسب للهدايا والإطلالات المسائية؛ قطع خفيفة يمكن ارتداؤها مع أكثر من ستايل.', 'בחירה מתאימה למתנות ולמראה ערב; פריטים קלים שניתן לשלב עם כמה סגנונות.', 120, NULL, FALSE, TRUE, TRUE, '2026-06-08'),
-    ('prod-minimal-watch', 'dior-minimal-watch', 'FL-WAT-021', 'cat-watches', 'brand-rolex', 'ساعة رولكس مينيمال', 'שעון רולקס מינימלי', 'ساعة بتصميم نظيف وسوار أنيق يناسب العمل والمناسبات.', 'שעון בעיצוב נקי ורצועה אלגנטית שמתאים לעבודה ולאירועים.', 'تفاصيل قليلة، تأثير كبير. ساعة مريحة وخفيفة مع قراءة واضحة ولمسة معدنية راقية.', 'מעט פרטים, השפעה גדולה. שעון נוח וקל עם קריאה ברורה ונגיעה מתכתית יוקרתית.', 180, 159, TRUE, FALSE, TRUE, '2026-06-12'),
-    ('prod-prada-sunglasses', 'prada-beige-sunglasses', 'FL-SUN-032', 'cat-sunglasses', 'brand-prada', 'نظارات برادا بيج', 'משקפי פראדה בז''', 'نظارات شمسية بإطار بيج دافئ وعدسات أنيقة لإطلالة نهارية فاخرة.', 'משקפי שמש במסגרת בז'' חמימה ועדשות אלגנטיות למראה יום יוקרתי.', 'قطعة خفيفة تغير الإطلالة فوراً؛ مثالية للسفر، المشاوير اليومية، وصور إنستغرام الناعمة.', 'פריט קל שמשנה את המראה מיד; מושלם לנסיעות, סידורים יומיים ותמונות אינסטגרם עדינות.', 165, NULL, FALSE, TRUE, TRUE, '2026-06-14')
-ON CONFLICT (id) DO UPDATE SET
-    slug = EXCLUDED.slug,
-    sku = EXCLUDED.sku,
-    category_id = EXCLUDED.category_id,
-    brand_id = EXCLUDED.brand_id,
-    name_ar = EXCLUDED.name_ar,
-    name_he = EXCLUDED.name_he,
-    description_ar = EXCLUDED.description_ar,
-    description_he = EXCLUDED.description_he,
-    story_ar = EXCLUDED.story_ar,
-    story_he = EXCLUDED.story_he,
-    price = EXCLUDED.price,
-    sale_price = EXCLUDED.sale_price,
-    best_seller = EXCLUDED.best_seller,
-    featured = EXCLUDED.featured,
-    active = EXCLUDED.active,
-    created_at = EXCLUDED.created_at;
+-- Products, images, colors, and orders are managed from the admin panel.
+-- Run scripts/clear-catalog.mjs to remove demo catalog data when needed.
 
-DELETE FROM product_images
-WHERE product_id IN ('prod-black-bag', 'prod-gold-set', 'prod-minimal-watch', 'prod-prada-sunglasses');
-
-INSERT INTO product_images (product_id, image_url, sort_order)
-VALUES
-    ('prod-black-bag', 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=88', 0),
-    ('prod-black-bag', 'https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1400&q=88', 1),
-    ('prod-black-bag', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1400&q=88', 2),
-    ('prod-gold-set', 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=1400&q=88', 0),
-    ('prod-gold-set', 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=1400&q=88', 1),
-    ('prod-gold-set', 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1800&q=88', 2),
-    ('prod-minimal-watch', 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1400&q=88', 0),
-    ('prod-minimal-watch', 'https://images.unsplash.com/photo-1522312346375-d1a52e2b99b3?auto=format&fit=crop&w=1400&q=88', 1),
-    ('prod-minimal-watch', 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1800&q=88', 2),
-    ('prod-prada-sunglasses', 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=1400&q=88', 0),
-    ('prod-prada-sunglasses', 'https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=1800&q=88', 1),
-    ('prod-prada-sunglasses', 'https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=1800&q=88', 2);
-
-INSERT INTO product_colors (id, product_id, color_name_ar, color_name_he, value, stock_quantity)
-VALUES
-    ('color-black', 'prod-black-bag', 'أسود', 'שחור', '#1A1A1A', 10),
-    ('color-beige', 'prod-black-bag', 'بيج', 'בז''', '#D4C1A7', 3),
-    ('color-gold', 'prod-gold-set', 'ذهبي', 'זהב', '#B89B72', 7),
-    ('color-silver', 'prod-gold-set', 'فضي', 'כסף', '#BDB8AF', 0),
-    ('color-white', 'prod-minimal-watch', 'أبيض', 'לבן', '#F8F5F0', 12),
-    ('color-brown', 'prod-minimal-watch', 'بني', 'חום', '#6D5644', 4),
-    ('color-pink', 'prod-prada-sunglasses', 'موكا', 'מוקה', '#A78D78', 6),
-    ('color-sand', 'prod-prada-sunglasses', 'رملي', 'חול', '#E8DFD3', 25)
-ON CONFLICT (id) DO UPDATE SET
-    product_id = EXCLUDED.product_id,
-    color_name_ar = EXCLUDED.color_name_ar,
-    color_name_he = EXCLUDED.color_name_he,
-    value = EXCLUDED.value,
-    stock_quantity = EXCLUDED.stock_quantity;
+ALTER TABLE products DROP CONSTRAINT IF EXISTS products_brand_id_fkey;
+ALTER TABLE products ALTER COLUMN brand_id DROP NOT NULL;
+ALTER TABLE products
+    ADD CONSTRAINT products_brand_id_fkey
+    FOREIGN KEY (brand_id) REFERENCES brands(id) ON DELETE SET NULL;
 
 INSERT INTO delivery_zones (id, name_ar, name_he, delivery_fee, active)
 VALUES

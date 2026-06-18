@@ -194,7 +194,7 @@ function mapProduct(row: ProductRow, imagesMap: Map<string, string[]>): Product 
     slug: row.slug,
     sku: row.sku,
     categoryId: row.category_id,
-    brandId: row.brand_id,
+    brandId: row.brand_id ?? "",
     nameAr: row.name_ar,
     nameHe: row.name_he,
     descriptionAr: row.description_ar ?? "",
@@ -203,7 +203,7 @@ function mapProduct(row: ProductRow, imagesMap: Map<string, string[]>): Product 
     storyHe: row.story_he ?? "",
     price: Number(row.price),
     salePrice: row.sale_price === null ? undefined : Number(row.sale_price),
-    images: imagesMap.get(row.id) ?? initialStoreData.products.find((item) => item.id === row.id)?.images ?? [],
+    images: imagesMap.get(row.id) ?? [],
     bestSeller: row.best_seller,
     featured: row.featured,
     active: row.active,
@@ -283,7 +283,7 @@ export async function fetchStoreData(client?: SupabaseClient | null): Promise<St
       orders: [],
     };
 
-    return storeData.products.length ? storeData : initialStoreData;
+    return storeData;
   } catch (error) {
     console.error("[Supabase] fetchStoreData failed", error);
     return initialStoreData;

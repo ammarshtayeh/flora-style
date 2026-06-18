@@ -65,7 +65,7 @@ export async function upsertProduct(product: Product) {
     slug: product.slug,
     sku: product.sku,
     category_id: product.categoryId,
-    brand_id: product.brandId,
+    brand_id: product.brandId || null,
     name_ar: product.nameAr,
     name_he: product.nameHe,
     description_ar: product.descriptionAr,
@@ -203,50 +203,60 @@ export async function deleteEntity(
   if (error) throw error;
 }
 
-export async function seedStoreFromInitialData(seed: StoreData = initialStoreData) {
+export async function deleteBrand(id: string) {
   const client = requireClient();
 
-  await client.from("product_images").delete().neq("product_id", "__none__");
-  await client.from("product_colors").delete().neq("id", "__none__");
-  await client.from("order_items").delete().neq("order_id", "__none__");
-  await client.from("orders").delete().neq("id", "__none__");
-  await client.from("products").delete().neq("id", "__none__");
-  await client.from("brands").delete().neq("id", "__none__");
-  await client.from("categories").delete().neq("id", "__none__");
-  await client.from("delivery_zones").delete().neq("id", "__none__");
-  await client.from("banners").delete().neq("id", "__none__");
+  const { error: unlinkError } = await client.from("products").update({ brand_id: null }).eq("brand_id", id);
+  if (unlinkError) throw unlinkError;
 
-  if (seed.categories.length) {
-    const { error } = await client.from("categories").insert(
-      seed.categories.map((category) => ({
-        id: category.id,
-        slug: category.slug,
-        name_ar: category.nameAr,
-        name_he: category.nameHe,
-        description_ar: category.descriptionAr,
-        description_he: category.descriptionHe,
-        image_url: category.imageUrl,
-        active: category.active,
-      }))
-    );
+  const { error } = await client.from("brands").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function clearCatalogAndOrders() {
+  const client = requireClient();
+
+  const steps = [
+    client.from("order_items").delete().neq("order_id", "__none__"),
+    client.from("orders").delete().neq("id", "__none__"),
+    client.from("product_images").delete().neq("product_id", "__none__"),
+    client.from("product_colors").delete().neq("id", "__none__"),
+    client.from("products").delete().neq("id", "__none__"),
+  ] as const;
+
+  for (const step of steps) {
+    const { error } = await step;
     if (error) throw error;
   }
+}
 
-  if (seed.brands.length) {
-    const { error } = await client.from("brands").insert(
-      seed.brands.map((brand) => ({
-        id: brand.id,
-        slug: brand.slug,
-        name_ar: brand.nameAr,
-        name_he: brand.nameHe,
-        description_ar: brand.descriptionAr,
-        description_he: brand.descriptionHe,
-        logo_url: brand.logoUrl,
-        active: brand.active,
-      }))
-    );
-    if (error) throw error;
+export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
+  const client = requireClient();
+
+  for (const category of seed.categories) {
+    await upsertCategory(category);
   }
+
+  for (const brand of seed.brands) {
+    await upsertBrand(brand);
+  }
+
+  for (const zone of seed.deliveryZones) {
+    await upsertDeliveryZone(zone);
+  }
+
+  for (const banner of seed.banners) {
+    await upsertBanner(banner);
+  }
+
+  await saveSettings(seed.settings);
+}
+
+export async function seedStoreFromInitialData(seed: StoreData = initialStoreData) {
+  await clearCatalogAndOrders();
+  await syncBaseCatalog(seed);
+
+  const client = requireClient();
 
   if (seed.products.length) {
     const { error } = await client.from("products").insert(
@@ -255,7 +265,7 @@ export async function seedStoreFromInitialData(seed: StoreData = initialStoreDat
         slug: product.slug,
         sku: product.sku,
         category_id: product.categoryId,
-        brand_id: product.brandId,
+        brand_id: product.brandId || null,
         name_ar: product.nameAr,
         name_he: product.nameHe,
         description_ar: product.descriptionAr,
@@ -299,34 +309,4 @@ export async function seedStoreFromInitialData(seed: StoreData = initialStoreDat
     );
     if (error) throw error;
   }
-
-  if (seed.deliveryZones.length) {
-    const { error } = await client.from("delivery_zones").insert(
-      seed.deliveryZones.map((zone) => ({
-        id: zone.id,
-        name_ar: zone.nameAr,
-        name_he: zone.nameHe,
-        delivery_fee: zone.deliveryFee,
-        active: zone.active,
-      }))
-    );
-    if (error) throw error;
-  }
-
-  if (seed.banners.length) {
-    const { error } = await client.from("banners").insert(
-      seed.banners.map((banner) => ({
-        id: banner.id,
-        title_ar: banner.titleAr,
-        title_he: banner.titleHe,
-        subtitle_ar: banner.subtitleAr,
-        subtitle_he: banner.subtitleHe,
-        image_url: banner.imageUrl,
-        active: banner.active,
-      }))
-    );
-    if (error) throw error;
-  }
-
-  await saveSettings(seed.settings);
 }

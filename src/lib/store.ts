@@ -385,96 +385,8 @@ export const initialStoreData: StoreData = {
       active: true
     }
   ],
-  products: [
-    {
-      id: "prod-black-bag",
-      slug: "dior-black-handbag",
-      sku: "FL-BAG-001",
-      categoryId: "cat-bags",
-      brandId: "brand-celine",
-      nameAr: "حقيبة سيلين سوداء",
-      nameHe: "תיק סלין שחור",
-      descriptionAr: "حقيبة سوداء بخطوط كلاسيكية وملمس فاخر، مصممة للاستخدام اليومي والمناسبات.",
-      descriptionHe: "תיק שחור בקווים קלאסיים ובמרקם יוקרתי, מתאים ליומיום ולאירועים.",
-      storyAr: "صُممت لتبدو هادئة من بعيد وغنية بالتفاصيل عند الاقتراب. مساحة منظمة، حضور أنثوي، وتشطيب يليق بإطلالة فاخرة.",
-      storyHe: "עוצב להיראות שקט מרחוק ועשיר בפרטים מקרוב. חלל מאורגן, נוכחות נשית וגימור שמתאים למראה יוקרתי.",
-      price: 290,
-      salePrice: 249,
-      images: [images.bags, images.bagAlt, images.tote],
-      bestSeller: true,
-      featured: true,
-      active: true,
-      createdAt: "2026-06-01"
-    },
-    {
-      id: "prod-gold-set",
-      slug: "chanel-gold-accessory-set",
-      sku: "FL-ACC-014",
-      categoryId: "cat-accessories",
-      brandId: "brand-chanel",
-      nameAr: "طقم شانيل الذهبي",
-      nameHe: "סט שאנל זהב",
-      descriptionAr: "طقم إكسسوارات ذهبي ناعم يمنح الإطلالة لمعة راقية دون مبالغة.",
-      descriptionHe: "סט אביזרי זהב עדין שמוסיף ברק יוקרתי בלי עומס.",
-      storyAr: "اختيار مناسب للهدايا والإطلالات المسائية؛ قطع خفيفة يمكن ارتداؤها مع أكثر من ستايل.",
-      storyHe: "בחירה מתאימה למתנות ולמראה ערב; פריטים קלים שניתן לשלב עם כמה סגנונות.",
-      price: 120,
-      images: [images.accessories, images.accessoriesAlt, images.editorial],
-      bestSeller: false,
-      featured: true,
-      active: true,
-      createdAt: "2026-06-08"
-    },
-    {
-      id: "prod-minimal-watch",
-      slug: "dior-minimal-watch",
-      sku: "FL-WAT-021",
-      categoryId: "cat-watches",
-      brandId: "brand-rolex",
-      nameAr: "ساعة رولكس مينيمال",
-      nameHe: "שעון רולקס מינימלי",
-      descriptionAr: "ساعة بتصميم نظيف وسوار أنيق يناسب العمل والمناسبات.",
-      descriptionHe: "שעון בעיצוב נקי ורצועה אלגנטית שמתאים לעבודה ולאירועים.",
-      storyAr: "تفاصيل قليلة، تأثير كبير. ساعة مريحة وخفيفة مع قراءة واضحة ولمسة معدنية راقية.",
-      storyHe: "מעט פרטים, השפעה גדולה. שעון נוח וקל עם קריאה ברורה ונגיעה מתכתית יוקרתית.",
-      price: 180,
-      salePrice: 159,
-      images: [images.watches, images.watchesAlt, images.atelier],
-      bestSeller: true,
-      featured: false,
-      active: true,
-      createdAt: "2026-06-12"
-    },
-    {
-      id: "prod-prada-sunglasses",
-      slug: "prada-beige-sunglasses",
-      sku: "FL-SUN-032",
-      categoryId: "cat-sunglasses",
-      brandId: "brand-prada",
-      nameAr: "نظارات برادا بيج",
-      nameHe: "משקפי פראדה בז'",
-      descriptionAr: "نظارات شمسية بإطار بيج دافئ وعدسات أنيقة لإطلالة نهارية فاخرة.",
-      descriptionHe: "משקפי שמש במסגרת בז' חמימה ועדשות אלגנטיות למראה יום יוקרתי.",
-      storyAr: "قطعة خفيفة تغير الإطلالة فوراً؛ مثالية للسفر، المشاوير اليومية، وصور إنستغرام الناعمة.",
-      storyHe: "פריט קל שמשנה את המראה מיד; מושלם לנסיעות, סידורים יומיים ותמונות אינסטגרם עדינות.",
-      price: 165,
-      images: [images.sunglasses, images.editorial, images.atelier],
-      bestSeller: false,
-      featured: true,
-      active: true,
-      createdAt: "2026-06-14"
-    }
-  ],
-  colors: [
-    { id: "color-black", productId: "prod-black-bag", nameAr: "أسود", nameHe: "שחור", value: "#1A1A1A", stockQuantity: 10 },
-    { id: "color-beige", productId: "prod-black-bag", nameAr: "بيج", nameHe: "בז'", value: "#D4C1A7", stockQuantity: 3 },
-    { id: "color-gold", productId: "prod-gold-set", nameAr: "ذهبي", nameHe: "זהב", value: "#B89B72", stockQuantity: 7 },
-    { id: "color-silver", productId: "prod-gold-set", nameAr: "فضي", nameHe: "כסף", value: "#BDB8AF", stockQuantity: 0 },
-    { id: "color-white", productId: "prod-minimal-watch", nameAr: "أبيض", nameHe: "לבן", value: "#F8F5F0", stockQuantity: 12 },
-    { id: "color-brown", productId: "prod-minimal-watch", nameAr: "بني", nameHe: "חום", value: "#6D5644", stockQuantity: 4 },
-    { id: "color-pink", productId: "prod-prada-sunglasses", nameAr: "موكا", nameHe: "מוקה", value: "#A78D78", stockQuantity: 6 },
-    { id: "color-sand", productId: "prod-prada-sunglasses", nameAr: "رملي", nameHe: "חול", value: "#E8DFD3", stockQuantity: 25 }
-  ],
+  products: [],
+  colors: [],
   deliveryZones: [
     { id: "zone-west-bank", nameAr: "الضفة الغربية", nameHe: "הגדה המערבית", deliveryFee: 20, active: true },
     { id: "zone-jerusalem", nameAr: "القدس", nameHe: "ירושלים", deliveryFee: 30, active: true },
@@ -502,23 +414,7 @@ export const initialStoreData: StoreData = {
     addressAr: "فلسطين",
     addressHe: "פלסטין"
   },
-  orders: [
-    {
-      id: "order-1",
-      orderNumber: "FL-1001",
-      customerName: "ليان أحمد",
-      phoneNumber: "0599000000",
-      deliveryZoneId: "zone-west-bank",
-      detailedAddress: "رام الله، شارع الإرسال",
-      notes: "التواصل قبل التوصيل",
-      subtotal: 249,
-      deliveryFee: 20,
-      totalPrice: 269,
-      status: "Pending",
-      createdAt: "2026-06-15",
-      items: [{ productId: "prod-black-bag", colorId: "color-black", quantity: 1, price: 249 }]
-    }
-  ]
+  orders: []
 };
 
 export function formatPrice(amount: number) {

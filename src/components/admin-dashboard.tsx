@@ -21,9 +21,11 @@ import {
 } from "@/lib/store";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import {
+  clearCatalogAndOrders,
+  deleteBrand,
   deleteEntity,
   saveSettings as saveSettingsRemote,
-  seedStoreFromInitialData,
+  syncBaseCatalog,
   uploadAdminAsset,
   uploadAdminAssets,
   upsertBanner,
@@ -509,7 +511,11 @@ export function AdminDashboard() {
       orders: "orders",
     } as const;
 
-    await deleteEntity(tableMap[key], id);
+    if (key === "brands") {
+      await deleteBrand(id);
+    } else {
+      await deleteEntity(tableMap[key], id);
+    }
     await refreshData();
     setSyncMessage(adminDeleteMessage(key));
   }
@@ -575,12 +581,17 @@ export function AdminDashboard() {
     setSyncMessage("تم تحديث حالة الطلب والمخزون في قاعدة البيانات بنجاح.");
   }
 
-  async function resetDemoData() {
-    await seedStoreFromInitialData(initialStoreData);
+  async function syncBaseStoreData() {
+    await syncBaseCatalog(initialStoreData);
     await refreshData();
     setSettingsDraft(initialStoreData.settings);
-    setColorDraft(blankColor(initialStoreData.products[0]?.id ?? ""));
-    setSyncMessage("تمت مزامنة بيانات المتجر مع قاعدة البيانات بنجاح.");
+    setSyncMessage("تم تحديث التصنيفات والبراندات وإعدادات المتجر في قاعدة البيانات.");
+  }
+
+  async function resetDemoData() {
+    await clearCatalogAndOrders();
+    await refreshData();
+    setSyncMessage("تم تنظيف المنتجات والطلبات من قاعدة البيانات. يمكنك البدء بإدخال بياناتك الحقيقية.");
   }
 
   async function handleLogout() {
@@ -665,9 +676,14 @@ export function AdminDashboard() {
             <h1>{activeTabMeta?.label}</h1>
             <p className="admin-header__body">لوحة إدارة متكاملة لإدارة الطلبات والمنتجات والوسائط بشكل مباشر من قاعدة البيانات.</p>
           </div>
-          <button className="danger-button" onClick={resetDemoData}>
-            مزامنة البيانات الابتدائية
-          </button>
+          <div className="admin-header__actions">
+            <button className="ghost-button" onClick={syncBaseStoreData} type="button">
+              تحديث الهيكل الأساسي
+            </button>
+            <button className="danger-button" onClick={resetDemoData} type="button">
+              تنظيف المنتجات والطلبات
+            </button>
+          </div>
         </header>
 
         {syncMessage ? (
