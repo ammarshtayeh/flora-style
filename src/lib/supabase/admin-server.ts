@@ -7,6 +7,7 @@ import type {
   ProductColor,
   StoreSettings,
 } from "@/lib/store";
+import { buildProductSlug } from "@/lib/slug";
 import { createServiceSupabaseClient } from "./service";
 
 function requireServiceClient() {
@@ -47,12 +48,58 @@ export async function serverUpsertBrand(brand: Brand) {
   if (error) throw error;
 }
 
-export async function serverUpsertProduct(product: Product) {
+async function resolveUniqueProductSlug(product: Product) {
   const client = requireServiceClient();
+  const baseSlug = buildProductSlug(product);
+  let candidate = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const { data, error } = await client
+      .from("products")
+      .select("id")
+      .eq("slug", candidate)
+      .neq("id", product.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return candidate;
+
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
+async function ensureDefaultProductColor(productId: string, defaultStock: number) {
+  if (defaultStock <= 0) return;
+
+  const client = requireServiceClient();
+  const { count, error: countError } = await client
+    .from("product_colors")
+    .select("*", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  if (countError) throw countError;
+  if ((count ?? 0) > 0) return;
+
+  const { error } = await client.from("product_colors").upsert({
+    id: `color-default-${productId}`,
+    product_id: productId,
+    color_name_ar: "افتراضي",
+    color_name_he: "ברירת מחדל",
+    value: "#d4af37",
+    stock_quantity: defaultStock,
+  });
+  if (error) throw error;
+}
+
+export async function serverUpsertProduct(product: Product, options?: { defaultStock?: number }) {
+  const client = requireServiceClient();
+  const slug = await resolveUniqueProductSlug(product);
 
   const { error: productError } = await client.from("products").upsert({
     id: product.id,
-    slug: product.slug,
+    slug,
     sku: product.sku,
     category_id: product.categoryId,
     brand_id: product.brandId || null,
@@ -83,6 +130,34 @@ export async function serverUpsertProduct(product: Product) {
       }))
     );
     if (imagesError) throw imagesError;
+  }
+
+  if (options?.defaultStock !== undefined) {
+    await ensureDefaultProductColor(product.id, options.defaultStock);
+  }
+}
+
+export async function serverRepairCatalogLinks() {
+  const client = requireServiceClient();
+  const { data: products, error } = await client.from("products").select("id,slug,sku,name_ar,name_he");
+  if (error) throw error;
+
+  for (const row of products ?? []) {
+    const product = {
+      id: row.id,
+      slug: row.slug ?? "",
+      sku: row.sku ?? "",
+      nameAr: row.name_ar ?? "",
+      nameHe: row.name_he ?? "",
+    } as Product;
+
+    const nextSlug = await resolveUniqueProductSlug(product);
+    if (nextSlug !== row.slug) {
+      const { error: updateError } = await client.from("products").update({ slug: nextSlug }).eq("id", row.id);
+      if (updateError) throw updateError;
+    }
+
+    await ensureDefaultProductColor(row.id, 1);
   }
 }
 

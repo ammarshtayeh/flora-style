@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
-import { loadStoreData, subscribeToStoreData } from "@/lib/db";
+import { loadStoreData, refreshStoreDataFromSupabase, subscribeToStoreData } from "@/lib/db";
 import { getBrandDisplayName, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
 
 const copy = {
@@ -187,10 +187,11 @@ export function Storefront() {
     }, {});
   }, [activeProducts]);
 
-  function handleAddToCart(product: Product) {
-    const color = storeData.colors.find((entry) => entry.productId === product.id && entry.stockQuantity > 0);
+  async function handleAddToCart(product: Product) {
+    const fresh = await refreshStoreDataFromSupabase();
+    const color = fresh.colors.find((entry) => entry.productId === product.id && entry.stockQuantity > 0);
     if (!color) return;
-    addToCart(product.id, color.id, 1);
+    addToCart(product.id, color.id, 1, { colors: fresh.colors });
     window.dispatchEvent(new CustomEvent("flora-open-cart"));
   }
 

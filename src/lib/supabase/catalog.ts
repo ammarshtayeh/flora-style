@@ -298,12 +298,16 @@ export async function fetchStoreDataWithOrders(client?: SupabaseClient | null): 
 
 export async function fetchProductBySlug(slug: string, client?: SupabaseClient | null) {
   const data = await fetchStoreData(client);
-  return data.products.find((product) => product.slug === slug && product.active) ?? null;
+  return data.products.find((product) => product.active && (product.slug === slug || product.id === slug)) ?? null;
+}
+
+function findActiveProduct(data: StoreData, slug: string) {
+  return data.products.find((item) => item.active && (item.slug === slug || item.id === slug));
 }
 
 export async function fetchProductPageData(slug: string, client?: SupabaseClient | null) {
   const data = await fetchStoreData(client);
-  const product = data.products.find((item) => item.slug === slug && item.active);
+  const product = findActiveProduct(data, slug);
 
   if (!product) {
     return null;
@@ -326,7 +330,7 @@ export async function fetchProductPageData(slug: string, client?: SupabaseClient
 
 export async function fetchProductSlugs(client?: SupabaseClient | null) {
   const data = await fetchStoreData(client);
-  return data.products.filter((product) => product.active).map((product) => product.slug);
+  return data.products.filter((product) => product.active && product.slug.trim()).map((product) => product.slug);
 }
 
 export async function isCatalogSeeded(client?: SupabaseClient | null) {

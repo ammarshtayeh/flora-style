@@ -32,7 +32,7 @@ export function ProductCard({
   const isSoldOut = stock <= 0;
   const body = (
     <>
-      <Link className={`luxury-product__image ${compact ? "luxury-product__image--compact" : ""}`.trim()} href={`/products/${product.slug}`}>
+      <Link className={`luxury-product__image ${compact ? "luxury-product__image--compact" : ""}`.trim()} href={`/products/${product.slug || product.id}`}>
         <Image
           className="primary"
           src={product.images[0]}
@@ -49,7 +49,7 @@ export function ProductCard({
         />
       </Link>
       <div className="luxury-product__meta">
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug || product.id}`}>
           <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
         </Link>
         {showDescription ? <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p> : null}
@@ -59,7 +59,7 @@ export function ProductCard({
         </div>
       </div>
       <div className="floating-actions">
-        <Link href={`/products/${product.slug}`}>
+        <Link href={`/products/${product.slug || product.id}`}>
           <Eye size={15} />
           {viewLabel}
         </Link>

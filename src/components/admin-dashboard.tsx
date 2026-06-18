@@ -39,6 +39,7 @@ import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
+import { buildProductSlug } from "@/lib/slug";
 
 type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts" | "profile";
 
@@ -108,19 +109,50 @@ function textInput<T extends object>(
   );
 }
 
+function AdminProductThumb({ imageUrl, label }: { imageUrl?: string; label: string }) {
+  if (!imageUrl) {
+    return <span aria-hidden className="admin-product-thumb admin-product-thumb--empty" />;
+  }
+
+  return (
+    <Image
+      alt={label}
+      className="admin-product-thumb"
+      height={48}
+      src={imageUrl}
+      unoptimized
+      width={48}
+    />
+  );
+}
+
+function AdminProductPreview({ product }: { product: Product }) {
+  return (
+    <div className="admin-product-preview">
+      <AdminProductThumb imageUrl={product.images[0]} label={product.nameAr} />
+      <div>
+        <strong>{product.nameAr}</strong>
+        <p className="muted">{product.sku}</p>
+      </div>
+    </div>
+  );
+}
+
 function AdminPicker({
   emptyLabel = "اختر من القائمة",
   label,
   onChange,
   options,
   searchable = false,
+  searchPlaceholder = "ابحثي...",
   value,
 }: {
   emptyLabel?: string;
   label: string;
   onChange: (id: string) => void;
-  options: Array<{ id: string; label: string }>;
+  options: Array<{ id: string; label: string; imageUrl?: string }>;
   searchable?: boolean;
+  searchPlaceholder?: string;
   value: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -158,6 +190,7 @@ function AdminPicker({
           onClick={() => setOpen((current) => !current)}
           type="button"
         >
+          {selected?.imageUrl ? <AdminProductThumb imageUrl={selected.imageUrl} label={selected.label} /> : null}
           <span>{selected?.label ?? emptyLabel}</span>
         </button>
         {open ? (
@@ -166,7 +199,7 @@ function AdminPicker({
               <input
                 className="field admin-picker__search"
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="ابحثي عن براند..."
+                placeholder={searchPlaceholder}
                 type="search"
                 value={query}
               />
@@ -184,7 +217,8 @@ function AdminPicker({
                     role="option"
                     type="button"
                   >
-                    {option.label}
+                    {option.imageUrl ? <AdminProductThumb imageUrl={option.imageUrl} label={option.label} /> : null}
+                    <span>{option.label}</span>
                   </button>
                 </li>
               ))}
@@ -207,6 +241,8 @@ export function AdminDashboard() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   
   const [productDraft, setProductDraft] = useState<Product>(() => blankProduct(data.categories[0]?.id, data.brands[0]?.id));
+  const [productDefaultStock, setProductDefaultStock] = useState(1);
+  const [productColorDrafts, setProductColorDrafts] = useState<ProductColorFormRow[]>(() => [blankProductColorRow()]);
   const [categoryDraft, setCategoryDraft] = useState<Category>(() => blankCategory());
   const [brandDraft, setBrandDraft] = useState<Brand>(() => blankBrand());
   const [colorDraft, setColorDraft] = useState<ProductColor>(() => blankColor(data.products[0]?.id ?? ""));
@@ -238,7 +274,7 @@ export function AdminDashboard() {
     setData(fresh);
     setSettingsDraft(fresh.settings);
     setSupabaseOrders(fresh.orders);
-    saveStoreData(fresh, { notify: false });
+    saveStoreData(fresh, { notify: true });
     return fresh;
   }
 
@@ -382,19 +418,102 @@ export function AdminDashboard() {
 
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab);
 
+  function beginEditProduct(product: Product) {
+    const rows = data.colors.filter((color) => color.productId === product.id);
+    setProductDraft(product);
+    setProductColorDrafts(rows.length ? rows.map(mapColorToFormRow) : [blankProductColorRow()]);
+    setProductDefaultStock(rows[0]?.stockQuantity ?? 1);
+  }
+
+  function resetProductForm() {
+    setProductDraft(blankProduct(data.categories[0]?.id, data.brands[0]?.id));
+    setProductColorDrafts([blankProductColorRow()]);
+    setProductDefaultStock(1);
+  }
+
+  function updateProductColorRow(index: number, patch: Partial<ProductColorFormRow>) {
+    setProductColorDrafts((current) => current.map((row, rowIndex) => (rowIndex === index ? { ...row, ...patch } : row)));
+  }
+
+  function addProductColorRow() {
+    setProductColorDrafts((current) => [...current, blankProductColorRow()]);
+  }
+
+  function removeProductColorRow(index: number) {
+    setProductColorDrafts((current) => (current.length <= 1 ? [blankProductColorRow()] : current.filter((_, rowIndex) => rowIndex !== index)));
+  }
+
   async function saveProduct(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
+    if (!productDraft.nameAr.trim()) {
+      setSyncError("أدخلي اسم المنتج بالعربية.");
+      return;
+    }
+    if (!productDraft.sku.trim()) {
+      setSyncError("أدخلي رمز المنتج (كود المخزون).");
+      return;
+    }
+    if (!productDraft.categoryId) {
+      setSyncError("اختاري تصنيفاً للمنتج.");
+      return;
+    }
+    if (productDraft.price <= 0) {
+      setSyncError("أدخلي سعراً صحيحاً للمنتج.");
+      return;
+    }
     if (!productDraft.images.length) {
       setSyncError("ارفع صورة واحدة على الأقل للمنتج قبل الحفظ.");
       return;
     }
-    const nextProduct = productDraft.id
+    if (productDefaultStock < 0) {
+      setSyncError("الكمية الافتراضية يجب أن تكون صفراً أو أكثر.");
+      return;
+    }
+
+    const validColors = productColorDrafts.filter((row) => row.nameAr.trim() || row.nameHe.trim());
+    if (validColors.length === 0 && productDefaultStock <= 0) {
+      setSyncError("أضيفي لوناً واحداً على الأقل مع الكمية، أو حددي مخزوناً افتراضياً.");
+      return;
+    }
+
+    const baseProduct = productDraft.id
       ? productDraft
       : { ...productDraft, id: uid("prod"), createdAt: new Date().toISOString().slice(0, 10) };
-    await upsertProduct(nextProduct);
+    const nextProduct = {
+      ...baseProduct,
+      slug: buildProductSlug(baseProduct),
+      sku: productDraft.sku.trim(),
+      nameAr: productDraft.nameAr.trim(),
+    };
+    const hasColors = validColors.length > 0;
+
+    await upsertProduct(nextProduct, hasColors ? undefined : productDefaultStock);
+
+    const existingColorIds = data.colors.filter((color) => color.productId === nextProduct.id).map((color) => color.id);
+    const savedColorIds: string[] = [];
+
+    for (const row of validColors) {
+      const colorId = row.id || uid("color");
+      await upsertColor({
+        id: colorId,
+        productId: nextProduct.id,
+        nameAr: row.nameAr.trim() || row.nameHe.trim(),
+        nameHe: row.nameHe.trim() || row.nameAr.trim(),
+        value: row.value || "#d4af37",
+        stockQuantity: Math.max(0, Number(row.stockQuantity) || 0),
+      });
+      savedColorIds.push(colorId);
+    }
+
+    for (const colorId of existingColorIds) {
+      if (!savedColorIds.includes(colorId)) {
+        await deleteEntity("product_colors", colorId);
+      }
+    }
+
     await refreshData();
-    setProductDraft(blankProduct(data.categories[0]?.id, data.brands[0]?.id));
+    resetProductForm();
     setSyncMessage(adminSaveMessage("products"));
   }
 
@@ -429,8 +548,21 @@ export function AdminDashboard() {
   async function saveColor(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
+    if (!colorDraft.productId) {
+      setSyncError("اختاري المنتج أولاً.");
+      return;
+    }
+    if (!colorDraft.nameAr.trim() && !colorDraft.nameHe.trim()) {
+      setSyncError("أدخلي اسم اللون بالعربية أو العبرية.");
+      return;
+    }
     const nextColor = colorDraft.id ? colorDraft : { ...colorDraft, id: uid("color") };
-    await upsertColor(nextColor);
+    await upsertColor({
+      ...nextColor,
+      nameAr: nextColor.nameAr.trim() || nextColor.nameHe.trim(),
+      nameHe: nextColor.nameHe.trim() || nextColor.nameAr.trim(),
+      stockQuantity: Math.max(0, Number(nextColor.stockQuantity) || 0),
+    });
     await refreshData();
     setColorDraft(blankColor(data.products[0]?.id ?? ""));
     setSyncMessage(adminSaveMessage("colors"));
@@ -850,6 +982,24 @@ export function AdminDashboard() {
                   )}
                   {textInput<Product>("السعر", productDraft.price, "price", setProductDraft, "number")}
                   {textInput<Product>("سعر التخفيض (اختياري)", productDraft.salePrice ?? "", "salePrice", setProductDraft, "number")}
+                  <label className="form-row">
+                    <span>رابط المنتج (يُنشأ تلقائياً)</span>
+                    <input
+                      className="input"
+                      readOnly
+                      value={buildProductSlug({ ...productDraft, id: productDraft.id || "prod-preview" })}
+                    />
+                  </label>
+                  <label className="form-row">
+                    <span>المخزون الافتراضي (إذا لم تُضاف ألوان بعد)</span>
+                    <input
+                      className="input"
+                      min={0}
+                      onChange={(event) => setProductDefaultStock(Number(event.target.value))}
+                      type="number"
+                      value={productDefaultStock}
+                    />
+                  </label>
                   <AdminPicker
                     label="التصنيف"
                     onChange={(categoryId) => setProductDraft({ ...productDraft, categoryId })}
@@ -861,6 +1011,7 @@ export function AdminDashboard() {
                     label="البراند"
                     onChange={(brandId) => setProductDraft({ ...productDraft, brandId })}
                     options={data.brands.map((brand) => ({ id: brand.id, label: brand.nameAr }))}
+                    searchPlaceholder="ابحثي عن براند..."
                     searchable
                     value={productDraft.brandId}
                   />
@@ -875,6 +1026,54 @@ export function AdminDashboard() {
                   onRemove={removeProductImage}
                   onUpload={handleProductImagesUpload}
                 />
+                <section className="admin-color-rows">
+                  <div className="admin-section-head">
+                    <strong>ألوان المنتج والمخزون</strong>
+                    <p className="muted">أضيفي كل لون متوفر وحددي الكمية المتبقية لكل لون.</p>
+                  </div>
+                  {productColorDrafts.map((row, index) => (
+                    <div className="admin-color-row" key={row.id || `color-row-${index}`}>
+                      <div className="admin-color-row__swatch">
+                        <span className="swatch" style={{ background: row.value || "#d4af37" }} />
+                        <input
+                          className="field"
+                          onChange={(event) => updateProductColorRow(index, { value: event.target.value })}
+                          placeholder="#d4af37"
+                          type="text"
+                          value={row.value}
+                        />
+                      </div>
+                      <input
+                        className="field"
+                        onChange={(event) => updateProductColorRow(index, { nameAr: event.target.value })}
+                        placeholder="اللون عربي"
+                        type="text"
+                        value={row.nameAr}
+                      />
+                      <input
+                        className="field"
+                        onChange={(event) => updateProductColorRow(index, { nameHe: event.target.value })}
+                        placeholder="اللون عبري"
+                        type="text"
+                        value={row.nameHe}
+                      />
+                      <input
+                        className="field"
+                        min={0}
+                        onChange={(event) => updateProductColorRow(index, { stockQuantity: Number(event.target.value) })}
+                        placeholder="الكمية"
+                        type="number"
+                        value={row.stockQuantity}
+                      />
+                      <button className="ghost-button" onClick={() => removeProductColorRow(index)} type="button">
+                        حذف
+                      </button>
+                    </div>
+                  ))}
+                  <button className="ghost-button" onClick={addProductColorRow} type="button">
+                    + إضافة لون
+                  </button>
+                </section>
                 <ToggleRow
                   values={[
                     ["الأكثر مبيعاً", productDraft.bestSeller, (checked) => setProductDraft({ ...productDraft, bestSeller: checked })],
@@ -886,7 +1085,7 @@ export function AdminDashboard() {
               </form>
             }
           >
-            <ProductsTable data={data} onEdit={setProductDraft} onDelete={(id) => deleteById("products", id)} />
+            <ProductsTable data={data} onEdit={beginEditProduct} onDelete={(id) => deleteById("products", id)} />
           </CrudLayout>
         ) : null}
 
@@ -895,16 +1094,22 @@ export function AdminDashboard() {
             title="إدارة الألوان والمخزون"
             form={
               <form className="form-grid" onSubmit={saveColor}>
-                <label className="form-row">
-                  <span>المنتج</span>
-                  <select className="select" value={colorDraft.productId} onChange={(event) => setColorDraft({ ...colorDraft, productId: event.target.value })}>
-                    {data.products.map((product) => (
-                      <option key={product.id} value={product.id}>
-                        {product.nameAr}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <AdminPicker
+                  emptyLabel="اختر المنتج"
+                  label="المنتج"
+                  onChange={(productId) => setColorDraft({ ...colorDraft, productId })}
+                  options={data.products.map((product) => ({
+                    id: product.id,
+                    imageUrl: product.images[0],
+                    label: `${product.nameAr} (${product.sku})`,
+                  }))}
+                  searchPlaceholder="ابحثي عن منتج..."
+                  searchable
+                  value={colorDraft.productId}
+                />
+                {colorDraft.productId ? (
+                  <AdminProductPreview product={data.products.find((product) => product.id === colorDraft.productId) ?? blankProduct()} />
+                ) : null}
                 <div className="two-col form-grid">
                   {textInput<ProductColor>("اللون عربي", colorDraft.nameAr, "nameAr", setColorDraft)}
                   {textInput<ProductColor>("اللون عبري", colorDraft.nameHe, "nameHe", setColorDraft)}
@@ -1187,7 +1392,29 @@ function blankBrand(): Brand {
 }
 
 function blankColor(productId: string): ProductColor {
-  return { id: "", productId, nameAr: "", nameHe: "", value: "#d4af37", stockQuantity: 0 };
+  return { id: "", productId, nameAr: "", nameHe: "", value: "#d4af37", stockQuantity: 1 };
+}
+
+type ProductColorFormRow = {
+  id: string;
+  nameAr: string;
+  nameHe: string;
+  value: string;
+  stockQuantity: number;
+};
+
+function blankProductColorRow(): ProductColorFormRow {
+  return { id: "", nameAr: "", nameHe: "", value: "#d4af37", stockQuantity: 1 };
+}
+
+function mapColorToFormRow(color: ProductColor): ProductColorFormRow {
+  return {
+    id: color.id,
+    nameAr: color.nameAr,
+    nameHe: color.nameHe,
+    value: color.value,
+    stockQuantity: color.stockQuantity,
+  };
 }
 
 function blankZone(): DeliveryZone {
@@ -1350,9 +1577,14 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
             return (
               <tr key={product.id}>
                 <td data-label="المنتج">
-                  <strong>{product.nameAr}</strong>
-                  <br />
-                  <span className="muted">{product.nameHe}</span>
+                  <div className="admin-product-cell">
+                    <AdminProductThumb imageUrl={product.images[0]} label={product.nameAr} />
+                    <div>
+                      <strong>{product.nameAr}</strong>
+                      <br />
+                      <span className="muted">{product.nameHe}</span>
+                    </div>
+                  </div>
                 </td>
                 <td data-label="رمز المنتج">{product.sku}</td>
                 <td data-label="السعر">{formatPrice(product.salePrice || product.price)}</td>
@@ -1397,7 +1629,16 @@ function InventoryTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (
             const product = data.products.find((entry) => entry.id === color.productId);
             return (
               <tr key={color.id}>
-                <td data-label="المنتج">{product?.nameAr ?? "-"}</td>
+                <td data-label="المنتج">
+                  <div className="admin-product-cell">
+                    <AdminProductThumb imageUrl={product?.images[0]} label={product?.nameAr ?? "-"} />
+                    <div>
+                      <strong>{product?.nameAr ?? "-"}</strong>
+                      <br />
+                      <span className="muted">{product?.sku ?? "-"}</span>
+                    </div>
+                  </div>
+                </td>
                 <td data-label="اللون">
                   <span className="swatch" style={{ background: color.value }} /> {color.nameAr}
                   <br />

@@ -8,7 +8,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
 import { addToCart } from "@/lib/cart";
-import { loadStoreData, subscribeToStoreData } from "@/lib/db";
+import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, getBrandDisplayName, initialStoreData, Language, Product, ProductColor, textByLanguage } from "@/lib/store";
 
 type ProductDetailsProps = {
@@ -71,7 +71,7 @@ const productCopy = {
   }
 };
 
-export function ProductDetails({ product: staticProduct }: ProductDetailsProps) {
+export function ProductDetails({ product: staticProduct, initialColors }: ProductDetailsProps) {
   const [language, setLanguage] = useState<Language>("ar");
   const [activeImage, setActiveImage] = useState(0);
   const [storeData, setStoreData] = useState(initialStoreData);
@@ -86,9 +86,26 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
   const labels = productCopy[language];
 
   useEffect(() => {
+    const current = loadStoreData();
+    const hasColors = current.colors.some((color) => color.productId === staticProduct.id);
+    const hasProduct = current.products.some((item) => item.id === staticProduct.id);
+
+    if (!hasProduct || (!hasColors && initialColors.length > 0)) {
+      saveStoreData(
+        {
+          ...current,
+          products: hasProduct ? current.products : [staticProduct, ...current.products],
+          colors: hasColors
+            ? current.colors
+            : [...current.colors.filter((color) => color.productId !== staticProduct.id), ...initialColors],
+        },
+        { notify: true }
+      );
+    }
+
     setStoreData(loadStoreData());
-    return subscribeToStoreData(setStoreData);
-  }, []);
+    return subscribeToStoreData(setStoreData, { skipInitialRefresh: true });
+  }, [staticProduct, initialColors]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("flora-language") as Language;
@@ -101,7 +118,10 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
   const product = useMemo(() => storeData.products.find((item) => item.id === staticProduct.id) || staticProduct, [storeData.products, staticProduct]);
   const brand = useMemo(() => storeData.brands.find((item) => item.id === product.brandId), [storeData.brands, product.brandId]);
   const category = useMemo(() => storeData.categories.find((item) => item.id === product.categoryId), [storeData.categories, product.categoryId]);
-  const colors = useMemo(() => storeData.colors.filter((color) => color.productId === product.id), [storeData.colors, product.id]);
+  const colors = useMemo(() => {
+    const liveColors = storeData.colors.filter((color) => color.productId === product.id);
+    return liveColors.length ? liveColors : initialColors;
+  }, [storeData.colors, product.id, initialColors]);
 
   useEffect(() => {
     if (colors.length > 0 && !selectedColorId) {
@@ -152,7 +172,7 @@ export function ProductDetails({ product: staticProduct }: ProductDetailsProps) 
 
   function handleAddToCart() {
     if (!selectedColorId || maxStock <= 0) return;
-    addToCart(product.id, selectedColorId, quantity);
+    addToCart(product.id, selectedColorId, quantity, { colors });
     window.dispatchEvent(new CustomEvent("flora-open-cart"));
   }
 

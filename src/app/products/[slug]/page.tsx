@@ -7,6 +7,8 @@ import { fetchProductPageData, fetchProductSlugs } from "@/lib/supabase/catalog"
 import { createStaticSupabaseClient } from "@/lib/supabase/public";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   params: Promise<{ slug: string }>;
 };

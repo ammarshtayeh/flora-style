@@ -1,4 +1,5 @@
 import { loadStoreData } from "./db";
+import type { ProductColor } from "./store";
 
 export type CartItem = {
   productId: string;
@@ -25,10 +26,16 @@ export function saveCart(cart: CartItem[]) {
   window.dispatchEvent(new CustomEvent("flora-cart-updated", { detail: cart }));
 }
 
-export function addToCart(productId: string, colorId: string, qty = 1): CartItem[] {
+export function addToCart(
+  productId: string,
+  colorId: string,
+  qty = 1,
+  options?: { colors?: ProductColor[] }
+): CartItem[] {
   const data = loadStoreData();
-  const color = data.colors.find((c) => c.id === colorId && c.productId === productId);
-  if (!color) return getCart();
+  const colorSource = options?.colors ?? data.colors;
+  const color = colorSource.find((c) => c.id === colorId && c.productId === productId);
+  if (!color || color.stockQuantity <= 0) return getCart();
 
   const currentCart = getCart();
   const existingIndex = currentCart.findIndex((item) => item.productId === productId && item.colorId === colorId);

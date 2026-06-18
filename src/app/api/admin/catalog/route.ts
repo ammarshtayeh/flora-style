@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import type { Banner, Brand, Category, DeliveryZone, Product, ProductColor, StoreSettings } from "@/lib/store";
 import { requireAdminAccess } from "@/lib/supabase/admin-access";
 import {
   serverClearCatalogAndOrders,
   serverDeleteBrand,
   serverDeleteEntity,
+  serverRepairCatalogLinks,
   serverSaveSettings,
   serverUpsertBanner,
   serverUpsertBrand,
@@ -18,14 +20,15 @@ import { isServiceRoleConfigured } from "@/lib/supabase/service";
 type CatalogBody =
   | { action: "upsertCategory"; payload: Category }
   | { action: "upsertBrand"; payload: Brand }
-  | { action: "upsertProduct"; payload: Product }
+  | { action: "upsertProduct"; payload: { product: Product; defaultStock?: number } }
   | { action: "upsertColor"; payload: ProductColor }
   | { action: "upsertDeliveryZone"; payload: DeliveryZone }
   | { action: "upsertBanner"; payload: Banner }
   | { action: "saveSettings"; payload: StoreSettings }
   | { action: "deleteEntity"; payload: { table: Parameters<typeof serverDeleteEntity>[0]; id: string } }
   | { action: "deleteBrand"; payload: { id: string } }
-  | { action: "clearCatalogAndOrders" };
+  | { action: "clearCatalogAndOrders" }
+  | { action: "repairCatalog" };
 
 export async function POST(request: Request) {
   const access = await requireAdminAccess();
@@ -56,7 +59,7 @@ export async function POST(request: Request) {
         await serverUpsertBrand(body.payload);
         break;
       case "upsertProduct":
-        await serverUpsertProduct(body.payload);
+        await serverUpsertProduct(body.payload.product, { defaultStock: body.payload.defaultStock });
         break;
       case "upsertColor":
         await serverUpsertColor(body.payload);
@@ -79,9 +82,17 @@ export async function POST(request: Request) {
       case "clearCatalogAndOrders":
         await serverClearCatalogAndOrders();
         break;
+      case "repairCatalog":
+        await serverRepairCatalogLinks();
+        break;
       default:
         return NextResponse.json({ error: "إجراء غير مدعوم." }, { status: 400 });
     }
+
+    revalidatePath("/", "layout");
+    revalidatePath("/shop");
+    revalidatePath("/checkout");
+    revalidatePath("/products", "layout");
 
     return NextResponse.json({ ok: true });
   } catch (error) {

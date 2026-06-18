@@ -37,8 +37,8 @@ export async function upsertBrand(brand: Brand) {
   await adminCatalogRequest("upsertBrand", brand);
 }
 
-export async function upsertProduct(product: Product) {
-  await adminCatalogRequest("upsertProduct", product);
+export async function upsertProduct(product: Product, defaultStock?: number) {
+  await adminCatalogRequest("upsertProduct", { product, defaultStock });
 }
 
 export async function upsertColor(color: ProductColor) {
@@ -100,6 +100,10 @@ export async function deleteBrand(id: string) {
 
 export async function clearCatalogAndOrders() {
   await adminCatalogRequest("clearCatalogAndOrders");
+}
+
+export async function repairCatalog() {
+  await adminCatalogRequest("repairCatalog");
 }
 
 export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
