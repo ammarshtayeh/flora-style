@@ -1248,14 +1248,17 @@ export function AdminDashboard() {
 
         {activeTab === "settings" ? (
           <div className="admin-panel">
-            <PanelTitle title="إعدادات المتجر العامة" hint="رقم واتساب هنا هو المصدر الوحيد لرسائل الطلب المستلمة." />
+            <PanelTitle
+              title="إعدادات المتجر العامة"
+              hint="روابط التواصل (واتساب، إنستغرام، تيك توك، فيسبوك، البريد) تظهر في تذييل الموقع والقائمة الجانبية. اتركي الحقل فارغاً لإخفائه."
+            />
             <form className="form-grid" onSubmit={saveSettings} style={{ marginTop: "20px" }}>
               <div className="two-col form-grid">
                 {textInput<StoreSettings>("اسم المتجر", settingsDraft.storeName, "storeName", setSettingsDraft)}
-                {textInput<StoreSettings>("رقم واتساب (شامل كود الدولة وبدون أصفار أو +)", settingsDraft.whatsappNumber, "whatsappNumber", setSettingsDraft)}
-                {textInput<StoreSettings>("Instagram URL", settingsDraft.instagramUrl, "instagramUrl", setSettingsDraft)}
-                {textInput<StoreSettings>("Facebook URL", settingsDraft.facebookUrl, "facebookUrl", setSettingsDraft)}
-                {textInput<StoreSettings>("TikTok URL", settingsDraft.tiktokUrl, "tiktokUrl", setSettingsDraft)}
+                {textInput<StoreSettings>("رقم واتساب / الهاتف (مثال: 972595405245)", settingsDraft.whatsappNumber, "whatsappNumber", setSettingsDraft)}
+                {textInput<StoreSettings>("رابط إنستغرام", settingsDraft.instagramUrl, "instagramUrl", setSettingsDraft)}
+                {textInput<StoreSettings>("رابط تيك توك", settingsDraft.tiktokUrl, "tiktokUrl", setSettingsDraft)}
+                {textInput<StoreSettings>("رابط فيسبوك", settingsDraft.facebookUrl, "facebookUrl", setSettingsDraft)}
                 {textInput<StoreSettings>("البريد الإلكتروني", settingsDraft.email, "email", setSettingsDraft)}
               </div>
               <Textarea label="العنوان الجغرافي عربي" value={settingsDraft.addressAr} onChange={(value) => setSettingsDraft({ ...settingsDraft, addressAr: value })} />

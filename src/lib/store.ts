@@ -406,11 +406,11 @@ export const initialStoreData: StoreData = {
   ],
   settings: {
     storeName: "Flora Style",
-    whatsappNumber: "970599000000",
-    instagramUrl: "https://instagram.com/florastyle",
-    facebookUrl: "https://facebook.com/florastyle",
-    tiktokUrl: "https://tiktok.com/@florastyle",
-    email: "hello@flora-style.shop",
+    whatsappNumber: "972595405245",
+    instagramUrl: "https://www.instagram.com/flora_style2?igsh=MXNiamxkdzZwaDc0cA%3D%3D&utm_source=qr",
+    facebookUrl: "",
+    tiktokUrl: "",
+    email: "",
     addressAr: "فلسطين",
     addressHe: "פלסטין"
   },

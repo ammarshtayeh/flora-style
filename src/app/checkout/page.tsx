@@ -202,9 +202,9 @@ export default function CheckoutPage() {
                   <span>{labels.customerInfo}</span>
                   <h2>{labels.ready}</h2>
                 </div>
-                <div className="checkout-pill">
-                  <ShieldCheck size={16} />
-                  {labels.secure}
+                <div className="checkout-pill checkout-pill--compact">
+                  <ShieldCheck size={15} />
+                  <span>{labels.secure}</span>
                 </div>
               </div>
 
@@ -262,9 +262,9 @@ export default function CheckoutPage() {
                     {cartDetails.length} {labels.items}
                   </h2>
                 </div>
-                <div className="checkout-pill">
-                  <MapPin size={16} />
-                  {zone ? textByLanguage(language, zone.nameAr, zone.nameHe) : labels.deliveryZone}
+                <div className="checkout-pill checkout-pill--compact">
+                  <MapPin size={15} />
+                  <span>{zone ? textByLanguage(language, zone.nameAr, zone.nameHe) : labels.deliveryZone}</span>
                 </div>
               </div>
 

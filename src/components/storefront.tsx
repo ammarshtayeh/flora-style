@@ -6,8 +6,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
 import { ProductCard } from "@/components/product-card";
+import { StoreContactLinks } from "@/components/store-contact-links";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, refreshStoreDataFromSupabase, subscribeToStoreData } from "@/lib/db";
+import { getWhatsAppHref, formatPhoneDisplay } from "@/lib/contact";
 import { getBrandDisplayName, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
 
 const copy = {
@@ -73,6 +75,10 @@ const copy = {
       story: "قصتنا",
       whatsapp: "واتساب",
       email: "البريد الإلكتروني",
+      instagram: "إنستغرام",
+      tiktok: "تيك توك",
+      facebook: "فيسبوك",
+      phone: "هاتف / واتساب",
       copyright: "جميع الحقوق محفوظة"
     }
   },
@@ -138,6 +144,10 @@ const copy = {
       story: "הסיפור שלנו",
       whatsapp: "וואטסאפ",
       email: "אימייל",
+      instagram: "אינסטגרם",
+      tiktok: "טיקטוק",
+      facebook: "פייסבוק",
+      phone: "טלפון / וואטסאפ",
       copyright: "כל הזכויות שמורות"
     }
   }
@@ -360,7 +370,7 @@ export function Storefront() {
                 </div>
               </div>
 
-              <a className="luxury-footer__cta" href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`} rel="noreferrer" target="_blank">
+              <a className="luxury-footer__cta" href={getWhatsAppHref(storeData.settings.whatsappNumber)} rel="noreferrer" target="_blank">
                 <strong>{labels.footer.concierge}</strong>
                 <span>{labels.footer.supportNote}</span>
               </a>
@@ -386,12 +396,7 @@ export function Storefront() {
 
               <div className="luxury-footer__column">
                 <span>{labels.footer.contact}</span>
-                <a href={`https://wa.me/${storeData.settings.whatsappNumber.replace(/\D/g, "")}`} rel="noreferrer" target="_blank">
-                  {labels.footer.whatsapp}
-                </a>
-                <a href={`mailto:${storeData.settings.email}`}>{labels.footer.email}</a>
-                <p>{storeData.settings.whatsappNumber}</p>
-                <p>{storeData.settings.email}</p>
+                <StoreContactLinks settings={storeData.settings} />
               </div>
             </div>
           </div>
@@ -400,7 +405,7 @@ export function Storefront() {
             <span>
               © {new Date().getFullYear()} {storeData.settings.storeName} - {labels.footer.copyright}
             </span>
-            <span>{storeData.settings.whatsappNumber}</span>
+            <span>{formatPhoneDisplay(storeData.settings.whatsappNumber)}</span>
           </div>
         </footer>
       </main>

@@ -18,7 +18,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   CartItem,
   changeCartColor,
@@ -30,6 +30,7 @@ import {
 } from "@/lib/cart";
 import { loadStoreData, subscribeToStoreData } from "@/lib/db";
 import { formatPrice, initialStoreData, Language, textByLanguage } from "@/lib/store";
+import { StoreContactLinks } from "@/components/store-contact-links";
 
 const headerCopy = {
   ar: {
@@ -51,12 +52,13 @@ const headerCopy = {
     light: "فاتح",
     dark: "داكن",
     concierge: "اطلبي مباشرة من الموقع",
-    cartHint: "راجعي القطع ثم انتقلي لإتمام الطلب ليصل مباشرة إلى الأدمن.",
+    cartHint: "راجعي القطع ثم أكملي الطلب من الموقع.",
     menuShop: "التسوق",
     menuSettings: "الإعدادات",
     menuHome: "الرئيسية",
     menuBags: "الشنط",
-    menuWatches: "الساعات"
+    menuWatches: "الساعات",
+    contact: "تواصل معنا"
   },
   he: {
     searchPlaceholder: "חפשי תיק, שעון, צבע או מותג...",
@@ -77,18 +79,20 @@ const headerCopy = {
     light: "בהיר",
     dark: "כהה",
     concierge: "הזמנה ישירה דרך האתר",
-    cartHint: "בדקי את הפריטים ואז המשיכי לקופה כדי שההזמנה תגיע ישירות לניהול.",
+    cartHint: "בדקי את הפריטים ואז השלימי את ההזמנה דרך האתר.",
     menuShop: "קנייה",
     menuSettings: "הגדרות",
     menuHome: "בית",
     menuBags: "תיקים",
-    menuWatches: "שעונים"
+    menuWatches: "שעונים",
+    contact: "יצירת קשר"
   }
 };
 
 function HeaderInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const headerRef = useRef<HTMLElement>(null);
   const [storeData, setStoreData] = useState(initialStoreData);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
@@ -146,6 +150,25 @@ function HeaderInner() {
   useEffect(() => {
     setSearchQuery(searchParams?.get("search") || "");
   }, [searchParams]);
+
+  useEffect(() => {
+    const node = headerRef.current;
+    if (!node) return;
+
+    const updateHeaderHeight = () => {
+      document.documentElement.style.setProperty("--flora-header-height", `${Math.ceil(node.getBoundingClientRect().height)}px`);
+    };
+
+    updateHeaderHeight();
+    const observer = new ResizeObserver(updateHeaderHeight);
+    observer.observe(node);
+    window.addEventListener("resize", updateHeaderHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeaderHeight);
+    };
+  }, []);
 
   useEffect(() => {
     if (typeof document === "undefined") {
@@ -226,7 +249,7 @@ function HeaderInner() {
 
   return (
     <>
-      <header className="flora-header">
+      <header className="flora-header" ref={headerRef}>
         <div className="flora-header__top">
           <button
             aria-expanded={menuOpen}
@@ -349,6 +372,11 @@ function HeaderInner() {
               </div>
 
               <div className="mobile-menu-section">
+                <span>{labels.contact}</span>
+                <StoreContactLinks settings={storeData.settings} variant="menu" />
+              </div>
+
+              <div className="mobile-menu-section">
                 <span>{labels.menuSettings}</span>
                 <div className="mobile-menu-actions">
                   <button onClick={handleLanguageSwitch} type="button">
@@ -398,39 +426,48 @@ function HeaderInner() {
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
               <div className="cart-sheet__head">
-                <div>
-                  <span>{labels.concierge}</span>
+                <div className="cart-sheet__title">
                   <h2>{labels.cart}</h2>
                   <p>{labels.cartHint}</p>
                 </div>
-                <button onClick={() => setCartOpen(false)} aria-label="Close cart">
-                  <X size={20} />
+                <button className="cart-sheet__close" onClick={() => setCartOpen(false)} aria-label="Close cart" type="button">
+                  <X size={18} />
                 </button>
               </div>
 
               {cartDetails.length ? (
                 <>
-                  <button className="clear-cart-trigger" onClick={clearCart}>
-                    <Trash2 size={15} />
-                    {labels.clearCart}
-                  </button>
+                  <div className="cart-sheet__toolbar">
+                    <span>
+                      {cartItemsCount} {language === "ar" ? "قطعة" : "פריטים"}
+                    </span>
+                    <button className="clear-cart-trigger" onClick={clearCart} type="button">
+                      <Trash2 size={14} />
+                      {labels.clearCart}
+                    </button>
+                  </div>
 
                   <div className="cart-lines">
                     {cartDetails.map((item) =>
                       item ? (
-                        <div className="cart-line" key={`${item.productId}-${item.colorId}`}>
-                          <Image
-                            src={item.product.images[0]}
-                            alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
-                            width={68}
-                            height={82}
-                          />
-                          <div>
-                            <strong>{textByLanguage(language, item.product.nameAr, item.product.nameHe)}</strong>
+                        <article className="cart-line" key={`${item.productId}-${item.colorId}`}>
+                          <div className="cart-line__image">
+                            <Image
+                              alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
+                              height={82}
+                              src={item.product.images[0] || "/flora-logo.png"}
+                              width={68}
+                            />
+                          </div>
+                          <div className="cart-line__body">
+                            <div className="cart-line__top">
+                              <strong>{textByLanguage(language, item.product.nameAr, item.product.nameHe)}</strong>
+                              <b>{formatPrice(item.total)}</b>
+                            </div>
                             <select
                               className="cart-color-select"
-                              value={item.colorId}
                               onChange={(event) => changeCartColor(item.productId, item.colorId, event.target.value)}
+                              value={item.colorId}
                             >
                               {item.availableColors.map((color) => (
                                 <option key={color.id} value={color.id}>
@@ -438,25 +475,27 @@ function HeaderInner() {
                                 </option>
                               ))}
                             </select>
-                            <div className="qty-control">
-                              <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)}>
-                                <Minus size={14} />
-                              </button>
-                              <span>{item.quantity}</span>
-                              <button
-                                onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
-                                disabled={item.quantity >= item.color.stockQuantity}
-                              >
-                                <Plus size={14} />
+                            <div className="cart-line__actions">
+                              <div className="qty-control">
+                                <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)} type="button">
+                                  <Minus size={14} />
+                                </button>
+                                <span>{item.quantity}</span>
+                                <button
+                                  disabled={item.quantity >= item.color.stockQuantity}
+                                  onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
+                                  type="button"
+                                >
+                                  <Plus size={14} />
+                                </button>
+                              </div>
+                              <button className="cart-line-remove" onClick={() => removeFromCart(item.productId, item.colorId)} type="button">
+                                <Trash2 size={13} />
+                                {labels.remove}
                               </button>
                             </div>
-                            <button className="cart-line-remove" onClick={() => removeFromCart(item.productId, item.colorId)}>
-                              <Trash2 size={13} />
-                              {labels.remove}
-                            </button>
                           </div>
-                          <b>{formatPrice(item.total)}</b>
-                        </div>
+                        </article>
                       ) : null
                     )}
                   </div>
@@ -471,6 +510,7 @@ function HeaderInner() {
                         setCartOpen(false);
                         router.push("/checkout");
                       }}
+                      type="button"
                     >
                       <CheckCircle2 size={18} />
                       {labels.checkoutBtn}
