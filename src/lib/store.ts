@@ -410,7 +410,7 @@ export const initialStoreData: StoreData = {
     instagramUrl: "https://instagram.com/florastyle",
     facebookUrl: "https://facebook.com/florastyle",
     tiktokUrl: "https://tiktok.com/@florastyle",
-    email: "hello@florastyle.store",
+    email: "hello@flora-style.shop",
     addressAr: "فلسطين",
     addressHe: "פלסטין"
   },

@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ShieldCheck, Mail } from "lucide-react";
@@ -29,68 +29,33 @@ function AdminLoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [loading, setLoading] = useState(false);
-  const redirectingRef = useRef(false);
 
   const supabase = useMemo(() => createBrowserSupabaseClient(), []);
   const nextPath = searchParams?.get("next") || "/admin";
   const blocked = searchParams?.get("blocked") === "1";
+  const signedOut = searchParams?.get("signedout") === "1";
 
   useEffect(() => {
     if (blocked) {
       setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
     }
-  }, [blocked]);
-
-  useEffect(() => {
-    if (!supabase) {
-      return;
+    if (signedOut) {
+      setNotice("تم تسجيل الخروج بنجاح. أدخلي بيانات الأدمن للدخول مرة أخرى.");
     }
-
-    const client = supabase;
-    let mounted = true;
-
-    async function syncUserState() {
-      const {
-        data: { session },
-      } = await client.auth.getSession();
-
-      if (!mounted || !session?.user?.id || redirectingRef.current) {
-        return;
-      }
-
-      const isAdmin = await ensureRegisteredAdmin(client, session.user.id);
-      if (!isAdmin) {
-        await client.auth.signOut();
-        if (mounted) {
-          setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
-        }
-        return;
-      }
-
-      setEmail((currentEmail) => currentEmail || session.user.email || "");
-      redirectingRef.current = true;
-      window.location.assign(nextPath);
-    }
-
-    void syncUserState();
-
-    return () => {
-      mounted = false;
-    };
-  }, [nextPath, supabase]);
+  }, [blocked, signedOut]);
 
   async function handleLogin(event: FormEvent) {
     event.preventDefault();
-    if (!supabase || redirectingRef.current) {
-      if (!supabase) {
-        setError("اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط ثم أعد تشغيل الموقع.");
-      }
+    if (!supabase) {
+      setError("اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط ثم أعد تشغيل الموقع.");
       return;
     }
 
     setLoading(true);
     setError("");
+    setNotice("");
 
     const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
@@ -100,15 +65,22 @@ function AdminLoginContent() {
       return;
     }
 
-    const isAdmin = await ensureRegisteredAdmin(supabase, signInData.user.id);
-    if (!isAdmin) {
-      await supabase.auth.signOut();
-      setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
+    try {
+      const isAdmin = await ensureRegisteredAdmin(supabase, signInData.user.id);
+      if (!isAdmin) {
+        await supabase.auth.signOut({ scope: "global" });
+        await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+        setError("هذا الحساب غير مسجّل كأدمن. يمكن الدخول فقط بحسابات الأدمن المعتمدة.");
+        setLoading(false);
+        return;
+      }
+    } catch (authError) {
+      await supabase.auth.signOut({ scope: "global" });
+      setError(formatAdminError(authError, "تعذر التحقق من صلاحيات الأدمن."));
       setLoading(false);
       return;
     }
 
-    redirectingRef.current = true;
     window.location.assign(nextPath);
   }
 
@@ -127,6 +99,7 @@ function AdminLoginContent() {
           </div>
         ) : null}
 
+        {notice ? <div className="admin-auth-message is-success">{notice}</div> : null}
         {error ? <div className="admin-auth-message is-error">{error}</div> : null}
 
         <form className="admin-auth-form" onSubmit={handleLogin}>
@@ -135,6 +108,7 @@ function AdminLoginContent() {
             <div className="admin-auth-input">
               <Mail size={16} />
               <input
+                autoComplete="username"
                 onChange={(event) => setEmail(event.target.value)}
                 required
                 type="email"
@@ -147,12 +121,18 @@ function AdminLoginContent() {
             <span>كلمة المرور</span>
             <div className="admin-auth-input">
               <ShieldCheck size={16} />
-              <input onChange={(event) => setPassword(event.target.value)} required type="password" value={password} />
+              <input
+                autoComplete="current-password"
+                onChange={(event) => setPassword(event.target.value)}
+                required
+                type="password"
+                value={password}
+              />
             </div>
           </label>
 
           <button className="button" disabled={loading || !isSupabaseEnabled()} type="submit">
-            {loading ? "جاري الدخول..." : "دخول"}
+            {loading ? "جاري التحقق..." : "دخول"}
           </button>
         </form>
 

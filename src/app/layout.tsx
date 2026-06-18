@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, Assistant, Manrope } from "next/font/google";
 import { PwaRegister } from "@/components/pwa-register";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const arabicFont = Alexandria({
@@ -22,7 +23,7 @@ const latinFont = Manrope({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://flora-style.vercel.app"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Flora Style",
     template: "%s | Flora Style"

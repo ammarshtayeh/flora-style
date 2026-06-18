@@ -692,20 +692,21 @@ export function AdminDashboard() {
     setSyncError("");
     setSyncMessage("");
 
-    if (!supabase) {
-      router.replace("/admin/login");
-      router.refresh();
-      return;
-    }
-
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        throw error;
+      if (supabase) {
+        const { error } = await supabase.auth.signOut({ scope: "global" });
+        if (error) {
+          throw error;
+        }
       }
 
-      router.replace("/admin/login");
-      router.refresh();
+      await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem("flora-style-admin-data-v2");
+      }
+
+      window.location.assign("/admin/login?signedout=1");
     } catch (error) {
       setSyncError(formatAdminError(error, "تعذر تسجيل الخروج."));
       setIsLoggingOut(false);

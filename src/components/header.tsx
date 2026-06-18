@@ -266,7 +266,7 @@ function HeaderInner() {
               {theme === "dark" ? <SunMedium size={16} /> : <Moon size={16} />}
               <span>{theme === "dark" ? labels.light : labels.dark}</span>
             </button>
-            <Link className="flora-header__action desktop-only" href="/admin">
+            <Link className="flora-header__action desktop-only" href="/admin/login">
               <LayoutDashboard size={16} />
               <span>{labels.admin}</span>
             </Link>
@@ -359,7 +359,7 @@ function HeaderInner() {
                     {theme === "dark" ? <SunMedium size={18} /> : <Moon size={18} />}
                     <span>{theme === "dark" ? labels.light : labels.dark}</span>
                   </button>
-                  <Link href="/admin" onClick={() => setMenuOpen(false)}>
+                  <Link href="/admin/login" onClick={() => setMenuOpen(false)}>
                     <LayoutDashboard size={18} />
                     <span>{labels.admin}</span>
                   </Link>

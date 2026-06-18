@@ -106,6 +106,16 @@ export async function POST(request: Request) {
       );
     }
 
+    if (message.includes("row-level security")) {
+      return NextResponse.json(
+        {
+          error:
+            "تعذر رفع الصورة بسبب إعدادات السيرفر. تأكدي من إضافة SUPABASE_SERVICE_ROLE_KEY الصحيح على Vercel ثم أعيدي النشر.",
+        },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json({ error: uploadError.message }, { status: 400 });
   }
 

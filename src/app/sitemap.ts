@@ -1,10 +1,11 @@
 import type { MetadataRoute } from "next";
 import { initialStoreData } from "@/lib/store";
+import { siteUrl } from "@/lib/site";
 import { fetchProductSlugs } from "@/lib/supabase/catalog";
 import { createStaticSupabaseClient } from "@/lib/supabase/public";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = "https://flora-style.vercel.app";
+  const baseUrl = siteUrl;
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1 },
     { url: `${baseUrl}/shop`, changeFrequency: "daily", priority: 0.9 },

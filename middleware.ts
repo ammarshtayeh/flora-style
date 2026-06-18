@@ -6,6 +6,14 @@ const supabasePublishableKey =
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
+function redirectWithSessionCookies(url: URL, sessionResponse: NextResponse) {
+  const redirect = NextResponse.redirect(url);
+  sessionResponse.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie);
+  });
+  return redirect;
+}
+
 export async function middleware(request: NextRequest) {
   const { response, supabase, user } = await updateSession(request);
 
@@ -32,12 +40,11 @@ export async function middleware(request: NextRequest) {
     .maybeSingle();
 
   if (!adminRecord) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
-    url.searchParams.set("next", pathname);
     url.searchParams.set("blocked", "1");
-    return NextResponse.redirect(url);
+    return redirectWithSessionCookies(url, response);
   }
 
   return response;

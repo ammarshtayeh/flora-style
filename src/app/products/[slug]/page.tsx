@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ProductDetails } from "@/components/product-details";
 import { formatPrice, initialStoreData, textByLanguage } from "@/lib/store";
+import { siteUrl } from "@/lib/site";
 import { fetchProductPageData, fetchProductSlugs } from "@/lib/supabase/catalog";
 import { createStaticSupabaseClient } from "@/lib/supabase/public";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -71,7 +72,7 @@ export default async function ProductPage({ params }: PageProps) {
       priceCurrency: "ILS",
       price,
       availability: stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-      url: `https://flora-style.vercel.app/products/${product.slug}`
+      url: `${siteUrl}/products/${product.slug}`
     }
   };
 

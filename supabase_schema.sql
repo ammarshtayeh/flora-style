@@ -479,7 +479,7 @@ USING (bucket_id = 'flora-assets' AND is_admin_user(auth.uid()));
 
 INSERT INTO store_settings (id, store_name, whatsapp_number, instagram_url, facebook_url, tiktok_url, email, address_ar, address_he)
 VALUES
-    (1, 'Flora Style', '970599000000', 'https://instagram.com/florastyle', 'https://facebook.com/florastyle', 'https://tiktok.com/@florastyle', 'hello@florastyle.store', 'فلسطين', 'פלסטין')
+    (1, 'Flora Style', '970599000000', 'https://instagram.com/florastyle', 'https://facebook.com/florastyle', 'https://tiktok.com/@florastyle', 'hello@flora-style.shop', 'فلسطين', 'פלסטין')
 ON CONFLICT (id) DO UPDATE SET
     store_name = EXCLUDED.store_name,
     whatsapp_number = EXCLUDED.whatsapp_number,

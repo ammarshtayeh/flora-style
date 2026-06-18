@@ -74,7 +74,7 @@ export function formatAdminError(error: unknown, fallback: string) {
   }
 
   if (lowered.includes("row-level security") || lowered.includes("not allowed")) {
-    return "ليس لديك صلاحية لتنفيذ هذا الإجراء. سجّل الدخول بحساب أدمن معتمد.";
+    return "تعذر تنفيذ العملية. تأكدي من تسجيل الدخول بحساب أدمن معتمد، ومن إعداد SUPABASE_SERVICE_ROLE_KEY على Vercel.";
   }
 
   if (lowered.includes("mime") || lowered.includes("content type")) {
