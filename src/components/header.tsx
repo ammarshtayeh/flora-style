@@ -338,8 +338,8 @@ function HeaderInner() {
             <motion.aside
               animate={{ x: 0 }}
               className="mobile-menu-sheet"
-              exit={{ x: "100%" }}
-              initial={{ x: "100%" }}
+              exit={{ x: "-100%" }}
+              initial={{ x: "-100%" }}
               onClick={(event) => event.stopPropagation()}
               transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
             >

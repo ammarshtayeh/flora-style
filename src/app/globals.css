@@ -970,10 +970,22 @@ html[data-theme="light"] .luxury-product,
 html[data-theme="light"] .category-directory__card,
 html[data-theme="light"] .brand-salon__card,
 html[data-theme="light"] .brand-story,
-html[data-theme="light"] .concierge-banner,
 html[data-theme="light"] .luxury-footer {
   background: #fffdfa;
   border-color: rgba(176, 139, 87, 0.16);
+}
+
+/* Concierge banner stays a dark luxury card in light mode for readable text */
+html[data-theme="light"] .concierge-banner {
+  background:
+    linear-gradient(180deg, rgba(212, 175, 55, 0.16), rgba(212, 175, 55, 0.05)),
+    #2f2a25;
+  border-color: rgba(212, 175, 55, 0.32);
+  box-shadow: 0 24px 60px rgba(53, 39, 28, 0.22);
+}
+
+html[data-theme="light"] .concierge-banner .luxury-kicker {
+  color: var(--gold-hover);
 }
 
 html[data-theme="light"] .cart-sheet {
@@ -1274,13 +1286,17 @@ html[data-theme="light"] .checkout-pill {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.018)),
     rgba(16, 16, 15, 0.98);
-  border-inline-start: 1px solid var(--line);
-  box-shadow: -22px 0 70px rgba(0, 0, 0, 0.48);
+  border-right: 1px solid var(--line);
+  box-shadow: 22px 0 70px rgba(0, 0, 0, 0.48);
   display: grid;
   gap: 22px;
-  height: 100%;
-  margin-inline-start: auto;
+  position: fixed;
+  inset-block: 0;
+  left: 0;
+  right: auto;
+  margin: 0;
   max-width: min(420px, 88vw);
+  width: min(420px, 88vw);
   overflow-y: auto;
   padding: 22px;
 }
@@ -6334,7 +6350,7 @@ html[data-theme="light"] select.select option {
   }
 
   .mobile-menu-sheet {
-    border-radius: 24px 0 0 24px;
+    border-radius: 0 24px 24px 0;
     max-width: min(88vw, 380px);
   }
 
