@@ -77,6 +77,25 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
 
 const statuses: OrderStatus[] = ["Pending", "Confirmed", "Processing", "Delivered", "Cancelled"];
 
+const COLOR_PRESETS: { value: string; nameAr: string; nameHe: string }[] = [
+  { value: "#000000", nameAr: "أسود", nameHe: "שחור" },
+  { value: "#ffffff", nameAr: "أبيض", nameHe: "לבן" },
+  { value: "#d4af37", nameAr: "ذهبي", nameHe: "זהב" },
+  { value: "#c0c0c0", nameAr: "فضي", nameHe: "כסף" },
+  { value: "#a78d78", nameAr: "موكا", nameHe: "מוקה" },
+  { value: "#8b5a2b", nameAr: "بني", nameHe: "חום" },
+  { value: "#b22222", nameAr: "أحمر", nameHe: "אדום" },
+  { value: "#1f3a93", nameAr: "أزرق", nameHe: "כחול" },
+  { value: "#2e7d32", nameAr: "أخضر", nameHe: "ירוק" },
+  { value: "#e91e8c", nameAr: "وردي", nameHe: "ורוד" },
+  { value: "#f5deb3", nameAr: "بيج", nameHe: "בז'" },
+  { value: "#808080", nameAr: "رمادي", nameHe: "אפור" },
+];
+
+function isHexColor(value: string | undefined): boolean {
+  return !!value && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(value.trim());
+}
+
 function uid(prefix: string) {
   return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
 }
@@ -1038,52 +1057,129 @@ export function AdminDashboard() {
                   onRemove={removeProductImage}
                   onUpload={handleProductImagesUpload}
                 />
-                <section className="admin-color-rows">
+                <section className="color-studio">
                   <div className="admin-section-head">
                     <strong>ألوان المنتج والمخزون</strong>
-                    <p className="muted">أضيفي كل لون متوفر وحددي الكمية المتبقية لكل لون.</p>
+                    <p className="muted">اختاري اللون من اللوحة أو أدخلي الكود، ثم حددي الكمية المتبقية لكل لون.</p>
                   </div>
-                  {productColorDrafts.map((row, index) => (
-                    <div className="admin-color-row" key={row.id || `color-row-${index}`}>
-                      <div className="admin-color-row__swatch">
-                        <span className="swatch" style={{ background: row.value || "#d4af37" }} />
-                        <input
-                          className="field"
-                          onChange={(event) => updateProductColorRow(index, { value: event.target.value })}
-                          placeholder="#d4af37"
-                          type="text"
-                          value={row.value}
-                        />
-                      </div>
-                      <input
-                        className="field"
-                        onChange={(event) => updateProductColorRow(index, { nameAr: event.target.value })}
-                        placeholder="اللون عربي"
-                        type="text"
-                        value={row.nameAr}
-                      />
-                      <input
-                        className="field"
-                        onChange={(event) => updateProductColorRow(index, { nameHe: event.target.value })}
-                        placeholder="اللون عبري"
-                        type="text"
-                        value={row.nameHe}
-                      />
-                      <input
-                        className="field"
-                        min={0}
-                        onChange={(event) => updateProductColorRow(index, { stockQuantity: Number(event.target.value) })}
-                        placeholder="الكمية"
-                        type="number"
-                        value={row.stockQuantity}
-                      />
-                      <button className="ghost-button" onClick={() => removeProductColorRow(index)} type="button">
-                        حذف
-                      </button>
-                    </div>
-                  ))}
-                  <button className="ghost-button" onClick={addProductColorRow} type="button">
-                    + إضافة لون
+                  <div className="color-studio__list">
+                    {productColorDrafts.map((row, index) => {
+                      const swatchValue = isHexColor(row.value) ? row.value : "#d4af37";
+                      return (
+                        <div className="color-card" key={row.id || `color-row-${index}`}>
+                          <div className="color-card__head">
+                            <label
+                              className="color-card__picker"
+                              style={{ background: swatchValue }}
+                              title="اختاري اللون"
+                            >
+                              <input
+                                aria-label="منتقي اللون"
+                                onChange={(event) => updateProductColorRow(index, { value: event.target.value })}
+                                type="color"
+                                value={swatchValue}
+                              />
+                            </label>
+                            <div className="color-card__hex">
+                              <span>كود اللون</span>
+                              <input
+                                className="field"
+                                onChange={(event) => updateProductColorRow(index, { value: event.target.value })}
+                                placeholder="#d4af37"
+                                type="text"
+                                value={row.value}
+                              />
+                            </div>
+                            <button
+                              aria-label="حذف اللون"
+                              className="color-card__remove"
+                              onClick={() => removeProductColorRow(index)}
+                              type="button"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <div className="color-card__presets">
+                            {COLOR_PRESETS.map((preset) => (
+                              <button
+                                aria-label={preset.nameAr}
+                                className={`color-chip${row.value?.toLowerCase() === preset.value.toLowerCase() ? " is-active" : ""}`}
+                                key={preset.value}
+                                onClick={() =>
+                                  updateProductColorRow(index, {
+                                    value: preset.value,
+                                    nameAr: row.nameAr.trim() ? row.nameAr : preset.nameAr,
+                                    nameHe: row.nameHe.trim() ? row.nameHe : preset.nameHe,
+                                  })
+                                }
+                                style={{ background: preset.value }}
+                                title={preset.nameAr}
+                                type="button"
+                              />
+                            ))}
+                          </div>
+                          <div className="color-card__fields">
+                            <label className="color-card__field">
+                              <span>اللون عربي</span>
+                              <input
+                                className="field"
+                                onChange={(event) => updateProductColorRow(index, { nameAr: event.target.value })}
+                                placeholder="مثال: ذهبي"
+                                type="text"
+                                value={row.nameAr}
+                              />
+                            </label>
+                            <label className="color-card__field">
+                              <span>اللون عبري</span>
+                              <input
+                                className="field"
+                                onChange={(event) => updateProductColorRow(index, { nameHe: event.target.value })}
+                                placeholder="לדוגמה: זהב"
+                                type="text"
+                                value={row.nameHe}
+                              />
+                            </label>
+                            <div className="color-card__field">
+                              <span>الكمية المتوفرة</span>
+                              <div className="stock-stepper">
+                                <button
+                                  aria-label="إنقاص"
+                                  onClick={() =>
+                                    updateProductColorRow(index, {
+                                      stockQuantity: Math.max(0, (Number(row.stockQuantity) || 0) - 1),
+                                    })
+                                  }
+                                  type="button"
+                                >
+                                  −
+                                </button>
+                                <input
+                                  aria-label="الكمية"
+                                  min={0}
+                                  onChange={(event) => updateProductColorRow(index, { stockQuantity: Math.max(0, Number(event.target.value)) })}
+                                  type="number"
+                                  value={row.stockQuantity}
+                                />
+                                <button
+                                  aria-label="زيادة"
+                                  onClick={() =>
+                                    updateProductColorRow(index, {
+                                      stockQuantity: (Number(row.stockQuantity) || 0) + 1,
+                                    })
+                                  }
+                                  type="button"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <button className="ghost-button color-studio__add" onClick={addProductColorRow} type="button">
+                    + إضافة لون جديد
                   </button>
                 </section>
                 <ToggleRow
@@ -1122,11 +1218,99 @@ export function AdminDashboard() {
                 {colorDraft.productId ? (
                   <AdminProductPreview product={data.products.find((product) => product.id === colorDraft.productId) ?? blankProduct()} />
                 ) : null}
-                <div className="two-col form-grid">
-                  {textInput<ProductColor>("اللون عربي", colorDraft.nameAr, "nameAr", setColorDraft)}
-                  {textInput<ProductColor>("اللون عبري", colorDraft.nameHe, "nameHe", setColorDraft)}
-                  {textInput<ProductColor>("قيمة اللون HEX", colorDraft.value, "value", setColorDraft)}
-                  {textInput<ProductColor>("الكمية بالمخزن", colorDraft.stockQuantity, "stockQuantity", setColorDraft, "number")}
+                <div className="color-card">
+                  <div className="color-card__head">
+                    <label
+                      className="color-card__picker"
+                      style={{ background: isHexColor(colorDraft.value) ? colorDraft.value : "#d4af37" }}
+                      title="اختاري اللون"
+                    >
+                      <input
+                        aria-label="منتقي اللون"
+                        onChange={(event) => setColorDraft({ ...colorDraft, value: event.target.value })}
+                        type="color"
+                        value={isHexColor(colorDraft.value) ? colorDraft.value : "#d4af37"}
+                      />
+                    </label>
+                    <div className="color-card__hex">
+                      <span>كود اللون</span>
+                      <input
+                        className="field"
+                        onChange={(event) => setColorDraft({ ...colorDraft, value: event.target.value })}
+                        placeholder="#d4af37"
+                        type="text"
+                        value={colorDraft.value}
+                      />
+                    </div>
+                  </div>
+                  <div className="color-card__presets">
+                    {COLOR_PRESETS.map((preset) => (
+                      <button
+                        aria-label={preset.nameAr}
+                        className={`color-chip${colorDraft.value?.toLowerCase() === preset.value.toLowerCase() ? " is-active" : ""}`}
+                        key={preset.value}
+                        onClick={() =>
+                          setColorDraft((draft) => ({
+                            ...draft,
+                            value: preset.value,
+                            nameAr: draft.nameAr.trim() ? draft.nameAr : preset.nameAr,
+                            nameHe: draft.nameHe.trim() ? draft.nameHe : preset.nameHe,
+                          }))
+                        }
+                        style={{ background: preset.value }}
+                        title={preset.nameAr}
+                        type="button"
+                      />
+                    ))}
+                  </div>
+                  <div className="color-card__fields">
+                    <label className="color-card__field">
+                      <span>اللون عربي</span>
+                      <input
+                        className="field"
+                        onChange={(event) => setColorDraft({ ...colorDraft, nameAr: event.target.value })}
+                        placeholder="مثال: ذهبي"
+                        type="text"
+                        value={colorDraft.nameAr}
+                      />
+                    </label>
+                    <label className="color-card__field">
+                      <span>اللون عبري</span>
+                      <input
+                        className="field"
+                        onChange={(event) => setColorDraft({ ...colorDraft, nameHe: event.target.value })}
+                        placeholder="לדוגמה: זהב"
+                        type="text"
+                        value={colorDraft.nameHe}
+                      />
+                    </label>
+                    <div className="color-card__field">
+                      <span>الكمية بالمخزن</span>
+                      <div className="stock-stepper">
+                        <button
+                          aria-label="إنقاص"
+                          onClick={() => setColorDraft((draft) => ({ ...draft, stockQuantity: Math.max(0, (Number(draft.stockQuantity) || 0) - 1) }))}
+                          type="button"
+                        >
+                          −
+                        </button>
+                        <input
+                          aria-label="الكمية"
+                          min={0}
+                          onChange={(event) => setColorDraft({ ...colorDraft, stockQuantity: Math.max(0, Number(event.target.value)) })}
+                          type="number"
+                          value={colorDraft.stockQuantity}
+                        />
+                        <button
+                          aria-label="زيادة"
+                          onClick={() => setColorDraft((draft) => ({ ...draft, stockQuantity: (Number(draft.stockQuantity) || 0) + 1 }))}
+                          type="button"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <button className="button">حفظ اللون</button>
               </form>
