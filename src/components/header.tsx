@@ -262,7 +262,7 @@ function HeaderInner() {
           </button>
 
           <Link className="flora-header__brand" href="/" aria-label="Flora Style home">
-            <Image src="/flora-logo.png" alt="Flora Style" width={44} height={44} priority />
+            <Image className="flora-logo-mark" src="/flora-logo.png" alt="Flora Style" width={44} height={44} priority />
             <div>
               <strong>Flora Style</strong>
               <span>Luxury Curated Store</span>

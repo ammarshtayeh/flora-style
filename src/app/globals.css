@@ -71,6 +71,13 @@
   font-size: 11px;
 }
 
+.flora-logo-mark {
+  border: 1px solid rgba(212, 175, 55, 0.32);
+  border-radius: 50%;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
 .flora-header__cart {
   align-items: center;
   background: rgba(212, 175, 55, 0.1);
