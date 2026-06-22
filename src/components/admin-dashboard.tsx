@@ -40,7 +40,7 @@ import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supa
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 import { buildProductSlug } from "@/lib/slug";
 
-type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "settings" | "accounts" | "profile";
+type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "backup" | "settings" | "accounts" | "profile";
 
 type AdminAccount = {
   user_id: string;
@@ -70,6 +70,7 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "brands", label: "البراندات" },
   { id: "delivery", label: "التوصيل" },
   { id: "banners", label: "البانرات" },
+  { id: "backup", label: "النسخة الاحتياطية" },
   { id: "settings", label: "الإعدادات" },
   { id: "accounts", label: "حسابات الأدمن" },
   { id: "profile", label: "ملفي الشخصي" }
@@ -286,6 +287,77 @@ export function AdminDashboard() {
   const [supabaseOrders, setSupabaseOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [supabaseAvailable, setSupabaseAvailable] = useState(false);
+  const [exportingBackup, setExportingBackup] = useState(false);
+
+  async function exportProductsBackup() {
+    setSyncError("");
+    setSyncMessage("");
+    if (!data.products.length) {
+      setSyncError("لا توجد منتجات لتصديرها حالياً.");
+      return;
+    }
+    setExportingBackup(true);
+    try {
+      const fresh = supabaseAvailable ? await refreshData() : data;
+      const XLSX = await import("xlsx");
+
+      const categoryName = (id: string) => fresh.categories.find((c) => c.id === id)?.nameAr ?? "-";
+      const brandName = (id: string) => fresh.brands.find((b) => b.id === id)?.nameAr ?? "-";
+
+      const productRows = fresh.products.map((product) => {
+        const colors = fresh.colors.filter((color) => color.productId === product.id);
+        const totalStock = colors.reduce((sum, color) => sum + (Number(color.stockQuantity) || 0), 0);
+        return {
+          "رمز المنتج": product.sku,
+          "الاسم بالعربية": product.nameAr,
+          "الاسم بالعبرية": product.nameHe,
+          "التصنيف": categoryName(product.categoryId),
+          "البراند": brandName(product.brandId),
+          "السعر": product.price,
+          "سعر التخفيض": product.salePrice ?? "",
+          "إجمالي المخزون": totalStock,
+          "عدد الألوان": colors.length,
+          "الألوان": colors.map((color) => `${color.nameAr} (${color.stockQuantity})`).join("، "),
+          "الوصف عربي": product.descriptionAr,
+          "الوصف عبري": product.descriptionHe,
+          "الأكثر مبيعاً": product.bestSeller ? "نعم" : "لا",
+          "مميز": product.featured ? "نعم" : "لا",
+          "فعال": product.active ? "نعم" : "لا",
+          "الرابط": product.slug,
+          "تاريخ الإضافة": product.createdAt,
+          "عدد الصور": product.images.length,
+          "روابط الصور": product.images.join(" | "),
+          "المعرف": product.id,
+        };
+      });
+
+      const colorRows = fresh.colors.map((color) => {
+        const product = fresh.products.find((entry) => entry.id === color.productId);
+        return {
+          "المنتج": product?.nameAr ?? "-",
+          "رمز المنتج": product?.sku ?? "-",
+          "اللون عربي": color.nameAr,
+          "اللون عبري": color.nameHe,
+          "كود اللون": color.value,
+          "الكمية المتوفرة": color.stockQuantity,
+        };
+      });
+
+      const workbook = XLSX.utils.book_new();
+      const productsSheet = XLSX.utils.json_to_sheet(productRows);
+      const colorsSheet = XLSX.utils.json_to_sheet(colorRows);
+      XLSX.utils.book_append_sheet(workbook, productsSheet, "المنتجات");
+      XLSX.utils.book_append_sheet(workbook, colorsSheet, "الألوان والمخزون");
+
+      const stamp = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `flora-style-backup-${stamp}.xlsx`);
+      setSyncMessage(`تم تنزيل النسخة الاحتياطية (${productRows.length} منتج).`);
+    } catch (error) {
+      setSyncError(formatAdminError(error, "تعذر إنشاء ملف النسخة الاحتياطية."));
+    } finally {
+      setExportingBackup(false);
+    }
+  }
 
   async function refreshData() {
     const fresh = await fetchStoreDataWithOrders();
@@ -1440,6 +1512,57 @@ export function AdminDashboard() {
           >
             <EntityTable rows={data.banners} columns={["titleAr", "titleHe", "active"]} onEdit={setBannerDraft} onDelete={(id) => deleteById("banners", id)} />
           </CrudLayout>
+        ) : null}
+
+        {activeTab === "backup" ? (
+          <div className="admin-grid admin-grid--single">
+            <div className="admin-panel">
+              <PanelTitle
+                title="النسخة الاحتياطية"
+                hint="نزّلي نسخة كاملة من المنتجات وبياناتها وألوانها ومخزونها في ملف Excel واحد للاحتفاظ بها."
+              />
+
+              <div className="backup-card">
+                <div className="backup-card__stats">
+                  <div className="backup-stat">
+                    <strong>{data.products.length}</strong>
+                    <span>منتج</span>
+                  </div>
+                  <div className="backup-stat">
+                    <strong>{data.colors.length}</strong>
+                    <span>لون / مخزون</span>
+                  </div>
+                  <div className="backup-stat">
+                    <strong>{data.categories.length}</strong>
+                    <span>تصنيف</span>
+                  </div>
+                  <div className="backup-stat">
+                    <strong>{data.brands.length}</strong>
+                    <span>براند</span>
+                  </div>
+                </div>
+
+                <div className="backup-card__body">
+                  <h3>تنزيل كل المنتجات في ملف Excel</h3>
+                  <p className="muted">
+                    يحتوي الملف على ورقتين: «المنتجات» بكل التفاصيل (الاسم، الرمز، التصنيف، البراند، السعر،
+                    المخزون، الوصف، الروابط والصور)، و«الألوان والمخزون» بتفاصيل كل لون وكميته.
+                  </p>
+                  <button
+                    className="button backup-card__action"
+                    disabled={exportingBackup || !data.products.length}
+                    onClick={exportProductsBackup}
+                    type="button"
+                  >
+                    {exportingBackup ? "جاري تجهيز الملف..." : "تنزيل ملف Excel"}
+                  </button>
+                  {!data.products.length ? (
+                    <p className="muted">لا توجد منتجات لتصديرها حالياً.</p>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </div>
         ) : null}
 
         {activeTab === "settings" ? (

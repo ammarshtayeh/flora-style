@@ -5096,6 +5096,100 @@ html[data-theme="light"] .store-contact-links--menu .store-contact-links__item:h
   }
 }
 
+/* Backup / Excel export panel */
+.admin-grid--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.backup-card {
+  display: grid;
+  gap: 22px;
+  margin-top: 16px;
+}
+
+.backup-card__stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.backup-stat {
+  background: rgba(212, 175, 55, 0.06);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  display: grid;
+  gap: 4px;
+  padding: 18px;
+  text-align: center;
+}
+
+.backup-stat strong {
+  color: var(--gold);
+  font-family: var(--font-luxury);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.backup-stat span {
+  color: var(--muted-strong);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.backup-card__body {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 24px;
+}
+
+.backup-card__body h3 {
+  color: var(--ink);
+  font-size: 20px;
+  margin: 0;
+}
+
+.backup-card__action {
+  justify-self: start;
+  margin-top: 6px;
+  min-width: 220px;
+}
+
+html[data-theme="light"] .backup-stat {
+  background: rgba(176, 139, 87, 0.08);
+  border-color: rgba(176, 139, 87, 0.2);
+}
+
+html[data-theme="light"] .backup-stat strong {
+  color: #8f6a3d;
+}
+
+html[data-theme="light"] .backup-stat span {
+  color: #6d6257;
+}
+
+html[data-theme="light"] .backup-card__body {
+  background: #fffdfa;
+  border-color: rgba(176, 139, 87, 0.2);
+}
+
+html[data-theme="light"] .backup-card__body h3 {
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .backup-card__stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .backup-card__action {
+    justify-self: stretch;
+    width: 100%;
+  }
+}
+
 /* Color studio — admin color & stock UX */
 .color-studio {
   display: grid;
