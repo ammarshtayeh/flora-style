@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, Assistant, Manrope } from "next/font/google";
 import { PwaRegister } from "@/components/pwa-register";
+import { SmoothScroll } from "@/components/smooth-scroll";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
+import "./flora-2026.css";
 
 const arabicFont = Alexandria({
   subsets: ["arabic"],
@@ -82,7 +84,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${arabicFont.variable} ${hebrewFont.variable} ${latinFont.variable}`}
     >
       <body>
-        {children}
+        <SmoothScroll>{children}</SmoothScroll>
         <PwaRegister />
       </body>
     </html>

@@ -3,8 +3,18 @@
 import { Eye, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { formatPrice, type Language, type Product, textByLanguage } from "@/lib/store";
+
+const cardReveal: Variants = {
+  hidden: { opacity: 0, y: 32, scale: 0.97 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
+  },
+};
 
 type ProductCardProps = {
   product: Product;
@@ -74,11 +84,29 @@ export function ProductCard({
   );
 
   if (compact) {
-    return <article className="luxury-product luxury-product--compact">{body}</article>;
+    return (
+      <motion.article
+        className="luxury-product luxury-product--compact"
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, amount: 0.2 }}
+        variants={cardReveal}
+      >
+        {body}
+      </motion.article>
+    );
   }
 
   return (
-    <motion.article className="luxury-product" whileHover={{ y: -8 }} transition={{ duration: 0.45 }}>
+    <motion.article
+      className="luxury-product"
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.15 }}
+      variants={cardReveal}
+      whileHover={{ y: -10 }}
+      transition={{ type: "spring", stiffness: 320, damping: 26 }}
+    >
       {body}
     </motion.article>
   );

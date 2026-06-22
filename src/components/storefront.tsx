@@ -154,8 +154,28 @@ const copy = {
 } as const;
 
 const reveal: Variants = {
-  hidden: { opacity: 0, y: 34 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.85, ease: [0.22, 1, 0.36, 1] } }
+  hidden: { opacity: 0, y: 40 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.9, ease: [0.16, 1, 0.3, 1] },
+  },
+};
+
+const stagger: Variants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: 0.12, delayChildren: 0.08 },
+  },
+};
+
+const fadeUp: Variants = {
+  hidden: { opacity: 0, y: 24 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
+  },
 };
 
 export function Storefront() {
@@ -213,13 +233,22 @@ export function Storefront() {
           <motion.div className="luxury-hero__media flora-home__hero-media" style={{ y: heroY }}>
             {banner ? <Image className="luxury-hero__image" src={banner.imageUrl} alt="Flora Style editorial" fill priority sizes="100vw" /> : null}
           </motion.div>
-          <motion.div className="luxury-hero__content flora-home__hero-content" initial="hidden" animate="show" variants={reveal}>
-            <h1>{banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}</h1>
-            <p>{banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}</p>
-            <div className="luxury-actions">
+          <motion.div
+            className="luxury-hero__content flora-home__hero-content"
+            initial="hidden"
+            animate="show"
+            variants={stagger}
+          >
+            <motion.h1 variants={fadeUp}>
+              {banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}
+            </motion.h1>
+            <motion.p variants={fadeUp}>
+              {banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}
+            </motion.p>
+            <motion.div className="luxury-actions" variants={fadeUp}>
               <Link href="/shop">{labels.shop}</Link>
               <a href="#collections">{labels.browseCategories}</a>
-            </div>
+            </motion.div>
           </motion.div>
         </section>
 
@@ -239,19 +268,21 @@ export function Storefront() {
         </section>
 
         <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
-          <div className="flora-category-grid">
+          <motion.div className="flora-category-grid" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
             {featuredCategories.map((category) => (
-              <Link className="flora-category-card" href={`/shop?category=${category.id}`} key={category.id}>
-                <div className="flora-category-card__image">
-                  <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 100vw, 25vw" />
-                </div>
-                <div className="flora-category-card__body">
-                  <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
-                  <strong>{productsPerCategory[category.id] ?? 0}</strong>
-                </div>
-              </Link>
+              <motion.div key={category.id} variants={fadeUp}>
+                <Link className="flora-category-card" href={`/shop?category=${category.id}`}>
+                  <div className="flora-category-card__image">
+                    <Image src={category.imageUrl} alt={textByLanguage(language, category.nameAr, category.nameHe)} fill sizes="(max-width: 900px) 100vw, 25vw" />
+                  </div>
+                  <div className="flora-category-card__body">
+                    <span>{textByLanguage(language, category.nameAr, category.nameHe)}</span>
+                    <strong>{productsPerCategory[category.id] ?? 0}</strong>
+                  </div>
+                </Link>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </AnimatedSection>
 
         <AnimatedSection id="best-sellers" eyebrow="02" title={labels.bestSellers}>
@@ -415,11 +446,18 @@ export function Storefront() {
 
 function AnimatedSection({ id, eyebrow, title, children }: { id?: string; eyebrow: string; title: string; children: React.ReactNode }) {
   return (
-    <motion.section className="luxury-section" id={id} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }} variants={reveal}>
-      <div className="luxury-section__head">
+    <motion.section
+      className="luxury-section"
+      id={id}
+      initial="hidden"
+      whileInView="show"
+      viewport={{ once: true, amount: 0.12 }}
+      variants={reveal}
+    >
+      <motion.div className="luxury-section__head" variants={fadeUp}>
         <span>{eyebrow}</span>
         <h2>{title}</h2>
-      </div>
+      </motion.div>
       {children}
     </motion.section>
   );
