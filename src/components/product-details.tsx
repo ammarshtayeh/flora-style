@@ -353,7 +353,7 @@ function ProductRow({
   return (
     <section className="product-row">
       <h2>{title}</h2>
-      <div className="product-row__grid">
+      <div className="product-row__grid product-row__cards">
         {products.map((product) => {
           const stock = colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
           return (

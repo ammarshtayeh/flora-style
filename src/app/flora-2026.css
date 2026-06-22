@@ -913,3 +913,208 @@ html[data-theme="light"] .luxury-footer {
     gap: 14px;
   }
 }
+
+/* ── Related & recently viewed product rows ── */
+.product-row {
+  margin-inline: auto;
+  max-width: 1240px;
+  padding-block: clamp(36px, 5vw, 72px) !important;
+  padding-inline: clamp(12px, 3vw, 24px);
+}
+
+.product-row h2 {
+  font-size: clamp(24px, 4vw, 38px) !important;
+  letter-spacing: -0.02em;
+  margin: 0 0 18px;
+}
+
+html[data-theme="light"] .product-row h2,
+html[data-theme="light"] .product-story h2 {
+  background: linear-gradient(135deg, #171412 0%, #6d4f2b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--ink);
+}
+
+.product-row__cards {
+  align-items: stretch;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 0 !important;
+}
+
+/* Neutralize legacy overlay styles that break ProductCard links */
+.product-row__cards a {
+  aspect-ratio: auto !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  position: relative !important;
+  transform: none !important;
+}
+
+.product-row__cards a:hover {
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.product-row__cards a img {
+  filter: none !important;
+  transform: none !important;
+}
+
+.product-row__cards a:hover img {
+  filter: none !important;
+  transform: none !important;
+}
+
+.product-row__cards > span,
+.product-row__cards .luxury-product span {
+  background: none !important;
+  bottom: auto !important;
+  color: inherit !important;
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  inset: auto !important;
+  padding: 0 !important;
+  position: static !important;
+}
+
+.product-row__cards .luxury-product__meta a {
+  display: inline !important;
+}
+
+.product-row__cards .luxury-product {
+  height: 100%;
+  min-width: 0;
+}
+
+.product-row__cards .luxury-product__image {
+  aspect-ratio: 1 / 1.02;
+  border-bottom: 1px solid rgba(176, 139, 87, 0.1);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  display: block;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.product-row__cards .luxury-product__image img {
+  object-fit: contain;
+  padding: 10px;
+}
+
+.product-row__cards .luxury-product__meta h3 {
+  font-size: 14px;
+  min-height: 0;
+}
+
+.product-row__cards .luxury-product__actions {
+  grid-template-columns: 1fr;
+  padding-top: 10px;
+}
+
+.product-row__cards .luxury-product__actions a {
+  min-height: 38px;
+}
+
+/* Product story block */
+html[data-theme="light"] .product-story {
+  margin-inline: auto;
+  max-width: 860px;
+  padding-block: clamp(32px, 5vw, 56px);
+  padding-inline: clamp(12px, 3vw, 24px);
+  text-align: center;
+}
+
+html[data-theme="light"] .product-story > span {
+  color: #8f6a3d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+html[data-theme="light"] .product-story p {
+  color: #5f5448;
+  line-height: 1.85;
+}
+
+/* ── Site-wide responsive polish ── */
+@media (max-width: 1120px) {
+  .product-row__cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .product-landing {
+    grid-template-columns: 1fr !important;
+  }
+
+  .shop-shell {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .product-page {
+    overflow-x: hidden;
+  }
+
+  .product-breadcrumb {
+    padding: 12px 12px 0;
+  }
+
+  .product-gallery__main {
+    border-radius: 18px;
+  }
+
+  .product-thumbs {
+    gap: 8px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin-top: 10px;
+  }
+
+  .product-row__cards {
+    display: flex;
+    gap: 12px;
+    margin-inline: -12px;
+    overflow-x: auto;
+    padding-inline: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .product-row__cards::-webkit-scrollbar {
+    display: none;
+  }
+
+  .product-row__cards .luxury-product {
+    flex: 0 0 min(68vw, 260px);
+    scroll-snap-align: start;
+  }
+
+  .flora-header__top {
+    gap: 10px;
+    min-height: 72px;
+  }
+
+  .shop-page,
+  .checkout-page {
+    padding-inline: 12px;
+  }
+
+  .luxury-section {
+    padding-inline: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-row__cards .luxury-product {
+    flex-basis: min(78vw, 240px);
+  }
+
+  .brand-filter-bar {
+    justify-content: flex-start;
+  }
+}
