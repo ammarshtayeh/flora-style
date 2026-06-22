@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Header } from "@/components/header";
+import { BrandTicker } from "@/components/brand-ticker";
 import { ProductCard } from "@/components/product-card";
 import { StoreContactLinks } from "@/components/store-contact-links";
 import { addToCart } from "@/lib/cart";
@@ -266,6 +267,8 @@ export function Storefront() {
             <span>{labels.statBrands}</span>
           </div>
         </section>
+
+        {activeBrands.length ? <BrandTicker brands={activeBrands} language={language} /> : null}
 
         <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
           <motion.div className="flora-category-grid" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger}>

@@ -914,6 +914,105 @@ html[data-theme="light"] .luxury-footer {
   }
 }
 
+/* Brand marquee ticker — above categories on home */
+.flora-brand-ticker {
+  margin: 0 auto 4px;
+  max-width: 1240px;
+  padding-inline: clamp(12px, 3vw, 24px);
+}
+
+.flora-brand-ticker__viewport {
+  background: linear-gradient(
+    90deg,
+    rgba(247, 243, 238, 0.4),
+    rgba(255, 253, 249, 0.92) 18%,
+    rgba(255, 253, 249, 0.92) 82%,
+    rgba(247, 243, 238, 0.4)
+  );
+  border: 1px solid rgba(176, 139, 87, 0.16);
+  border-radius: 999px;
+  direction: ltr;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  overflow: hidden;
+}
+
+.flora-brand-ticker__track {
+  align-items: center;
+  animation: flora-brand-ticker 38s linear infinite;
+  display: flex;
+  width: max-content;
+  will-change: transform;
+}
+
+.flora-brand-ticker__track:hover {
+  animation-play-state: paused;
+}
+
+.flora-brand-ticker__group {
+  align-items: center;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.flora-brand-ticker__item {
+  color: #4a4038;
+  display: inline-block;
+  font-family: var(--font-luxury);
+  font-size: clamp(11px, 1.6vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  padding: 14px 26px;
+  text-transform: uppercase;
+  transition: color 0.35s ease;
+  white-space: nowrap;
+}
+
+.flora-brand-ticker__item:hover {
+  color: #8f6a3d;
+}
+
+.flora-brand-ticker__sep {
+  background: rgba(176, 139, 87, 0.55);
+  border-radius: 999px;
+  display: inline-block;
+  flex-shrink: 0;
+  height: 4px;
+  width: 4px;
+}
+
+@keyframes flora-brand-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flora-brand-ticker__track {
+    animation: none;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .flora-brand-ticker__viewport {
+    mask-image: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .flora-brand-ticker__item {
+    letter-spacing: 0.14em;
+    padding: 12px 18px;
+  }
+
+  .flora-brand-ticker__track {
+    animation-duration: 28s;
+  }
+}
+
 /* ── Related & recently viewed product rows ── */
 .product-row {
   margin-inline: auto;
