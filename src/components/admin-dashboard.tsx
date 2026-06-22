@@ -21,11 +21,10 @@ import {
 } from "@/lib/store";
 import { loadStoreData, saveStoreData, subscribeToStoreData } from "@/lib/db";
 import {
-  clearCatalogAndOrders,
   deleteBrand,
   deleteEntity,
   saveSettings as saveSettingsRemote,
-  syncBaseCatalog,
+  syncStructureCatalog,
   uploadAdminAsset,
   uploadAdminAssets,
   upsertBanner,
@@ -724,6 +723,20 @@ export function AdminDashboard() {
     id: string
   ) {
     setSyncError("");
+
+    if (key === "products") {
+      const product = data.products.find((entry) => entry.id === id);
+      const confirmed = window.confirm(
+        `حذف المنتج "${product?.nameAr ?? id}" نهائياً؟\nهذا الإجراء لا يمكن التراجع عنه.`
+      );
+      if (!confirmed) return;
+    }
+
+    if (key === "orders") {
+      const confirmed = window.confirm("حذف هذا الطلب نهائياً من السجل؟");
+      if (!confirmed) return;
+    }
+
     const tableMap = {
       products: "products",
       categories: "categories",
@@ -805,16 +818,14 @@ export function AdminDashboard() {
   }
 
   async function syncBaseStoreData() {
-    await syncBaseCatalog(initialStoreData);
-    await refreshData();
-    setSettingsDraft(initialStoreData.settings);
-    setSyncMessage("تم تحديث التصنيفات والبراندات وإعدادات المتجر في قاعدة البيانات.");
-  }
+    const confirmed = window.confirm(
+      "سيتم تحديث التصنيفات والبراندات ومناطق التوصيل والبانرات فقط.\nالمنتجات والطلبات الحالية لن تُحذف.\nهل تريدين المتابعة؟"
+    );
+    if (!confirmed) return;
 
-  async function resetDemoData() {
-    await clearCatalogAndOrders();
+    await syncStructureCatalog(initialStoreData);
     await refreshData();
-    setSyncMessage("تم تنظيف المنتجات والطلبات من قاعدة البيانات. يمكنك البدء بإدخال بياناتك الحقيقية.");
+    setSyncMessage("تم تحديث التصنيفات والبراندات ومناطق التوصيل. المنتجات والطلبات وإعدادات التواصل لم تُمس.");
   }
 
   async function handleLogout() {
@@ -902,13 +913,14 @@ export function AdminDashboard() {
           </div>
           <div className="admin-header__actions">
             <button className="ghost-button" onClick={syncBaseStoreData} type="button">
-              تحديث الهيكل الأساسي
-            </button>
-            <button className="danger-button" onClick={resetDemoData} type="button">
-              تنظيف المنتجات والطلبات
+              تحديث التصنيفات والبراندات
             </button>
           </div>
         </header>
+
+        <div className="admin-inline-notice admin-inline-notice--success">
+          بيانات المنتجات محفوظة في قاعدة البيانات. الحذف الجماعي للكتالوج معطّل لحماية عملك.
+        </div>
 
         {syncMessage ? (
           <div className="admin-flash admin-flash--success">

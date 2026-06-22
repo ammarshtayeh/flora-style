@@ -3,7 +3,6 @@ import { revalidatePath } from "next/cache";
 import type { Banner, Brand, Category, DeliveryZone, Product, ProductColor, StoreSettings } from "@/lib/store";
 import { requireAdminAccess } from "@/lib/supabase/admin-access";
 import {
-  serverClearCatalogAndOrders,
   serverDeleteBrand,
   serverDeleteEntity,
   serverRepairCatalogLinks,
@@ -27,7 +26,6 @@ type CatalogBody =
   | { action: "saveSettings"; payload: StoreSettings }
   | { action: "deleteEntity"; payload: { table: Parameters<typeof serverDeleteEntity>[0]; id: string } }
   | { action: "deleteBrand"; payload: { id: string } }
-  | { action: "clearCatalogAndOrders" }
   | { action: "repairCatalog" };
 
 export async function POST(request: Request) {
@@ -78,9 +76,6 @@ export async function POST(request: Request) {
         break;
       case "deleteBrand":
         await serverDeleteBrand(body.payload.id);
-        break;
-      case "clearCatalogAndOrders":
-        await serverClearCatalogAndOrders();
         break;
       case "repairCatalog":
         await serverRepairCatalogLinks();

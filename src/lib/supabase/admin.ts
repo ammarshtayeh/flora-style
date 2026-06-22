@@ -99,14 +99,14 @@ export async function deleteBrand(id: string) {
 }
 
 export async function clearCatalogAndOrders() {
-  await adminCatalogRequest("clearCatalogAndOrders");
+  throw new Error("تم تعطيل مسح الكتالوج من لوحة الأدمن لحماية بيانات المتجر.");
 }
 
 export async function repairCatalog() {
   await adminCatalogRequest("repairCatalog");
 }
 
-export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
+export async function syncStructureCatalog(seed: StoreData = initialStoreData) {
   for (const category of seed.categories) {
     await upsertCategory(category);
   }
@@ -122,19 +122,13 @@ export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
   for (const banner of seed.banners) {
     await upsertBanner(banner);
   }
+}
 
+export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
+  await syncStructureCatalog(seed);
   await saveSettings(seed.settings);
 }
 
 export async function seedStoreFromInitialData(seed: StoreData = initialStoreData) {
-  await clearCatalogAndOrders();
-  await syncBaseCatalog(seed);
-
-  for (const product of seed.products) {
-    await upsertProduct(product);
-  }
-
-  for (const color of seed.colors) {
-    await upsertColor(color);
-  }
+  throw new Error("تم تعطيل إعادة تهيئة المتجر من الواجهة. استخدمي سكربتات الصيانة يدوياً عند الحاجة.");
 }

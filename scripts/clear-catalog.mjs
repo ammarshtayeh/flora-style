@@ -1,3 +1,8 @@
+/**
+ * DANGER: Deletes ALL products and orders from Supabase.
+ * Do NOT run on production unless you have a backup.
+ * This script is for maintenance only — not exposed in admin UI.
+ */
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
