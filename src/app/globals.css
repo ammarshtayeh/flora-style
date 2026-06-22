@@ -817,6 +817,41 @@ html[data-theme="light"] .shop-mobile-filter-sheet {
     var(--linen);
 }
 
+html[data-theme="light"] .brand-filter-bar button {
+  background: #fffdfa;
+  border-color: rgba(176, 139, 87, 0.22);
+  color: #5f5448;
+  box-shadow: 0 6px 16px rgba(176, 139, 87, 0.08);
+}
+
+html[data-theme="light"] .brand-filter-bar button small {
+  background: rgba(176, 139, 87, 0.14);
+  color: #8f6a3d;
+}
+
+html[data-theme="light"] .brand-filter-bar button:hover {
+  border-color: var(--gold);
+  color: #7a5728;
+}
+
+html[data-theme="light"] .brand-filter-bar button.is-active,
+html[data-theme="light"] .flora-brand-filter-bar button:first-child.is-active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #fffdf9;
+}
+
+html[data-theme="light"] .brand-filter-bar button.is-active small {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fffdf9;
+}
+
+html[data-theme="light"] .flora-brand-filter-bar button:first-child {
+  background: rgba(176, 139, 87, 0.12);
+  border-color: rgba(176, 139, 87, 0.4);
+  color: #7a5728;
+}
+
 html[data-theme="light"] .install-prompt {
   border-color: rgba(176, 139, 87, 0.18);
 }
@@ -3538,17 +3573,12 @@ button {
 /* Brand filter chips bar */
 .brand-filter-bar {
   display: flex;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 10px;
-  margin: 0 auto 20px;
-  max-width: 1440px;
-  overflow-x: auto;
-  padding-bottom: 6px;
-  -webkit-overflow-scrolling: touch;
-}
-
-.brand-filter-bar::-webkit-scrollbar {
-  display: none;
+  margin: 0 auto 24px;
+  max-width: 1180px;
+  padding: 4px;
 }
 
 .brand-filter-bar button {
@@ -3570,9 +3600,16 @@ button {
 }
 
 .brand-filter-bar button small {
+  align-items: center;
+  background: rgba(212, 175, 55, 0.12);
+  border-radius: 999px;
   color: var(--gold);
+  display: inline-flex;
   font-family: var(--font-luxury);
-  font-size: 12px;
+  font-size: 11px;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 7px;
 }
 
 .brand-filter-bar button:hover,
@@ -3580,6 +3617,17 @@ button {
   background: rgba(212, 175, 55, 0.14);
   border-color: var(--gold);
   color: var(--gold);
+}
+
+.brand-filter-bar button.is-active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ivory);
+}
+
+.brand-filter-bar button.is-active small {
+  background: rgba(0, 0, 0, 0.18);
+  color: inherit;
 }
 
 /* Horizontal product rail on mobile */
@@ -5986,16 +6034,16 @@ html[data-theme="light"] select.select option {
 }
 
 .flora-brand-filter-bar {
-  align-items: stretch;
-  gap: 12px;
+  align-items: center;
+  gap: 10px;
 }
 
 .flora-brand-filter-bar button {
   align-items: center;
   display: inline-flex;
-  gap: 10px;
-  min-height: 46px;
-  padding-inline: 16px;
+  gap: 9px;
+  min-height: 44px;
+  padding-inline: 18px;
 }
 
 .flora-brand-filter-bar button span {
@@ -6006,7 +6054,19 @@ html[data-theme="light"] select.select option {
 }
 
 .flora-brand-filter-bar button small {
-  font-size: 12px;
+  font-size: 11px;
+}
+
+.flora-brand-filter-bar button:first-child {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: rgba(212, 175, 55, 0.4);
+  color: var(--gold);
+  font-weight: 800;
+}
+
+.flora-brand-filter-bar button:first-child.is-active {
+  background: var(--gold);
+  color: var(--ivory);
 }
 
 .flora-brand-filter-bar button.is-muted {
