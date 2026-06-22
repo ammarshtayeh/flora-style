@@ -526,6 +526,243 @@ html[data-theme="light"] .cart-line__top strong {
   color: var(--ink);
 }
 
+/* ── Product purchase panel: compact, no internal scroll ── */
+.purchase-panel {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+.purchase-panel .luxury-kicker {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  margin-bottom: 6px;
+}
+
+.purchase-panel h1 {
+  font-size: clamp(22px, 4.5vw, 40px) !important;
+  line-height: 1.2;
+  margin: 4px 0 8px !important;
+}
+
+.purchase-panel .purchase-hint {
+  font-size: 12px;
+  line-height: 1.55;
+  margin: 0 0 10px;
+}
+
+.purchase-panel .product-price {
+  margin: 10px 0;
+  padding: 10px 0;
+}
+
+.purchase-panel .product-price strong {
+  font-size: 26px;
+}
+
+.purchase-panel .product-facts {
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 0 0 12px;
+}
+
+.purchase-panel .product-facts div {
+  align-items: start;
+  border-bottom: 0;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 0;
+}
+
+.purchase-panel .product-facts dt {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+}
+
+.purchase-panel .product-facts dd {
+  font-size: 12px;
+  max-width: 100%;
+  text-align: start;
+}
+
+.purchase-panel .selector-block {
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.purchase-panel .selector-block > span {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+/* Color chips — horizontal, compact */
+.purchase-panel .premium-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.purchase-panel .premium-swatches button {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 1 1 calc(50% - 4px);
+  gap: 8px;
+  grid-template-columns: none;
+  justify-content: flex-start;
+  min-height: 40px;
+  min-width: 0;
+  padding: 6px 12px;
+}
+
+.purchase-panel .premium-swatches i {
+  flex-shrink: 0;
+  height: 18px;
+  width: 18px;
+}
+
+.purchase-panel .premium-swatches span {
+  flex: 1;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.purchase-panel .premium-swatches small {
+  flex-shrink: 0;
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+html[data-theme="light"] .purchase-panel .premium-swatches button {
+  background: #fffdfa;
+  border-color: rgba(176, 139, 87, 0.22);
+}
+
+html[data-theme="light"] .purchase-panel .premium-swatches span {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .purchase-panel .premium-swatches small {
+  color: #8f6a3d;
+}
+
+html[data-theme="light"] .purchase-panel .premium-swatches button.is-selected {
+  background: rgba(176, 139, 87, 0.14);
+  border-color: #b08b57;
+}
+
+html[data-theme="light"] .purchase-panel .premium-swatches button.is-selected span {
+  color: #5a3f1a;
+}
+
+/* Quantity inline with label */
+.purchase-panel .selector-block + .selector-block {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.purchase-panel .selector-block + .selector-block .luxury-qty {
+  margin-top: 0;
+}
+
+.purchase-panel .luxury-qty button {
+  height: 28px;
+  width: 32px;
+}
+
+.purchase-panel .luxury-qty strong {
+  font-size: 13px;
+  min-width: 28px;
+}
+
+.purchase-panel .purchase-actions {
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.purchase-panel .purchase-actions button {
+  min-height: 46px;
+  padding-inline: 14px;
+}
+
+.purchase-panel .share-link {
+  margin-top: 10px;
+  min-height: 40px;
+}
+
+html[data-theme="light"] .purchase-panel {
+  padding: 16px 14px;
+}
+
+@media (max-width: 768px) {
+  .product-landing {
+    gap: 18px;
+    padding: 12px 12px 24px;
+  }
+
+  .purchase-panel {
+    padding: 14px 12px !important;
+  }
+
+  .purchase-panel .premium-swatches button {
+    flex: 1 1 calc(33.333% - 6px);
+    flex-direction: column;
+    gap: 4px;
+    min-height: 52px;
+    padding: 6px 6px;
+    text-align: center;
+  }
+
+  .purchase-panel .premium-swatches span {
+    font-size: 11px;
+    white-space: normal;
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .purchase-panel .premium-swatches small {
+    font-size: 9px;
+  }
+
+  .purchase-panel .product-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .purchase-panel .purchase-hint {
+    -webkit-line-clamp: 2;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .purchase-panel .purchase-actions {
+    flex-direction: row;
+  }
+
+  .purchase-panel .purchase-actions button {
+    flex: 1;
+    font-size: 11px;
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 769px) {
+  .purchase-panel {
+    padding: 20px 18px !important;
+  }
+
+  .purchase-panel .premium-swatches button {
+    flex: 1 1 calc(33.333% - 6px);
+  }
+}
+
 /* Buttons — shimmer CTA */
 .luxury-actions a,
 .button,
