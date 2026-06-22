@@ -181,7 +181,7 @@ html[data-theme="light"] .flora-category-card__body span {
   color: var(--ink);
 }
 
-/* Product cards — editorial boutique */
+/* Product cards — editorial boutique (fixed layout) */
 html[data-theme="light"] .luxury-product {
   background: #fffdfa;
   border-color: rgba(176, 139, 87, 0.14);
@@ -190,45 +190,340 @@ html[data-theme="light"] .luxury-product {
 }
 
 .luxury-product {
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+  min-height: 0;
+  overflow: hidden;
   transition:
-    transform 0.65s var(--ease-out-expo),
-    box-shadow 0.65s var(--ease-out-expo),
+    transform 0.55s var(--ease-out-expo),
+    box-shadow 0.55s var(--ease-out-expo),
     border-color 0.45s ease;
 }
 
 .luxury-product:hover {
   box-shadow: var(--shadow-gold);
+  transform: translateY(-6px);
+}
+
+.luxury-product__image {
+  aspect-ratio: 1 / 1.05;
+  background: linear-gradient(180deg, #faf7f2 0%, #f3ede4 100%);
+  border-bottom: 1px solid rgba(176, 139, 87, 0.1);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.luxury-product__image img {
+  object-fit: contain;
+  object-position: center;
+  padding: 14px;
+}
+
+.luxury-product:hover .primary {
+  opacity: 1;
+  transform: scale(1.04);
+}
+
+.luxury-product:hover .secondary {
+  opacity: 0;
+}
+
+.luxury-product__badge {
+  background: rgba(23, 20, 18, 0.78);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  inset-block-start: 12px;
+  inset-inline-start: 12px;
+  letter-spacing: 0.06em;
+  padding: 6px 12px;
+  position: absolute;
+  z-index: 2;
+}
+
+.luxury-product__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  padding: 16px 16px 14px;
+}
+
+.luxury-product__meta {
+  display: grid;
+  flex: 1;
+  gap: 8px;
+  min-height: 0;
 }
 
 html[data-theme="light"] .luxury-product__meta h3 {
   color: var(--ink);
+  display: -webkit-box;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.45;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 html[data-theme="light"] .luxury-product__meta p {
   color: #6d6257;
+  display: -webkit-box;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 0;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 
 html[data-theme="light"] .luxury-product__bottom strong {
   color: #8f6a3d;
+  font-family: var(--font-luxury);
+  font-size: 18px;
 }
 
-.luxury-product__image {
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+.luxury-product__bottom {
+  margin-top: auto;
+  padding-top: 4px;
 }
 
-.floating-actions {
-  backdrop-filter: blur(14px);
+/* In-flow action bar — no overlay bugs */
+.luxury-product__actions {
+  border-top: 1px solid rgba(176, 139, 87, 0.12);
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 12px;
+}
+
+.luxury-product--compact .luxury-product__actions {
+  grid-template-columns: 1fr;
+}
+
+.luxury-product__actions a,
+.luxury-product__actions button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(176, 139, 87, 0.22);
   border-radius: 999px;
-  transition: opacity 0.45s var(--ease-out-expo), transform 0.45s var(--ease-out-expo);
+  color: #5f5448;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  gap: 6px;
+  justify-content: center;
+  letter-spacing: 0.06em;
+  min-height: 42px;
+  padding: 0 12px;
+  transition:
+    background 0.35s ease,
+    border-color 0.35s ease,
+    color 0.35s ease,
+    transform 0.35s var(--ease-out-expo);
 }
 
-html[data-theme="light"] .floating-actions {
-  background: rgba(255, 253, 249, 0.92);
-  border: 1px solid rgba(176, 139, 87, 0.18);
+.luxury-product__actions a:hover,
+.luxury-product__actions button:hover:not(:disabled) {
+  background: rgba(176, 139, 87, 0.12);
+  border-color: rgba(176, 139, 87, 0.4);
+  color: #7a5728;
+  transform: translateY(-1px);
 }
 
-.luxury-product:hover .floating-actions {
-  transform: translateX(-50%) translateY(-6px);
+.luxury-product__actions button:last-child {
+  background: linear-gradient(135deg, #b08b57, #c9a66b);
+  border-color: transparent;
+  color: #fffdf9;
+}
+
+.luxury-product__actions button:last-child:hover:not(:disabled) {
+  background: linear-gradient(135deg, #9a7848, #b08b57);
+  color: #fff;
+}
+
+.luxury-product__actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* Hide legacy floating overlay */
+.luxury-product .floating-actions {
+  display: none !important;
+}
+
+/* Home product grid — grid on desktop, rail on mobile */
+.flora-home-product-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 1120px) {
+  .flora-home-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .flora-home-product-grid {
+    display: flex;
+    gap: 14px;
+    margin-inline: -12px;
+    overflow-x: auto;
+    padding-inline: 12px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .flora-home-product-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .flora-home-product-grid .luxury-product {
+    flex: 0 0 min(78vw, 280px);
+    scroll-snap-align: start;
+  }
+}
+
+/* Shop grid consistency */
+.shop-product-grid {
+  align-items: stretch;
+  gap: 22px;
+}
+
+.shop-product-grid .luxury-product {
+  height: auto !important;
+}
+
+.shop-product-grid .luxury-product__meta h3 {
+  min-height: 0;
+}
+
+.shop-product-grid .luxury-product__meta p {
+  display: -webkit-box;
+}
+
+.shop-product-grid .floating-actions {
+  display: none !important;
+}
+
+/* Story, reviews, why — light theme readability */
+html[data-theme="light"] .brand-story,
+html[data-theme="light"] .flora-home__story {
+  background: #fffdfa;
+  border: 1px solid rgba(176, 139, 87, 0.14);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: clamp(32px, 5vw, 48px);
+}
+
+html[data-theme="light"] .brand-story h2,
+html[data-theme="light"] .flora-home__story h2 {
+  background: linear-gradient(135deg, #171412, #6d4f2b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--ink);
+}
+
+html[data-theme="light"] .brand-story p,
+html[data-theme="light"] .flora-home__story p {
+  color: #5f5448;
+}
+
+html[data-theme="light"] .why-item,
+html[data-theme="light"] .review-grid blockquote {
+  background: #fffdfa;
+  border-color: rgba(176, 139, 87, 0.14);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+}
+
+html[data-theme="light"] .why-item h3 {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .review-grid p {
+  color: #5f5448;
+}
+
+html[data-theme="light"] .review-grid cite {
+  color: #8f6a3d;
+}
+
+/* Category grid motion wrapper */
+.flora-category-grid > div {
+  display: flex;
+  height: 100%;
+}
+
+.flora-category-grid .flora-category-card {
+  flex: 1;
+  width: 100%;
+}
+
+/* Shop layout polish */
+html[data-theme="light"] .shop-shell {
+  gap: 28px;
+}
+
+html[data-theme="light"] .shop-sidebar {
+  background: #fffdfa;
+  border: 1px solid rgba(176, 139, 87, 0.14);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-soft);
+  padding: 22px;
+}
+
+html[data-theme="light"] .shop-main {
+  background: transparent;
+}
+
+html[data-theme="light"] .shop-toolbar {
+  border-bottom-color: rgba(176, 139, 87, 0.14);
+}
+
+html[data-theme="light"] .shop-toolbar h2 {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .shop-toolbar__count {
+  color: #6d6257;
+}
+
+/* Product detail page */
+html[data-theme="light"] .product-landing {
+  gap: clamp(24px, 4vw, 48px);
+}
+
+html[data-theme="light"] .product-facts dt {
+  color: #8f6a3d;
+}
+
+html[data-theme="light"] .product-facts dd {
+  color: var(--ink);
+}
+
+html[data-theme="light"] .luxury-footer__column a:hover {
+  color: #8f6a3d;
+}
+
+/* Cart sheet */
+html[data-theme="light"] .cart-sheet {
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  box-shadow: 0 -20px 60px rgba(53, 39, 28, 0.12);
+}
+
+html[data-theme="light"] .cart-line strong,
+html[data-theme="light"] .cart-line__top strong {
+  color: var(--ink);
 }
 
 /* Buttons — shimmer CTA */

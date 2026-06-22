@@ -3,18 +3,10 @@
 import { Eye, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, type Variants } from "framer-motion";
 import { formatPrice, type Language, type Product, textByLanguage } from "@/lib/store";
 
-const cardReveal: Variants = {
-  hidden: { opacity: 0, y: 32, scale: 0.97 },
-  show: {
-    opacity: 1,
-    y: 0,
-    scale: 1,
-    transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] },
-  },
-};
+const PLACEHOLDER =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='500' viewBox='0 0 400 500'%3E%3Crect fill='%23f3ede4' width='400' height='500'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23b08b57' font-size='18' font-family='sans-serif'%3EFlora Style%3C/text%3E%3C/svg%3E";
 
 type ProductCardProps = {
   product: Product;
@@ -40,74 +32,60 @@ export function ProductCard({
   compact = false,
 }: ProductCardProps) {
   const isSoldOut = stock <= 0;
-  const body = (
-    <>
-      <Link className={`luxury-product__image ${compact ? "luxury-product__image--compact" : ""}`.trim()} href={`/products/${product.slug || product.id}`}>
-        <Image
-          className="primary"
-          src={product.images[0]}
-          alt={textByLanguage(language, product.nameAr, product.nameHe)}
-          fill
-          sizes={compact ? "(max-width: 900px) 50vw, 20vw" : "(max-width: 900px) 50vw, 25vw"}
-        />
-        <Image
-          className="secondary"
-          src={product.images[1] ?? product.images[0]}
-          alt=""
-          fill
-          sizes={compact ? "(max-width: 900px) 50vw, 20vw" : "(max-width: 900px) 50vw, 25vw"}
-        />
-      </Link>
-      <div className="luxury-product__meta">
-        <Link href={`/products/${product.slug || product.id}`}>
-          <h3>{textByLanguage(language, product.nameAr, product.nameHe)}</h3>
-        </Link>
-        {showDescription ? <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p> : null}
-        <div className="luxury-product__bottom">
-          <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
-          {isSoldOut ? <span>{soldOutLabel}</span> : null}
-        </div>
-      </div>
-      <div className="floating-actions">
-        <Link href={`/products/${product.slug || product.id}`}>
-          <Eye size={15} />
-          {viewLabel}
-        </Link>
-        {!compact ? (
-          <button disabled={stock <= 0 || !onAdd} onClick={() => onAdd?.(product)} type="button">
-            <ShoppingBag size={15} />
-            {addLabel}
-          </button>
-        ) : null}
-      </div>
-    </>
-  );
-
-  if (compact) {
-    return (
-      <motion.article
-        className="luxury-product luxury-product--compact"
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-        variants={cardReveal}
-      >
-        {body}
-      </motion.article>
-    );
-  }
+  const href = `/products/${product.slug || product.id}`;
+  const primaryImage = product.images[0] || PLACEHOLDER;
+  const secondaryImage = product.images[1] ?? primaryImage;
+  const name = textByLanguage(language, product.nameAr, product.nameHe);
 
   return (
-    <motion.article
-      className="luxury-product"
-      initial="hidden"
-      whileInView="show"
-      viewport={{ once: true, amount: 0.15 }}
-      variants={cardReveal}
-      whileHover={{ y: -10 }}
-      transition={{ type: "spring", stiffness: 320, damping: 26 }}
-    >
-      {body}
-    </motion.article>
+    <article className={`luxury-product${compact ? " luxury-product--compact" : ""}`.trim()}>
+      <Link className={`luxury-product__image${compact ? " luxury-product__image--compact" : ""}`.trim()} href={href}>
+        <Image
+          className="primary"
+          src={primaryImage}
+          alt={name}
+          fill
+          sizes={compact ? "(max-width: 900px) 50vw, 20vw" : "(max-width: 900px) 50vw, 25vw"}
+          unoptimized={primaryImage.startsWith("data:")}
+        />
+        {product.images[1] ? (
+          <Image
+            className="secondary"
+            src={secondaryImage}
+            alt=""
+            fill
+            sizes={compact ? "(max-width: 900px) 50vw, 20vw" : "(max-width: 900px) 50vw, 25vw"}
+          />
+        ) : null}
+        {isSoldOut ? <span className="luxury-product__badge">{soldOutLabel}</span> : null}
+      </Link>
+
+      <div className="luxury-product__body">
+        <div className="luxury-product__meta">
+          <Link href={href}>
+            <h3>{name}</h3>
+          </Link>
+          {showDescription ? (
+            <p>{textByLanguage(language, product.descriptionAr, product.descriptionHe)}</p>
+          ) : null}
+          <div className="luxury-product__bottom">
+            <strong>{formatPrice(product.salePrice ?? product.price)}</strong>
+          </div>
+        </div>
+
+        <div className="luxury-product__actions">
+          <Link href={href}>
+            <Eye size={15} />
+            {viewLabel}
+          </Link>
+          {!compact ? (
+            <button disabled={isSoldOut || !onAdd} onClick={() => onAdd?.(product)} type="button">
+              <ShoppingBag size={15} />
+              {addLabel}
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }

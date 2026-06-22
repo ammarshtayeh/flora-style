@@ -286,7 +286,7 @@ export function Storefront() {
         </AnimatedSection>
 
         <AnimatedSection id="best-sellers" eyebrow="02" title={labels.bestSellers}>
-          <div className="luxury-product-grid product-rail--scroll">
+          <div className="luxury-product-grid flora-home-product-grid">
             {bestSellers.map((product) => {
               const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
               return (
@@ -307,7 +307,7 @@ export function Storefront() {
         </AnimatedSection>
 
         <AnimatedSection id="new-arrivals" eyebrow="03" title={labels.newArrivals}>
-          <div className="luxury-product-grid product-rail--scroll">
+          <div className="luxury-product-grid flora-home-product-grid">
             {newArrivals.map((product) => {
               const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
               return (
