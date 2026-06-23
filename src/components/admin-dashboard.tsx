@@ -509,13 +509,32 @@ export function AdminDashboard() {
   const activeTabMeta = tabs.find((tab) => tab.id === activeTab);
 
   function beginEditProduct(product: Product) {
+    setSyncMessage("");
     const rows = data.colors.filter((color) => color.productId === product.id);
     setProductDraft(product);
     setProductColorDrafts(rows.length ? rows.map(mapColorToFormRow) : [blankProductColorRow()]);
     setProductDefaultStock(rows[0]?.stockQuantity ?? 1);
   }
 
+  function beginDuplicateProduct(product: Product) {
+    setSyncError("");
+    setProductDraft({
+      ...product,
+      id: "",
+      slug: "",
+      sku: product.sku.trim() ? `${product.sku.trim()}-copy` : "",
+      nameAr: product.nameAr.trim() ? `${product.nameAr.trim()} (نسخة)` : "",
+      nameHe: product.nameHe.trim() ? `${product.nameHe.trim()} (עותק)` : "",
+      createdAt: new Date().toISOString().slice(0, 10),
+    });
+    setProductColorDrafts([blankProductColorRow()]);
+    setProductDefaultStock(1);
+    setSyncMessage(`نسخة من «${product.nameAr}» — عدّلي رمز المنتج والاسم، أضيفي الألوان، ثم احفظي.`);
+    setActiveTab("products");
+  }
+
   function resetProductForm() {
+    setSyncMessage("");
     setProductDraft(blankProduct(data.categories[0]?.id, data.brands[0]?.id));
     setProductColorDrafts([blankProductColorRow()]);
     setProductDefaultStock(1);
@@ -1265,7 +1284,12 @@ export function AdminDashboard() {
               </form>
             }
           >
-            <ProductsTable data={data} onEdit={beginEditProduct} onDelete={(id) => deleteById("products", id)} />
+            <ProductsTable
+              data={data}
+              onDelete={(id) => deleteById("products", id)}
+              onDuplicate={beginDuplicateProduct}
+              onEdit={beginEditProduct}
+            />
           </CrudLayout>
         ) : null}
 
@@ -1881,7 +1905,17 @@ function ToggleRow({ values }: { values: Array<[string, boolean, (checked: boole
   );
 }
 
-function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (product: Product) => void; onDelete: (id: string) => void }) {
+function ProductsTable({
+  data,
+  onEdit,
+  onDuplicate,
+  onDelete,
+}: {
+  data: StoreData;
+  onEdit: (product: Product) => void;
+  onDuplicate: (product: Product) => void;
+  onDelete: (id: string) => void;
+}) {
   return (
     <div className="table-wrap admin-mobile-table">
       <table>
@@ -1919,6 +1953,9 @@ function ProductsTable({ data, onEdit, onDelete }: { data: StoreData; onEdit: (p
                   <div className="table-action-group">
                     <button className="ghost-button" onClick={() => onEdit(product)} type="button">
                     تعديل
+                    </button>
+                    <button className="ghost-button" onClick={() => onDuplicate(product)} type="button">
+                    نسخ
                     </button>
                     <button className="danger-button" onClick={() => onDelete(product.id)} type="button">
                     حذف
