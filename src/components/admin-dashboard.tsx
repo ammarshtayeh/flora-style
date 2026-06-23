@@ -69,7 +69,7 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "categories", label: "التصنيفات" },
   { id: "brands", label: "البراندات" },
   { id: "delivery", label: "التوصيل" },
-  { id: "banners", label: "البانرات" },
+  { id: "banners", label: "صورة الهيرو" },
   { id: "backup", label: "النسخة الاحتياطية" },
   { id: "settings", label: "الإعدادات" },
   { id: "accounts", label: "حسابات الأدمن" },
@@ -1511,26 +1511,29 @@ export function AdminDashboard() {
 
         {activeTab === "banners" ? (
           <CrudLayout
-            title="إدارة البانرات"
+            title="صورة الهيرو والنص الرئيسي"
             form={
               <form className="form-grid" onSubmit={saveBanner}>
+                <div className="admin-inline-notice admin-inline-notice--success">
+                  من هنا تتحكمي بصورة البنت/الهيرو والعنوان والوصف في الصفحة الرئيسية. ارفعي صورة جديدة واحفظي.
+                </div>
                 <div className="two-col form-grid">
                   {textInput<Banner>("العنوان عربي", bannerDraft.titleAr, "titleAr", setBannerDraft)}
                   {textInput<Banner>("العنوان عبري", bannerDraft.titleHe, "titleHe", setBannerDraft)}
                 </div>
                 <MediaField
-                  isUploading={uploadingField === "صورة البانر"}
-                  label="صورة البانر"
+                  isUploading={uploadingField === "صورة الهيرو"}
+                  label="صورة الهيرو (الصفحة الرئيسية)"
                   onClear={() => setBannerDraft((current) => ({ ...current, imageUrl: "" }))}
                   onUpload={(file) =>
-                    handleSingleAssetUpload(file, "banners", (url) => setBannerDraft((current) => ({ ...current, imageUrl: url })), "صورة البانر")
+                    handleSingleAssetUpload(file, "banners", (url) => setBannerDraft((current) => ({ ...current, imageUrl: url })), "صورة الهيرو")
                   }
                   value={bannerDraft.imageUrl}
                 />
-                <Textarea label="وصف البانر عربي" value={bannerDraft.subtitleAr} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleAr: value })} />
-                <Textarea label="وصف البانر عبري" value={bannerDraft.subtitleHe} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleHe: value })} />
+                <Textarea label="وصف الهيرو عربي" value={bannerDraft.subtitleAr} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleAr: value })} />
+                <Textarea label="وصف الهيرو عبري" value={bannerDraft.subtitleHe} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleHe: value })} />
                 <ToggleRow values={[["فعال", bannerDraft.active, (checked) => setBannerDraft({ ...bannerDraft, active: checked })]]} />
-                <button className="button">حفظ البانر</button>
+                <button className="button">حفظ الهيرو</button>
               </form>
             }
           >

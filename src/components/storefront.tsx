@@ -213,6 +213,7 @@ export function Storefront() {
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
+  const heroImage = banner?.imageUrl?.trim() || "/flora-hero-model.png";
   const featuredCategories = activeCategories.slice(0, 4);
 
   const productsPerCategory = useMemo(() => {
@@ -275,9 +276,10 @@ export function Storefront() {
                   alt="Flora Style luxury editorial"
                   className="flora-home__hero-model"
                   fill
+                  key={heroImage}
                   priority
                   sizes="(max-width: 900px) 88vw, 44vw"
-                  src="/flora-hero-model.png"
+                  src={heroImage}
                 />
               </div>
               <div className="flora-home__hero-badge">
