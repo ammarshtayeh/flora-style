@@ -77,7 +77,9 @@ html[data-theme="light"] .flora-header__cart {
 
 .flora-home__hero-content h1 {
   letter-spacing: -0.02em;
-  line-height: 1.08;
+  line-height: 1.2;
+  overflow: visible;
+  padding-block: 0.08em;
 }
 
 @keyframes flora-rise {
@@ -95,18 +97,13 @@ html[data-theme="light"] .flora-header__cart {
 html[data-theme="light"] .luxury-section__head h2,
 html[data-theme="light"] .product-row h2,
 html[data-theme="light"] .product-story h2 {
-  background: linear-gradient(135deg, #171412 0%, #6d4f2b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--ink);
   letter-spacing: -0.02em;
 }
 
 html[data-theme="light"] .shop-hero h1,
 html[data-theme="light"] .checkout-hero h1,
 html[data-theme="light"] .product-landing h1 {
-  background: linear-gradient(135deg, #171412 0%, #8f6a3d 55%, #5f5448 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   color: var(--ink);
   letter-spacing: -0.03em;
 }
@@ -1029,9 +1026,6 @@ html[data-theme="light"] .luxury-footer {
 
 html[data-theme="light"] .product-row h2,
 html[data-theme="light"] .product-story h2 {
-  background: linear-gradient(135deg, #171412 0%, #6d4f2b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
   color: var(--ink);
 }
 

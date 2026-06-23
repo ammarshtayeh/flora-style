@@ -50,7 +50,7 @@ const copy = {
     soldOut: "نفد",
     categoryCta: "عرض التصنيف",
     statProducts: "منتج مختار",
-    statZones: "منطقة توصيل",
+    statZones: "مناطق توصيل",
     statBrands: "ماركة فاخرة",
     whyItems: [
       { title: "تصنيفات واضحة", body: "الوصول إلى المنتج يبدأ من تقسيمات مباشرة تسهّل التصفح بدل إرباك المستخدم." },
@@ -270,7 +270,7 @@ export function Storefront() {
 
         {activeBrands.length ? <BrandTicker brands={activeBrands} language={language} /> : null}
 
-        <AnimatedSection id="collections" eyebrow="01" title={labels.collections}>
+        <AnimatedSection id="collections" title={labels.collections}>
           <motion.div className="flora-category-grid" initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.2 }} variants={stagger}>
             {featuredCategories.map((category) => (
               <motion.div key={category.id} variants={fadeUp}>
@@ -288,7 +288,7 @@ export function Storefront() {
           </motion.div>
         </AnimatedSection>
 
-        <AnimatedSection id="best-sellers" eyebrow="02" title={labels.bestSellers}>
+        <AnimatedSection id="best-sellers" title={labels.bestSellers}>
           <div className="luxury-product-grid flora-home-product-grid">
             {bestSellers.map((product) => {
               const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
@@ -309,7 +309,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="new-arrivals" eyebrow="03" title={labels.newArrivals}>
+        <AnimatedSection id="new-arrivals" title={labels.newArrivals}>
           <div className="luxury-product-grid flora-home-product-grid">
             {newArrivals.map((product) => {
               const stock = storeData.colors.filter((color) => color.productId === product.id).reduce((sum, color) => sum + color.stockQuantity, 0);
@@ -329,7 +329,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="brands" eyebrow="04" title={labels.brands}>
+        <AnimatedSection id="brands" title={labels.brands}>
           <div className="brand-wall__lead">
             <p>{labels.brandsLead}</p>
             <Link href="/shop">{labels.shop}</Link>
@@ -343,7 +343,7 @@ export function Storefront() {
           </div>
         </AnimatedSection>
 
-        <AnimatedSection id="reviews" eyebrow="05" title={labels.reviews}>
+        <AnimatedSection id="reviews" title={labels.reviews}>
           <div className="review-grid">
             {labels.reviewItems.map((quote, index) => (
               <blockquote key={quote}>
@@ -447,7 +447,7 @@ export function Storefront() {
   );
 }
 
-function AnimatedSection({ id, eyebrow, title, children }: { id?: string; eyebrow: string; title: string; children: React.ReactNode }) {
+function AnimatedSection({ id, title, children }: { id?: string; title: string; children: React.ReactNode }) {
   return (
     <motion.section
       className="luxury-section"
@@ -458,7 +458,6 @@ function AnimatedSection({ id, eyebrow, title, children }: { id?: string; eyebro
       variants={reveal}
     >
       <motion.div className="luxury-section__head" variants={fadeUp}>
-        <span>{eyebrow}</span>
         <h2>{title}</h2>
       </motion.div>
       {children}
