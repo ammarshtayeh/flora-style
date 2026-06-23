@@ -777,6 +777,22 @@ html[data-theme="light"] .concierge-banner__copy p:last-child {
   color: rgba(255, 248, 238, 0.88);
 }
 
+html[data-theme="light"] .luxury-footer__cta {
+  background:
+    linear-gradient(180deg, rgba(212, 175, 55, 0.16), rgba(212, 175, 55, 0.05)),
+    #2f2a25;
+  border-color: rgba(212, 175, 55, 0.32);
+  box-shadow: 0 24px 60px rgba(53, 39, 28, 0.22);
+}
+
+html[data-theme="light"] .luxury-footer__cta strong {
+  color: #fffaf2;
+}
+
+html[data-theme="light"] .luxury-footer__cta span {
+  color: rgba(255, 248, 238, 0.88);
+}
+
 html[data-theme="light"] .checkout-support {
   background: linear-gradient(180deg, rgba(176, 139, 87, 0.12), rgba(176, 139, 87, 0.05));
   border-color: rgba(176, 139, 87, 0.22);
@@ -1760,7 +1776,7 @@ html[data-theme="light"] .checkout-pill {
 }
 
 .luxury-footer__cta span {
-  color: var(--muted);
+  color: rgba(255, 248, 238, 0.84);
   line-height: 1.8;
 }
 
