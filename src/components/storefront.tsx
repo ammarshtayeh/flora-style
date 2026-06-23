@@ -11,7 +11,7 @@ import { StoreContactLinks } from "@/components/store-contact-links";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, refreshStoreDataFromSupabase, subscribeToStoreData } from "@/lib/db";
 import { getWhatsAppHref, formatPhoneDisplay } from "@/lib/contact";
-import { getBrandDisplayName, getBannerImages, initialStoreData, normalizeBanner, type Language, type Product, textByLanguage } from "@/lib/store";
+import { getBrandDisplayName, getBannerImages, defaultHeroCarouselImages, initialStoreData, normalizeBanner, type Language, type Product, textByLanguage } from "@/lib/store";
 import { HeroCarousel } from "@/components/hero-carousel";
 
 const copy = {
@@ -215,7 +215,7 @@ export function Storefront() {
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
   const heroImages = getBannerImages(banner);
-  const heroSlides = heroImages.length ? heroImages : ["/flora-hero-model.png"];
+  const heroSlides = heroImages.length ? heroImages : [...defaultHeroCarouselImages];
   const featuredCategories = activeCategories.slice(0, 4);
 
   const productsPerCategory = useMemo(() => {

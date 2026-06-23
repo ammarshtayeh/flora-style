@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import { defaultHeroCarouselImages } from "@/lib/store";
 import { shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 
 const HERO_CAROUSEL_INTERVAL_MS = 3000;
@@ -16,7 +17,7 @@ type HeroCarouselProps = {
 export function HeroCarousel({ images, alt }: HeroCarouselProps) {
   const slides = (() => {
     const normalized = uniqueImageUrls(images);
-    return normalized.length ? normalized : ["/flora-hero-model.png"];
+    return normalized.length ? normalized : [...defaultHeroCarouselImages];
   })();
   const [index, setIndex] = useState(0);
   const slideKey = slides.join("|");

@@ -74,11 +74,12 @@ export type Banner = {
 };
 
 export function getBannerImages(banner?: Pick<Banner, "imageUrl" | "imageUrls"> | null) {
-  const gallery = uniqueImageUrls(banner?.imageUrls ?? []);
+  const gallery = withoutDeprecatedHeroImages(banner?.imageUrls ?? []);
   if (gallery.length) return gallery;
 
   const single = banner?.imageUrl?.trim();
-  return single && isValidImageSource(single) ? [single] : [];
+  if (!single || !isValidImageSource(single) || deprecatedHeroImageSources.has(single)) return [];
+  return [single];
 }
 
 export function normalizeBanner(banner: Banner): Banner {
@@ -88,6 +89,18 @@ export function normalizeBanner(banner: Banner): Banner {
     imageUrls,
     imageUrl: imageUrls[0] ?? "",
   };
+}
+
+export const defaultHeroCarouselImages = [
+  "/flora-hero-bag.png",
+  "/flora-hero-pink-bag.png",
+  "/flora-hero-watch.png",
+] as const;
+
+const deprecatedHeroImageSources = new Set(["/flora-hero-model.png"]);
+
+function withoutDeprecatedHeroImages(urls: string[]) {
+  return uniqueImageUrls(urls).filter((url) => !deprecatedHeroImageSources.has(url));
 }
 
 export type StoreSettings = {
@@ -137,7 +150,7 @@ export type StoreData = {
 };
 
 const images = {
-  hero: "/flora-hero-model.png",
+  heroSlides: [...defaultHeroCarouselImages],
   bags: "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=1400&q=88",
   bagAlt: "https://images.unsplash.com/photo-1594223274512-ad4803739b7c?auto=format&fit=crop&w=1400&q=88",
   tote: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=1400&q=88",
@@ -420,8 +433,8 @@ export const initialStoreData: StoreData = {
       titleHe: "אלגנטיות שמרגישה אישית",
       subtitleAr: "مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.",
       subtitleHe: "אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.",
-      imageUrl: images.hero,
-      imageUrls: [images.hero],
+      imageUrl: images.heroSlides[0],
+      imageUrls: [...images.heroSlides],
       active: true
     }
   ],

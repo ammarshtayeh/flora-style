@@ -570,8 +570,8 @@ VALUES
         'אלגנטיות שמרגישה אישית',
         'مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.',
         'אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.',
-        '/flora-hero-model.png',
-        '["/flora-hero-model.png"]'::jsonb,
+        '/flora-hero-bag.png',
+        '["/flora-hero-bag.png", "/flora-hero-pink-bag.png", "/flora-hero-watch.png"]'::jsonb,
         TRUE
     )
 ON CONFLICT (id) DO UPDATE SET
