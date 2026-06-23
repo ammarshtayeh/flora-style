@@ -196,114 +196,20 @@
   color: var(--gold);
 }
 
-.flora-home__hero {
-  align-content: end;
-  display: grid;
-  grid-template-columns: 1fr;
-  justify-items: center;
+.flora-home__hero--split.luxury-hero {
   min-height: calc(100dvh - var(--flora-header-height, 132px));
-  padding-bottom: clamp(40px, 7vh, 88px);
-  place-items: end center;
-}
-
-.flora-home__hero-content {
-  background: none;
-  border: none;
-  backdrop-filter: none;
-  box-shadow: none;
-  margin-inline: auto;
-  margin-top: 0;
-  max-width: min(900px, calc(100% - 40px));
   padding: 0;
-  text-align: center;
-  width: 100%;
+  place-items: stretch;
 }
 
-.flora-home__hero-kicker {
-  color: #e8d2a5;
-  display: inline-block;
-  font-family: var(--font-luxury);
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.24em;
-  margin-bottom: 16px;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
-  text-transform: uppercase;
+.flora-home__hero--split .luxury-hero__content {
+  padding: 0;
+  text-align: start;
 }
 
-.flora-home__hero-content h1 {
-  color: #ffffff;
-  font-family: var(--font-arabic), var(--font-hebrew), var(--font-latin), Arial, sans-serif;
-  font-size: clamp(34px, 6.8vw, 68px);
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.22;
-  margin: 0 auto;
-  max-width: 11ch;
-  overflow: visible;
-  padding-block: 0.06em;
-  text-shadow: 0 6px 36px rgba(0, 0, 0, 0.55);
-}
-
-.flora-home__hero-content h1::after {
-  background: linear-gradient(90deg, transparent, #d4af37 20%, #f3e5ab 50%, #d4af37 80%, transparent);
-  border-radius: 999px;
-  content: "";
-  display: block;
-  height: 2px;
-  margin: 20px auto 0;
-  width: min(72px, 18vw);
-}
-
-.flora-home__hero-lead,
-.flora-home__hero-content p {
-  color: rgba(255, 250, 242, 0.94);
-  font-size: clamp(15px, 1.85vw, 19px);
-  line-height: 1.85;
-  margin: 22px auto 0;
-  max-width: 44ch;
-  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.5);
-}
-
-.flora-home__hero-actions {
-  gap: 14px;
-  justify-content: center;
-  margin-top: 34px;
-}
-
-.flora-home__hero .luxury-actions a:first-child {
-  background: linear-gradient(135deg, #e8c96a 0%, #d4af37 48%, #b08b57 100%);
-  border-color: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
-  color: #1a1410;
-  font-weight: 800;
-  min-height: 52px;
-  padding-inline: 34px;
-}
-
-.flora-home__hero .luxury-actions a:nth-child(2) {
-  background: rgba(255, 250, 242, 0.1);
-  border-color: rgba(255, 248, 238, 0.42);
-  box-shadow: none;
-  color: #fffaf2;
-  backdrop-filter: blur(10px);
-}
-
-.flora-home__hero .luxury-actions a:nth-child(2):hover {
-  background: rgba(255, 250, 242, 0.18);
-  border-color: rgba(243, 229, 171, 0.65);
-  color: #fffaf2;
-}
-
-.flora-home__hero .luxury-hero__media::after {
-  background:
-    linear-gradient(180deg, rgba(10, 8, 7, 0.12) 0%, rgba(10, 8, 7, 0.04) 34%, rgba(10, 8, 7, 0.78) 72%, rgba(10, 8, 7, 0.94) 100%),
-    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(176, 139, 87, 0.18), transparent 68%);
-}
-
-.flora-home__hero .luxury-hero__image {
-  filter: brightness(0.9) contrast(1.06) saturate(1.1);
-  transform: scale(1.02);
+.flora-home__hero--split .luxury-hero__media,
+.flora-home__hero--split .luxury-hero__media::after {
+  display: none;
 }
 
 .flora-category-grid {
@@ -827,24 +733,16 @@ html[data-theme="light"] .why-item p {
   color: var(--muted);
 }
 
-html[data-theme="light"] .flora-home__hero-content {
-  background: none;
-  border: none;
+html[data-theme="light"] .flora-home__hero--split .luxury-actions a:nth-child(2) {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: rgba(176, 139, 87, 0.28);
+  color: var(--ink);
 }
 
-html[data-theme="light"] .flora-home__hero-kicker {
-  color: #f3e5ab;
-}
-
-html[data-theme="light"] .flora-home__hero-content h1 {
-  color: #ffffff;
-  font-weight: 700;
-  text-shadow: 0 6px 36px rgba(0, 0, 0, 0.55);
-}
-
-html[data-theme="light"] .flora-home__hero-content p,
-html[data-theme="light"] .flora-home__hero-lead {
-  color: rgba(255, 250, 242, 0.94);
+html[data-theme="light"] .flora-home__hero--split .luxury-actions a:nth-child(2):hover {
+  background: rgba(176, 139, 87, 0.1);
+  border-color: rgba(176, 139, 87, 0.42);
+  color: var(--ink);
 }
 
 html[data-theme="light"] .concierge-banner__copy h2 {
@@ -1069,21 +967,6 @@ html[data-theme="light"] .cart-line-remove {
   color: var(--ink);
 }
 
-html[data-theme="light"] .flora-home__hero .luxury-actions a:first-child {
-  color: #1a1410;
-}
-
-html[data-theme="light"] .flora-home__hero .luxury-actions a:nth-child(2) {
-  background: rgba(255, 250, 242, 0.1);
-  border-color: rgba(255, 248, 238, 0.42);
-  color: #fffaf2;
-}
-
-html[data-theme="light"] .flora-home__hero .luxury-actions a:nth-child(2):hover {
-  background: rgba(255, 250, 242, 0.18);
-  border-color: rgba(243, 229, 171, 0.65);
-  color: #fffaf2;
-}
 
 html[data-theme="light"] .luxury-product,
 html[data-theme="light"] .category-directory__card,
@@ -8633,14 +8516,12 @@ html[data-theme="light"] .mobile-menu-links a {
     min-height: 72vh;
   }
 
-  .luxury-hero__content,
-  .flora-home__hero-content {
-    margin-top: 0;
-    padding: 0 16px;
+  .flora-home__hero--split {
+    padding-bottom: 24px;
   }
 
-  .flora-home__hero {
-    padding-bottom: 28px;
+  .flora-home__hero-content {
+    padding: 0 4px;
   }
 
   .flora-home__hero-content h1 {
@@ -8666,7 +8547,7 @@ html[data-theme="light"] .mobile-menu-links a {
     width: 100%;
   }
 
-  .flora-home__hero .luxury-actions a {
+  .flora-home__hero--split .luxury-actions a {
     width: 100%;
   }
 

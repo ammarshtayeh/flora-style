@@ -26,8 +26,10 @@ const copy = {
       { title: "وصل حديثاً", body: "شاهدي أحدث الإضافات قبل أن تصبح قطعاً مطلوبة.", href: "#new-arrivals" }
     ],
     heroEyebrow: "فخامة هادئة · مختارة بعناية",
-    heroTitle: "أناقة تشبهك، بتفاصيل عالمية",
+    heroTitleLead: "أناقة تشبهك،",
+    heroTitleAccent: "بتفاصيل عالمية",
     heroBody: "مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.",
+    heroQuote: "نختار لكِ قطعاً تليق بإطلالتك اليومية والمناسبة، بذوق هادئ وفاخر.",
     editorialTitle: "مجموعات موسمية بلمسة بوتيك عالمية",
     editorialBody: "تنسيق أقرب لتجربة luxury e-commerce: هدوء بصري، إبراز واضح للقطع الأساسية، ومسار شراء سريع.",
     collections: "التصنيفات",
@@ -95,8 +97,10 @@ const copy = {
       { title: "הגיע עכשיו", body: "צפו בהוספות החדשות ביותר לפני שהן הופכות לפריטים מבוקשים.", href: "#new-arrivals" }
     ],
     heroEyebrow: "Luxury pieces, quietly curated",
-    heroTitle: "אלגנטיות שמרגישה אישית",
+    heroTitleLead: "אלגנטיות",
+    heroTitleAccent: "שמרגישה אישית",
     heroBody: "Flora Style היא חוויית קנייה יוקרתית לתיקים, אביזרים ושעונים שנבחרו בקפידה, עם מסלול ברור שמוביל מהר למה שהלקוחה מחפשת.",
+    heroQuote: "פריטים שנבחרו בקפידה לאירועים וליום-יום, עם טעם שקט ויוקרתי.",
     editorialTitle: "קולקציות עונתיות בגישת בוטיק גלובלית",
     editorialBody: "מראה קרוב יותר לחוויית luxury e-commerce: שקט ויזואלי, הדגשה לפריטים המרכזיים, וזרימת רכישה מהירה.",
     collections: "קטגוריות",
@@ -230,30 +234,58 @@ export function Storefront() {
     <>
       <Header />
       <main className="luxury-shell flora-home" dir="rtl">
-        <section className="luxury-hero flora-home__hero" ref={heroRef}>
-          <motion.div className="luxury-hero__media flora-home__hero-media" style={{ y: heroY }}>
-            {banner ? <Image className="luxury-hero__image" src={banner.imageUrl} alt="Flora Style editorial" fill priority sizes="100vw" /> : null}
-          </motion.div>
-          <motion.div
-            className="luxury-hero__content flora-home__hero-content"
-            initial="hidden"
-            animate="show"
-            variants={stagger}
-          >
-            <motion.span className="flora-home__hero-kicker" variants={fadeUp}>
-              {labels.heroEyebrow}
-            </motion.span>
-            <motion.h1 variants={fadeUp}>
-              {banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}
-            </motion.h1>
-            <motion.p className="flora-home__hero-lead" variants={fadeUp}>
-              {banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}
-            </motion.p>
-            <motion.div className="luxury-actions flora-home__hero-actions" variants={fadeUp}>
-              <Link href="/shop">{labels.shop}</Link>
-              <a href="#collections">{labels.browseCategories}</a>
+        <section className="luxury-hero flora-home__hero flora-home__hero--split" ref={heroRef}>
+          <div className="flora-home__hero-shell">
+            <motion.div
+              className="luxury-hero__content flora-home__hero-content"
+              initial="hidden"
+              animate="show"
+              variants={stagger}
+            >
+              <motion.span className="flora-home__hero-kicker" variants={fadeUp}>
+                {labels.heroEyebrow}
+              </motion.span>
+              <motion.h1 variants={fadeUp}>
+                <span className="flora-home__hero-title-lead">
+                  {banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitleLead}
+                </span>
+                {!banner ? <span className="flora-home__hero-title-accent">{labels.heroTitleAccent}</span> : null}
+              </motion.h1>
+              <motion.p className="flora-home__hero-lead" variants={fadeUp}>
+                {banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}
+              </motion.p>
+              <motion.div className="luxury-actions flora-home__hero-actions" variants={fadeUp}>
+                <Link href="/shop">{labels.shop}</Link>
+                <a href="#collections">{labels.browseCategories}</a>
+              </motion.div>
+              <motion.blockquote className="flora-home__hero-quote" variants={fadeUp}>
+                {labels.heroQuote}
+              </motion.blockquote>
             </motion.div>
-          </motion.div>
+
+            <motion.div className="flora-home__hero-visual" style={{ y: heroY }} variants={fadeUp} initial="hidden" animate="show">
+              <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--one" />
+              <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--two" />
+              <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--three" />
+              <span aria-hidden className="flora-home__hero-orb flora-home__hero-orb--cream" />
+              <span aria-hidden className="flora-home__hero-orb flora-home__hero-orb--gold" />
+              <span aria-hidden className="flora-home__hero-ring" />
+              <div className="flora-home__hero-frame">
+                <Image
+                  alt="Flora Style luxury editorial"
+                  className="flora-home__hero-model"
+                  fill
+                  priority
+                  sizes="(max-width: 900px) 88vw, 44vw"
+                  src="/flora-hero-model.png"
+                />
+              </div>
+              <div className="flora-home__hero-badge">
+                <strong>{activeBrands.length}</strong>
+                <span>{labels.statBrands}</span>
+              </div>
+            </motion.div>
+          </div>
         </section>
 
         <section className="luxury-stat-band">
