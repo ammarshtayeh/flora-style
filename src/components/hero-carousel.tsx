@@ -4,28 +4,36 @@ import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
+import { shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
+
+const HERO_CAROUSEL_INTERVAL_MS = 3000;
+
 type HeroCarouselProps = {
   alt: string;
   images: string[];
 };
 
 export function HeroCarousel({ images, alt }: HeroCarouselProps) {
-  const slides = images.length ? images : ["/flora-hero-model.png"];
+  const slides = (() => {
+    const normalized = uniqueImageUrls(images);
+    return normalized.length ? normalized : ["/flora-hero-model.png"];
+  })();
   const [index, setIndex] = useState(0);
+  const slideKey = slides.join("|");
 
   useEffect(() => {
     setIndex(0);
-  }, [slides.join("|")]);
+  }, [slideKey]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
 
     const timer = window.setInterval(() => {
       setIndex((current) => (current + 1) % slides.length);
-    }, 4500);
+    }, HERO_CAROUSEL_INTERVAL_MS);
 
     return () => window.clearInterval(timer);
-  }, [slides]);
+  }, [slideKey, slides.length]);
 
   return (
     <div className="flora-hero-carousel">
@@ -45,6 +53,7 @@ export function HeroCarousel({ images, alt }: HeroCarouselProps) {
             priority={index === 0}
             sizes="(max-width: 900px) 88vw, 44vw"
             src={slides[index]}
+            unoptimized={!shouldOptimizeRemoteImage(slides[index])}
           />
         </motion.div>
       </AnimatePresence>

@@ -6651,6 +6651,13 @@ html[data-theme="light"] select.select option {
   gap: 14px;
 }
 
+.media-gallery__url-row {
+  align-items: center;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
 .media-field__picker {
   align-items: center;
   background: rgba(212, 175, 55, 0.08);

@@ -38,6 +38,7 @@ import {
 import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
+import { isValidImageSource, shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 import { buildProductSlug } from "@/lib/slug";
 
@@ -691,9 +692,9 @@ export function AdminDashboard() {
   async function saveBanner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
-    const imageUrls = bannerDraft.imageUrls.map((url) => url.trim()).filter(Boolean);
+    const imageUrls = uniqueImageUrls(bannerDraft.imageUrls);
     if (!imageUrls.length) {
-      setSyncError("ارفعي صورة واحدة على الأقل للهيرو قبل الحفظ.");
+      setSyncError("ارفعي صورة واحدة على الأقل للهيرو (رفع ملف أو لصق رابط) قبل الحفظ.");
       return;
     }
     const nextBanner = normalizeBanner(
@@ -716,7 +717,7 @@ export function AdminDashboard() {
       const urls = await uploadAdminAssets(Array.from(files), "banners");
       setBannerDraft((current) => normalizeBanner({
         ...current,
-        imageUrls: [...current.imageUrls, ...urls],
+        imageUrls: uniqueImageUrls([...current.imageUrls, ...urls]),
       }));
       setSyncMessage("تم رفع صور الهيرو.");
     } catch (error) {
@@ -724,6 +725,21 @@ export function AdminDashboard() {
     } finally {
       setUploadingField("");
     }
+  }
+
+  function addBannerImageUrl(url: string) {
+    const value = url.trim();
+    if (!isValidImageSource(value)) {
+      setSyncError("أدخلي رابط صورة صالح (يبدأ بـ http:// أو https:// أو مسار محلي /).");
+      return;
+    }
+
+    setSyncError("");
+    setBannerDraft((current) => normalizeBanner({
+      ...current,
+      imageUrls: uniqueImageUrls([...current.imageUrls, value]),
+    }));
+    setSyncMessage("تمت إضافة رابط الصورة.");
   }
 
   function removeBannerImage(index: number) {
@@ -1554,13 +1570,17 @@ export function AdminDashboard() {
                   {textInput<Banner>("العنوان عبري", bannerDraft.titleHe, "titleHe", setBannerDraft)}
                 </div>
                 <ProductGalleryField
-                  emptyLabel="ارفعي صورة واحدة أو أكثر. الصور تتبدل تلقائياً في الهيرو."
+                  allowUrlInput
+                  emptyLabel="ارفعي صورة واحدة أو أكثر، أو ألصقي رابط صورة. الصور تتبدل تلقائياً كل 3 ثوانٍ في الهيرو."
                   images={bannerDraft.imageUrls}
                   isUploading={uploadingField === "صور الهيرو"}
                   label="صور الهيرو (كاروسيل)"
+                  onAddUrl={addBannerImageUrl}
                   onRemove={removeBannerImage}
                   onUpload={handleBannerImagesUpload}
                   uploadLabel="رفع صور الهيرو"
+                  urlAddLabel="إضافة الرابط"
+                  urlPlaceholder="https://example.com/hero.jpg"
                 />
                 <Textarea label="وصف الهيرو عربي" value={bannerDraft.subtitleAr} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleAr: value })} />
                 <Textarea label="وصف الهيرو عبري" value={bannerDraft.subtitleHe} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleHe: value })} />
@@ -1899,19 +1919,35 @@ function ProductGalleryField({
   images,
   onUpload,
   onRemove,
+  onAddUrl,
   isUploading,
   label = "صور المنتج",
   uploadLabel = "رفع صور المعرض",
   emptyLabel = "ارفع صورة واحدة أو أكثر للمنتج.",
+  allowUrlInput = false,
+  urlPlaceholder = "https://example.com/image.jpg",
+  urlAddLabel = "إضافة الرابط",
 }: {
   images: string[];
   onUpload: (files: FileList | null) => void;
   onRemove: (index: number) => void;
+  onAddUrl?: (url: string) => void;
   isUploading: boolean;
   label?: string;
   uploadLabel?: string;
   emptyLabel?: string;
+  allowUrlInput?: boolean;
+  urlPlaceholder?: string;
+  urlAddLabel?: string;
 }) {
+  const [urlDraft, setUrlDraft] = useState("");
+
+  function handleAddUrl() {
+    if (!onAddUrl || !urlDraft.trim()) return;
+    onAddUrl(urlDraft);
+    setUrlDraft("");
+  }
+
   return (
     <div className="form-row">
       <span>{label}</span>
@@ -1920,11 +1956,30 @@ function ProductGalleryField({
           <input accept="image/*" hidden multiple onChange={(event) => onUpload(event.target.files)} type="file" />
           <span>{isUploading ? "جاري رفع الصور..." : uploadLabel}</span>
         </label>
+        {allowUrlInput && onAddUrl ? (
+          <div className="media-gallery__url-row">
+            <input
+              className="input"
+              onChange={(event) => setUrlDraft(event.target.value)}
+              placeholder={urlPlaceholder}
+              value={urlDraft}
+            />
+            <button className="ghost-button" onClick={handleAddUrl} type="button">
+              {urlAddLabel}
+            </button>
+          </div>
+        ) : null}
         <div className="media-gallery__grid">
           {images.map((image, index) => (
             <div className="media-gallery__item" key={`${image}-${index}`}>
               <div className="media-gallery__image">
-                <Image alt={`Gallery image ${index + 1}`} fill src={image} sizes="160px" />
+                <Image
+                  alt={`Gallery image ${index + 1}`}
+                  fill
+                  sizes="160px"
+                  src={image}
+                  unoptimized={!shouldOptimizeRemoteImage(image)}
+                />
               </div>
               <button className="danger-button" onClick={() => onRemove(index)} type="button">
                 حذف

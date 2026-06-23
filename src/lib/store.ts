@@ -1,3 +1,5 @@
+import { isValidImageSource, uniqueImageUrls } from "@/lib/image-url";
+
 export type Language = "ar" | "he";
 
 export type Category = {
@@ -72,14 +74,15 @@ export type Banner = {
 };
 
 export function getBannerImages(banner?: Pick<Banner, "imageUrl" | "imageUrls"> | null) {
-  const gallery = banner?.imageUrls?.map((url) => url.trim()).filter(Boolean) ?? [];
+  const gallery = uniqueImageUrls(banner?.imageUrls ?? []);
   if (gallery.length) return gallery;
+
   const single = banner?.imageUrl?.trim();
-  return single ? [single] : [];
+  return single && isValidImageSource(single) ? [single] : [];
 }
 
 export function normalizeBanner(banner: Banner): Banner {
-  const imageUrls = getBannerImages(banner);
+  const imageUrls = uniqueImageUrls(getBannerImages(banner));
   return {
     ...banner,
     imageUrls,
