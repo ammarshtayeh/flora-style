@@ -121,10 +121,14 @@ CREATE TABLE IF NOT EXISTS banners (
     subtitle_ar TEXT DEFAULT '',
     subtitle_he TEXT DEFAULT '',
     image_url TEXT NOT NULL,
+    image_urls JSONB NOT NULL DEFAULT '[]'::jsonb,
     active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE banners
+    ADD COLUMN IF NOT EXISTS image_urls JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE TABLE IF NOT EXISTS orders (
     id TEXT PRIMARY KEY,
@@ -558,13 +562,27 @@ ON CONFLICT (id) DO UPDATE SET
     delivery_fee = EXCLUDED.delivery_fee,
     active = EXCLUDED.active;
 
-INSERT INTO banners (id, title_ar, title_he, subtitle_ar, subtitle_he, image_url, active)
+INSERT INTO banners (id, title_ar, title_he, subtitle_ar, subtitle_he, image_url, image_urls, active)
 VALUES
-    ('banner-main', 'أناقة تشبهك، بتفاصيل عالمية', 'אלגנטיות שמרגישה אישית', 'مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.', 'אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.', 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=1800&q=88', TRUE)
+    (
+        'banner-main',
+        'أناقة تشبهك، بتفاصيل عالمية',
+        'אלגנטיות שמרגישה אישית',
+        'مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.',
+        'אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.',
+        '/flora-hero-model.png',
+        '["/flora-hero-model.png"]'::jsonb,
+        TRUE
+    )
 ON CONFLICT (id) DO UPDATE SET
     title_ar = EXCLUDED.title_ar,
     title_he = EXCLUDED.title_he,
     subtitle_ar = EXCLUDED.subtitle_ar,
     subtitle_he = EXCLUDED.subtitle_he,
     image_url = EXCLUDED.image_url,
+    image_urls = EXCLUDED.image_urls,
     active = EXCLUDED.active;
+
+UPDATE banners
+SET image_urls = jsonb_build_array(image_url)
+WHERE image_urls IS NULL OR image_urls = '[]'::jsonb;

@@ -12,6 +12,7 @@ import {
   DeliveryZone,
   formatPrice,
   initialStoreData,
+  normalizeBanner,
   Order,
   OrderStatus,
   Product,
@@ -690,15 +691,46 @@ export function AdminDashboard() {
   async function saveBanner(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
-    if (!bannerDraft.imageUrl) {
-      setSyncError("ارفع صورة البانر قبل الحفظ.");
+    const imageUrls = bannerDraft.imageUrls.map((url) => url.trim()).filter(Boolean);
+    if (!imageUrls.length) {
+      setSyncError("ارفعي صورة واحدة على الأقل للهيرو قبل الحفظ.");
       return;
     }
-    const nextBanner = bannerDraft.id ? bannerDraft : { ...bannerDraft, id: uid("banner") };
+    const nextBanner = normalizeBanner(
+      bannerDraft.id
+        ? { ...bannerDraft, imageUrls }
+        : { ...bannerDraft, id: uid("banner"), imageUrls }
+    );
     await upsertBanner(nextBanner);
     await refreshData();
     setBannerDraft(blankBanner());
     setSyncMessage(adminSaveMessage("banners"));
+  }
+
+  async function handleBannerImagesUpload(files: FileList | null) {
+    if (!files?.length) return;
+
+    setUploadingField("صور الهيرو");
+    setSyncError("");
+    try {
+      const urls = await uploadAdminAssets(Array.from(files), "banners");
+      setBannerDraft((current) => normalizeBanner({
+        ...current,
+        imageUrls: [...current.imageUrls, ...urls],
+      }));
+      setSyncMessage("تم رفع صور الهيرو.");
+    } catch (error) {
+      setSyncError(formatAdminError(error, "تعذر رفع صور الهيرو."));
+    } finally {
+      setUploadingField("");
+    }
+  }
+
+  function removeBannerImage(index: number) {
+    setBannerDraft((current) => normalizeBanner({
+      ...current,
+      imageUrls: current.imageUrls.filter((_, imageIndex) => imageIndex !== index),
+    }));
   }
 
   async function saveSettings(event: FormEvent<HTMLFormElement>) {
@@ -1515,20 +1547,20 @@ export function AdminDashboard() {
             form={
               <form className="form-grid" onSubmit={saveBanner}>
                 <div className="admin-inline-notice admin-inline-notice--success">
-                  من هنا تتحكمي بصورة البنت/الهيرو والعنوان والوصف في الصفحة الرئيسية. ارفعي صورة جديدة واحفظي.
+                  من هنا تتحكمي بصور الهيرو (واحدة أو أكثر ككاروسيل) والعنوان والوصف في الصفحة الرئيسية.
                 </div>
                 <div className="two-col form-grid">
                   {textInput<Banner>("العنوان عربي", bannerDraft.titleAr, "titleAr", setBannerDraft)}
                   {textInput<Banner>("العنوان عبري", bannerDraft.titleHe, "titleHe", setBannerDraft)}
                 </div>
-                <MediaField
-                  isUploading={uploadingField === "صورة الهيرو"}
-                  label="صورة الهيرو (الصفحة الرئيسية)"
-                  onClear={() => setBannerDraft((current) => ({ ...current, imageUrl: "" }))}
-                  onUpload={(file) =>
-                    handleSingleAssetUpload(file, "banners", (url) => setBannerDraft((current) => ({ ...current, imageUrl: url })), "صورة الهيرو")
-                  }
-                  value={bannerDraft.imageUrl}
+                <ProductGalleryField
+                  emptyLabel="ارفعي صورة واحدة أو أكثر. الصور تتبدل تلقائياً في الهيرو."
+                  images={bannerDraft.imageUrls}
+                  isUploading={uploadingField === "صور الهيرو"}
+                  label="صور الهيرو (كاروسيل)"
+                  onRemove={removeBannerImage}
+                  onUpload={handleBannerImagesUpload}
+                  uploadLabel="رفع صور الهيرو"
                 />
                 <Textarea label="وصف الهيرو عربي" value={bannerDraft.subtitleAr} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleAr: value })} />
                 <Textarea label="وصف الهيرو عبري" value={bannerDraft.subtitleHe} onChange={(value) => setBannerDraft({ ...bannerDraft, subtitleHe: value })} />
@@ -1537,7 +1569,12 @@ export function AdminDashboard() {
               </form>
             }
           >
-            <EntityTable rows={data.banners} columns={["titleAr", "titleHe", "active"]} onEdit={setBannerDraft} onDelete={(id) => deleteById("banners", id)} />
+            <EntityTable
+              onDelete={(id) => deleteById("banners", id)}
+              onEdit={(banner) => setBannerDraft(normalizeBanner(banner))}
+              rows={data.banners}
+              columns={["titleAr", "titleHe", "active"]}
+            />
           </CrudLayout>
         ) : null}
 
@@ -1771,7 +1808,7 @@ function blankZone(): DeliveryZone {
 }
 
 function blankBanner(): Banner {
-  return { id: "", titleAr: "", titleHe: "", subtitleAr: "", subtitleHe: "", imageUrl: "", active: true };
+  return { id: "", titleAr: "", titleHe: "", subtitleAr: "", subtitleHe: "", imageUrl: "", imageUrls: [], active: true };
 }
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -1863,32 +1900,38 @@ function ProductGalleryField({
   onUpload,
   onRemove,
   isUploading,
+  label = "صور المنتج",
+  uploadLabel = "رفع صور المعرض",
+  emptyLabel = "ارفع صورة واحدة أو أكثر للمنتج.",
 }: {
   images: string[];
   onUpload: (files: FileList | null) => void;
   onRemove: (index: number) => void;
   isUploading: boolean;
+  label?: string;
+  uploadLabel?: string;
+  emptyLabel?: string;
 }) {
   return (
     <div className="form-row">
-      <span>صور المنتج</span>
+      <span>{label}</span>
       <div className="media-gallery">
         <label className="media-field__picker">
           <input accept="image/*" hidden multiple onChange={(event) => onUpload(event.target.files)} type="file" />
-          <span>{isUploading ? "جاري رفع الصور..." : "رفع صور المعرض"}</span>
+          <span>{isUploading ? "جاري رفع الصور..." : uploadLabel}</span>
         </label>
         <div className="media-gallery__grid">
           {images.map((image, index) => (
             <div className="media-gallery__item" key={`${image}-${index}`}>
               <div className="media-gallery__image">
-                <Image alt={`Product image ${index + 1}`} fill src={image} sizes="160px" />
+                <Image alt={`Gallery image ${index + 1}`} fill src={image} sizes="160px" />
               </div>
               <button className="danger-button" onClick={() => onRemove(index)} type="button">
                 حذف
               </button>
             </div>
           ))}
-          {!images.length ? <div className="media-field__empty">ارفع صورة واحدة أو أكثر للمنتج.</div> : null}
+          {!images.length ? <div className="media-field__empty">{emptyLabel}</div> : null}
         </div>
       </div>
     </div>

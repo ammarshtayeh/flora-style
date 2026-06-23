@@ -169,42 +169,50 @@ html[data-theme="light"] .flora-header__cart {
 
 .flora-home__hero-visual {
   isolation: isolate;
+  margin-top: clamp(28px, 5vw, 56px);
   min-height: clamp(360px, 52vh, 620px);
   position: relative;
 }
 
-.flora-home__hero-orb {
-  border-radius: 50%;
-  position: absolute;
-  z-index: 0;
-}
-
-.flora-home__hero-orb--cream {
-  background: rgba(243, 229, 171, 0.42);
-  height: clamp(220px, 34vw, 360px);
-  inset-inline-end: 8%;
-  top: 8%;
-  width: clamp(220px, 34vw, 360px);
-}
-
-.flora-home__hero-orb--gold {
-  background: linear-gradient(145deg, rgba(176, 139, 87, 0.92), rgba(143, 106, 61, 0.88));
-  box-shadow: 0 24px 60px rgba(176, 139, 87, 0.28);
-  height: clamp(260px, 40vw, 420px);
-  inset-inline-start: 10%;
-  top: 18%;
-  width: clamp(260px, 40vw, 420px);
-}
-
+.flora-home__hero-orb,
 .flora-home__hero-ring {
-  border: 1px dashed rgba(255, 250, 242, 0.72);
-  border-radius: 50%;
-  height: clamp(210px, 32vw, 340px);
-  inset-inline-start: 16%;
+  display: none;
+}
+
+.flora-hero-carousel {
+  inset: 0;
   position: absolute;
-  top: 24%;
-  width: clamp(210px, 32vw, 340px);
-  z-index: 1;
+}
+
+.flora-hero-carousel__slide {
+  inset: 0;
+  position: absolute;
+}
+
+.flora-hero-carousel__dots {
+  bottom: 14px;
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  left: 0;
+  position: absolute;
+  right: 0;
+  z-index: 3;
+}
+
+.flora-hero-carousel__dots button {
+  background: rgba(255, 250, 242, 0.45);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  height: 8px;
+  padding: 0;
+  width: 8px;
+}
+
+.flora-hero-carousel__dots button.is-active {
+  background: #d4af37;
+  width: 22px;
 }
 
 .flora-home__hero-frame {

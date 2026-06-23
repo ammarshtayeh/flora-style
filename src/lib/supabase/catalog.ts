@@ -85,6 +85,7 @@ type BannerRow = {
   subtitle_ar: string | null;
   subtitle_he: string | null;
   image_url: string;
+  image_urls?: string[] | null;
   active: boolean;
 };
 
@@ -159,14 +160,24 @@ function mapZone(row: DeliveryZoneRow) {
   };
 }
 
+function parseBannerImageUrls(row: BannerRow) {
+  if (Array.isArray(row.image_urls)) {
+    return row.image_urls.map((url) => url.trim()).filter(Boolean);
+  }
+
+  return row.image_url?.trim() ? [row.image_url] : [];
+}
+
 function mapBanner(row: BannerRow): Banner {
+  const imageUrls = parseBannerImageUrls(row);
   return {
     id: row.id,
     titleAr: row.title_ar,
     titleHe: row.title_he,
     subtitleAr: row.subtitle_ar ?? "",
     subtitleHe: row.subtitle_he ?? "",
-    imageUrl: row.image_url,
+    imageUrl: imageUrls[0] ?? row.image_url ?? "",
+    imageUrls,
     active: row.active,
   };
 }

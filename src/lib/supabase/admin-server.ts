@@ -7,6 +7,7 @@ import type {
   ProductColor,
   StoreSettings,
 } from "@/lib/store";
+import { getBannerImages } from "@/lib/store";
 import { buildProductSlug } from "@/lib/slug";
 import { createServiceSupabaseClient } from "./service";
 
@@ -188,13 +189,15 @@ export async function serverUpsertDeliveryZone(zone: DeliveryZone) {
 
 export async function serverUpsertBanner(banner: Banner) {
   const client = requireServiceClient();
+  const imageUrls = getBannerImages(banner);
   const { error } = await client.from("banners").upsert({
     id: banner.id,
     title_ar: banner.titleAr,
     title_he: banner.titleHe,
     subtitle_ar: banner.subtitleAr,
     subtitle_he: banner.subtitleHe,
-    image_url: banner.imageUrl,
+    image_url: imageUrls[0] ?? banner.imageUrl,
+    image_urls: imageUrls,
     active: banner.active,
   });
   if (error) throw error;

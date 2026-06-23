@@ -11,7 +11,8 @@ import { StoreContactLinks } from "@/components/store-contact-links";
 import { addToCart } from "@/lib/cart";
 import { loadStoreData, refreshStoreDataFromSupabase, subscribeToStoreData } from "@/lib/db";
 import { getWhatsAppHref, formatPhoneDisplay } from "@/lib/contact";
-import { getBrandDisplayName, initialStoreData, type Language, type Product, textByLanguage } from "@/lib/store";
+import { getBrandDisplayName, getBannerImages, initialStoreData, normalizeBanner, type Language, type Product, textByLanguage } from "@/lib/store";
+import { HeroCarousel } from "@/components/hero-carousel";
 
 const copy = {
   ar: {
@@ -213,7 +214,8 @@ export function Storefront() {
   const activeCategories = useMemo(() => storeData.categories.filter((category) => category.active), [storeData.categories]);
   const activeBrands = useMemo(() => storeData.brands.filter((brand) => brand.active), [storeData.brands]);
   const banner = storeData.banners.find((entry) => entry.active) || storeData.banners[0];
-  const heroImage = banner?.imageUrl?.trim() || "/flora-hero-model.png";
+  const heroImages = getBannerImages(banner);
+  const heroSlides = heroImages.length ? heroImages : ["/flora-hero-model.png"];
   const featuredCategories = activeCategories.slice(0, 4);
 
   const productsPerCategory = useMemo(() => {
@@ -268,19 +270,8 @@ export function Storefront() {
               <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--one" />
               <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--two" />
               <span aria-hidden className="flora-home__hero-dot flora-home__hero-dot--three" />
-              <span aria-hidden className="flora-home__hero-orb flora-home__hero-orb--cream" />
-              <span aria-hidden className="flora-home__hero-orb flora-home__hero-orb--gold" />
-              <span aria-hidden className="flora-home__hero-ring" />
               <div className="flora-home__hero-frame">
-                <Image
-                  alt="Flora Style luxury editorial"
-                  className="flora-home__hero-model"
-                  fill
-                  key={heroImage}
-                  priority
-                  sizes="(max-width: 900px) 88vw, 44vw"
-                  src={heroImage}
-                />
+                <HeroCarousel alt="Flora Style luxury editorial" images={heroSlides} />
               </div>
               <div className="flora-home__hero-badge">
                 <strong>{activeBrands.length}</strong>

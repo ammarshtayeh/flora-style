@@ -67,8 +67,25 @@ export type Banner = {
   subtitleAr: string;
   subtitleHe: string;
   imageUrl: string;
+  imageUrls: string[];
   active: boolean;
 };
+
+export function getBannerImages(banner?: Pick<Banner, "imageUrl" | "imageUrls"> | null) {
+  const gallery = banner?.imageUrls?.map((url) => url.trim()).filter(Boolean) ?? [];
+  if (gallery.length) return gallery;
+  const single = banner?.imageUrl?.trim();
+  return single ? [single] : [];
+}
+
+export function normalizeBanner(banner: Banner): Banner {
+  const imageUrls = getBannerImages(banner);
+  return {
+    ...banner,
+    imageUrls,
+    imageUrl: imageUrls[0] ?? "",
+  };
+}
 
 export type StoreSettings = {
   storeName: string;
@@ -401,6 +418,7 @@ export const initialStoreData: StoreData = {
       subtitleAr: "مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.",
       subtitleHe: "אוסף נבחר של תיקים, אביזרים ושעונים. גלשי בנוחות ושלחי את ההזמנה ישירות מהאתר.",
       imageUrl: images.hero,
+      imageUrls: [images.hero],
       active: true
     }
   ],
