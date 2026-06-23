@@ -1,8 +1,9 @@
 "use client";
 
-import { Download, Share, X } from "lucide-react";
+import { Bell, Download, Share, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { isOneSignalConfigured, requestFloraPushPermission } from "@/lib/onesignal";
 import type { Language } from "@/lib/store";
 
 type BeforeInstallPromptEvent = Event & {
@@ -74,8 +75,10 @@ export function PwaRegister() {
     window.matchMedia("(display-mode: standalone)").addEventListener("change", handleDisplayModeChange);
 
     if ("serviceWorker" in navigator && process.env.NODE_ENV === "production") {
-      navigator.serviceWorker.register("/sw.js").catch(() => {
-        // PWA support should never block the shopping experience.
+      navigator.serviceWorker.register("/OneSignalSDKWorker.js").catch(() => {
+        navigator.serviceWorker.register("/sw.js").catch(() => {
+          // PWA support should never block the shopping experience.
+        });
       });
     }
 
@@ -102,6 +105,13 @@ export function PwaRegister() {
     setShowInstallGuide(true);
   }
 
+  async function handleEnableNotifications() {
+    const granted = await requestFloraPushPermission();
+    if (granted) {
+      window.localStorage.setItem("flora-push-enabled", "1");
+    }
+  }
+
   function handleDismiss() {
     setDismissed(true);
     window.localStorage.setItem("flora-install-dismissed", "1");
@@ -117,6 +127,7 @@ export function PwaRegister() {
           body: "احفظي المتجر على جهازك لتجربة أسرع وأقرب لتطبيق فعلي.",
           later: "لاحقاً",
           install: "تثبيت",
+          notifications: "تفعيل الإشعارات",
           guideTitle: isIosDevice() ? "إضافة إلى الشاشة الرئيسية" : "تثبيت التطبيق",
           guideClose: "حسناً",
           iosSteps: [
@@ -135,6 +146,7 @@ export function PwaRegister() {
           body: "שמרי את החנות על המכשיר לחוויה מהירה וקרובה יותר לאפליקציה.",
           later: "אחר כך",
           install: "התקנה",
+          notifications: "הפעלת התראות",
           guideTitle: isIosDevice() ? "הוספה למסך הבית" : "התקנת האפליקציה",
           guideClose: "הבנתי",
           iosSteps: [
@@ -161,6 +173,12 @@ export function PwaRegister() {
             <button onClick={handleDismiss} type="button">
               {copy.later}
             </button>
+            {isOneSignalConfigured() && (installed || !isIosDevice()) ? (
+              <button className="install-prompt__notify" onClick={handleEnableNotifications} type="button">
+                <Bell size={16} />
+                {copy.notifications}
+              </button>
+            ) : null}
             <button onClick={handleInstall} type="button">
               <Download size={16} />
               {copy.install}

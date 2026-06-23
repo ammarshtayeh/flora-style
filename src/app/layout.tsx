@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, Assistant, Manrope } from "next/font/google";
+import { OneSignalCartSync } from "@/components/onesignal-cart-sync";
+import { OneSignalInit } from "@/components/onesignal-init";
 import { PwaRegister } from "@/components/pwa-register";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { siteUrl } from "@/lib/site";
@@ -85,6 +87,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body>
         <SmoothScroll>{children}</SmoothScroll>
+        <OneSignalInit />
+        <OneSignalCartSync />
         <PwaRegister />
       </body>
     </html>

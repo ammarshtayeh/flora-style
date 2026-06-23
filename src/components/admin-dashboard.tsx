@@ -38,11 +38,12 @@ import {
 import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
+import { AdminMarketingNotifications } from "@/components/admin-marketing-notifications";
 import { isValidImageSource, shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 import { buildProductSlug } from "@/lib/slug";
 
-type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "backup" | "settings" | "accounts" | "profile";
+type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "marketing" | "backup" | "settings" | "accounts" | "profile";
 
 type AdminAccount = {
   user_id: string;
@@ -72,6 +73,7 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: "brands", label: "البراندات" },
   { id: "delivery", label: "التوصيل" },
   { id: "banners", label: "صورة الهيرو" },
+  { id: "marketing", label: "التسويق · الإشعارات" },
   { id: "backup", label: "النسخة الاحتياطية" },
   { id: "settings", label: "الإعدادات" },
   { id: "accounts", label: "حسابات الأدمن" },
@@ -1596,6 +1598,13 @@ export function AdminDashboard() {
               columns={["titleAr", "titleHe", "active"]}
             />
           </CrudLayout>
+        ) : null}
+
+        {activeTab === "marketing" ? (
+          <AdminMarketingNotifications
+            onError={setSyncError}
+            onMessage={setSyncMessage}
+          />
         ) : null}
 
         {activeTab === "backup" ? (

@@ -1,6 +1,8 @@
 import { loadStoreData } from "./db";
 import type { ProductColor } from "./store";
 
+import { syncOneSignalCartTag } from "./onesignal";
+
 export type CartItem = {
   productId: string;
   colorId: string;
@@ -23,6 +25,7 @@ export function getCart(): CartItem[] {
 export function saveCart(cart: CartItem[]) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  syncOneSignalCartTag(cart.length > 0);
   window.dispatchEvent(new CustomEvent("flora-cart-updated", { detail: cart }));
 }
 
