@@ -1,7 +1,8 @@
 "use client";
 
 import { Bell, Send } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import type { OneSignalDiagnostics } from "@/lib/onesignal-server";
 import {
   marketingNotificationTemplates,
   type MarketingNotificationAudience,
@@ -28,6 +29,16 @@ export function AdminMarketingNotifications({
   const [draft, setDraft] = useState<MarketingNotificationDraft>(blankDraft);
   const [isSending, setIsSending] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
+  const [diagnostics, setDiagnostics] = useState<OneSignalDiagnostics | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/notifications", { credentials: "include" })
+      .then((response) => response.json())
+      .then((payload: { diagnostics?: OneSignalDiagnostics }) => {
+        if (payload.diagnostics) setDiagnostics(payload.diagnostics);
+      })
+      .catch(() => setDiagnostics(null));
+  }, []);
 
   const audienceLabel = useMemo(() => {
     return draft.audience === "cart" ? "مشتركات لديهن منتجات في السلة" : "كل المشتركين المفعّلين";
@@ -83,6 +94,13 @@ export function AdminMarketingNotifications({
             </p>
           </div>
         </div>
+        {diagnostics?.issue ? (
+          <div className="admin-flash admin-flash--error">{diagnostics.issue}</div>
+        ) : diagnostics?.apiReachable ? (
+          <div className="admin-inline-notice admin-inline-notice--success">
+            OneSignal متصل — المشتركين المكتشفين عبر API: <strong>{diagnostics.subscriptionCount}</strong>
+          </div>
+        ) : null}
       </div>
 
       <div className="admin-panel">

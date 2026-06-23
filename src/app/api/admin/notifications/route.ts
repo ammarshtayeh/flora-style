@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getMarketingNotificationTemplate } from "@/lib/marketing-notifications";
-import { isOneSignalServerConfigured, sendMarketingPushNotification } from "@/lib/onesignal-server";
+import { getOneSignalDiagnostics, isOneSignalServerConfigured, sendMarketingPushNotification } from "@/lib/onesignal-server";
 import { requireAdminAccess } from "@/lib/supabase/admin-access";
 
 type NotificationBody = {
@@ -17,8 +17,11 @@ export async function GET() {
   const access = await requireAdminAccess();
   if (access.error) return access.error;
 
+  const diagnostics = await getOneSignalDiagnostics();
+
   return NextResponse.json({
     configured: isOneSignalServerConfigured(),
+    diagnostics,
     templates: ["new_arrivals", "offers", "coupons", "cart_reminder"],
   });
 }

@@ -21,12 +21,35 @@ type OneSignalPlayersResponse = {
   total_count?: number;
 };
 
+type OneSignalSegmentsResponse = {
+  segments?: Array<{ name?: string }>;
+};
+
+export type OneSignalDiagnostics = {
+  configured: boolean;
+  appId: string;
+  apiKeyPresent: boolean;
+  segments: string[];
+  subscriptionCount: number;
+  apiReachable: boolean;
+  issue?: string;
+};
+
 function getOneSignalAppId() {
   return process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID?.trim() ?? process.env.ONESIGNAL_APP_ID?.trim() ?? "";
 }
 
+function normalizeApiKey(raw: string) {
+  return raw.trim().replace(/^key\s+/i, "");
+}
+
 function getOneSignalRestApiKey() {
-  return process.env.ONESIGNAL_REST_API_KEY?.trim() ?? "";
+  const raw =
+    process.env.ONESIGNAL_REST_API_KEY?.trim() ??
+    process.env.ONESIGNAL_APP_API_KEY?.trim() ??
+    process.env.ONESIGNAL_API_KEY?.trim() ??
+    "";
+  return normalizeApiKey(raw);
 }
 
 export function isOneSignalServerConfigured() {
@@ -58,53 +81,27 @@ function formatOneSignalErrors(errors: OneSignalNotificationResponse["errors"]) 
     .join(" ");
 }
 
-function buildWebPushPayload(
-  base: Record<string, unknown>,
-  audience: "all" | "cart"
-): Record<string, unknown> {
-  const resolvedUrl = base.url as string;
-  const payload: Record<string, unknown> = {
-    ...base,
-    target_channel: "push",
-    url: resolvedUrl,
-    web_url: resolvedUrl,
-    isIos: false,
-    isAndroid: false,
-    isHuawei: false,
-    isWP_WNS: false,
-    isAdm: false,
-    isAnyWeb: true,
-    isChromeWeb: true,
-    isFirefox: true,
-    isSafari: true,
+function authHeaders(apiKey: string) {
+  return {
+    Authorization: `Key ${apiKey}`,
+    "Content-Type": "application/json; charset=utf-8",
   };
-
-  if (audience === "cart") {
-    payload.filters = [{ field: "tag", key: "has_cart", relation: "=", value: "true" }];
-  }
-
-  return payload;
 }
 
-async function postOneSignalNotification(payload: Record<string, unknown>, apiKey: string) {
-  const response = await fetch("https://api.onesignal.com/notifications", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      Authorization: `Key ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
+async function fetchSegmentNames(appId: string, apiKey: string) {
+  const response = await fetch(`https://api.onesignal.com/apps/${appId}/segments?limit=50`, {
+    headers: { Authorization: `Key ${apiKey}` },
   });
 
-  const result = (await response.json().catch(() => ({}))) as OneSignalNotificationResponse;
-  return { response, result };
+  if (!response.ok) return [];
+
+  const payload = (await response.json().catch(() => ({}))) as OneSignalSegmentsResponse;
+  return (payload.segments ?? []).map((segment) => segment.name?.trim()).filter(Boolean) as string[];
 }
 
-async function fetchSubscribedWebSubscriptionIds(appId: string, apiKey: string) {
+async function fetchSubscribedSubscriptionIds(appId: string, apiKey: string) {
   const response = await fetch(`https://api.onesignal.com/api/v1/players?app_id=${appId}&limit=200&offset=0`, {
-    headers: {
-      Authorization: `Key ${apiKey}`,
-    },
+    headers: { Authorization: `Key ${apiKey}` },
   });
 
   if (!response.ok) return [];
@@ -115,37 +112,104 @@ async function fetchSubscribedWebSubscriptionIds(appId: string, apiKey: string) 
     .map((player) => player.id as string);
 }
 
+async function postOneSignalNotification(payload: Record<string, unknown>, apiKey: string) {
+  const response = await fetch("https://api.onesignal.com/notifications", {
+    method: "POST",
+    headers: authHeaders(apiKey),
+    body: JSON.stringify(payload),
+  });
+
+  const result = (await response.json().catch(() => ({}))) as OneSignalNotificationResponse;
+  return { response, result };
+}
+
+function buildAudienceStrategies(
+  appId: string,
+  base: Record<string, unknown>,
+  audience: "all" | "cart",
+  segmentNames: string[],
+  subscriptionIds: string[]
+) {
+  const strategies: Array<Record<string, unknown>> = [];
+  const resolvedUrl = base.url as string;
+
+  const minimalBase = {
+    app_id: appId,
+    target_channel: "push",
+    headings: base.headings,
+    contents: base.contents,
+    url: resolvedUrl,
+    web_url: resolvedUrl,
+    name: base.name,
+  };
+
+  if (audience === "cart") {
+    strategies.push({
+      ...minimalBase,
+      filters: [{ field: "tag", key: "has_cart", relation: "=", value: "true" }],
+    });
+    return strategies;
+  }
+
+  const preferredSegments = [
+    "Subscribed Users",
+    "All Subscriptions",
+    "Total Subscriptions",
+    "All",
+    ...segmentNames,
+  ];
+
+  const uniqueSegments = [...new Set(preferredSegments.map((name) => name.trim()).filter(Boolean))];
+
+  for (const segment of uniqueSegments) {
+    strategies.push({
+      ...minimalBase,
+      included_segments: [segment],
+    });
+  }
+
+  if (subscriptionIds.length) {
+    strategies.push({
+      ...minimalBase,
+      include_subscription_ids: subscriptionIds.slice(0, 200),
+    });
+  }
+
+  strategies.push({
+    ...minimalBase,
+    isIos: false,
+    isAndroid: false,
+    isHuawei: false,
+    isWP_WNS: false,
+    isAdm: false,
+    isAnyWeb: true,
+    isChromeWeb: true,
+    isFirefox: true,
+    isSafari: true,
+    included_segments: ["Subscribed Users"],
+  });
+
+  return strategies;
+}
+
 async function sendWithStrategies(
   appId: string,
   apiKey: string,
   base: Record<string, unknown>,
   audience: "all" | "cart"
 ) {
-  const strategies: Array<Record<string, unknown>> = [];
+  const [segmentNames, subscriptionIds] = await Promise.all([
+    fetchSegmentNames(appId, apiKey),
+    audience === "all" ? fetchSubscribedSubscriptionIds(appId, apiKey) : Promise.resolve([]),
+  ]);
 
-  if (audience === "all") {
-    for (const segment of ["Subscribed Users", "All", "Total Subscriptions", "All Subscriptions"]) {
-      strategies.push({
-        ...buildWebPushPayload(base, audience),
-        included_segments: [segment],
-      });
-    }
-  } else {
-    strategies.push(buildWebPushPayload(base, audience));
-  }
+  const strategies = buildAudienceStrategies(appId, base, audience, segmentNames, subscriptionIds);
 
-  const subscriptionIds = audience === "all" ? await fetchSubscribedWebSubscriptionIds(appId, apiKey) : [];
-  if (subscriptionIds.length) {
-    strategies.push({
-      ...buildWebPushPayload(base, audience),
-      include_subscription_ids: subscriptionIds.slice(0, 200),
-    });
-  }
-
-  let lastError = "لم يتم إنشاء الإشعار. تأكدي من وجود مشتركين مفعّلين للإشعارات.";
+  let lastError =
+    "لم يتم إنشاء الإشعار. تأكدي أن REST API Key و App ID من نفس تطبيق OneSignal الذي فيه المشتركين.";
 
   for (const payload of strategies) {
-    const { response, result } = await postOneSignalNotification({ app_id: appId, ...payload }, apiKey);
+    const { response, result } = await postOneSignalNotification(payload, apiKey);
 
     if (result.id) {
       return { id: result.id };
@@ -154,13 +218,13 @@ async function sendWithStrategies(
     const formatted = formatOneSignalErrors(result.errors);
     if (formatted) {
       lastError = formatted;
-      if (/api key|authorization|unauthorized/i.test(formatted)) {
+      if (/api key|authorization|unauthorized|access denied|invalid/i.test(formatted)) {
         throw new Error(
-          "مفتاح OneSignal غير صحيح. استخدمي REST API Key من Settings → Keys & IDs وليس Organization API Key."
+          "مفتاح OneSignal غير صحيح. من Settings → Keys & IDs انسخي App API Key (يبدأ غالباً بـ os_v2_app_) بدون كلمة Key في Vercel."
         );
       }
     } else if (!response.ok) {
-      lastError = formatted || "تعذر إرسال الإشعار عبر OneSignal.";
+      lastError = "تعذر إرسال الإشعار عبر OneSignal.";
     }
 
     const warning = result.warnings?.join(" ");
@@ -168,6 +232,44 @@ async function sendWithStrategies(
   }
 
   throw new Error(lastError);
+}
+
+export async function getOneSignalDiagnostics(): Promise<OneSignalDiagnostics> {
+  const appId = getOneSignalAppId();
+  const apiKey = getOneSignalRestApiKey();
+
+  if (!appId || !apiKey) {
+    return {
+      configured: false,
+      appId,
+      apiKeyPresent: Boolean(apiKey),
+      segments: [],
+      subscriptionCount: 0,
+      apiReachable: false,
+      issue: "ONESIGNAL_REST_API_KEY أو NEXT_PUBLIC_ONESIGNAL_APP_ID غير مضاف في Vercel.",
+    };
+  }
+
+  const [segmentNames, subscriptionIds] = await Promise.all([
+    fetchSegmentNames(appId, apiKey),
+    fetchSubscribedSubscriptionIds(appId, apiKey),
+  ]);
+
+  let issue: string | undefined;
+  if (!segmentNames.length && !subscriptionIds.length) {
+    issue =
+      "المفتاح أو App ID لا يطابقان تطبيق OneSignal الصحيح. Dashboard يعمل لكن API يستهدف تطبيقاً بلا مشتركين.";
+  }
+
+  return {
+    configured: true,
+    appId,
+    apiKeyPresent: true,
+    segments: segmentNames,
+    subscriptionCount: subscriptionIds.length,
+    apiReachable: segmentNames.length > 0 || subscriptionIds.length > 0,
+    issue,
+  };
 }
 
 export async function sendMarketingPushNotification(input: SendMarketingNotificationInput) {
@@ -193,7 +295,6 @@ export async function sendMarketingPushNotification(input: SendMarketingNotifica
     headings: buildLocalizedField(titleAr, titleHe),
     contents: buildLocalizedField(bodyAr, bodyHe),
     url: resolvedUrl,
-    chrome_web_image: `${getSiteUrl()}/flora-logo.png`,
   };
 
   const result = await sendWithStrategies(appId, apiKey, base, input.audience);
