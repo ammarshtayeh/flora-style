@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, Send } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import {
   marketingNotificationTemplates,
   type MarketingNotificationAudience,
@@ -26,16 +26,8 @@ export function AdminMarketingNotifications({
   onError: (message: string) => void;
 }) {
   const [draft, setDraft] = useState<MarketingNotificationDraft>(blankDraft);
-  const [configured, setConfigured] = useState<boolean | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [activeTemplateId, setActiveTemplateId] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/admin/notifications", { credentials: "include" })
-      .then((response) => response.json())
-      .then((payload: { configured?: boolean }) => setConfigured(Boolean(payload.configured)))
-      .catch(() => setConfigured(false));
-  }, []);
 
   const audienceLabel = useMemo(() => {
     return draft.audience === "cart" ? "مشتركات لديهن منتجات في السلة" : "كل المشتركين المفعّلين";
@@ -91,11 +83,6 @@ export function AdminMarketingNotifications({
             </p>
           </div>
         </div>
-        {configured === false ? (
-          <div className="admin-flash admin-flash--error">
-            أضيفي <code>ONESIGNAL_REST_API_KEY</code> و <code>NEXT_PUBLIC_ONESIGNAL_APP_ID</code> في Vercel ثم أعيدي النشر.
-          </div>
-        ) : null}
       </div>
 
       <div className="admin-panel">
@@ -181,7 +168,7 @@ export function AdminMarketingNotifications({
           سيتم الإرسال إلى: <strong>{audienceLabel}</strong>
         </div>
 
-        <button className="button admin-marketing__send" disabled={isSending || configured === false} type="submit">
+        <button className="button admin-marketing__send" disabled={isSending} type="submit">
           <Send size={16} />
           {isSending ? "جاري الإرسال..." : "إرسال الإشعار"}
         </button>
