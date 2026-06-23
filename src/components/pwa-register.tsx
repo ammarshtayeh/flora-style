@@ -40,11 +40,17 @@ export function PwaRegister() {
   const [readyToShow, setReadyToShow] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [installed, setInstalled] = useState(false);
+  const [notifyDismissed, setNotifyDismissed] = useState(false);
+  const [pushEnabled, setPushEnabled] = useState(false);
   const [showInstallGuide, setShowInstallGuide] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const savedNotifyDismiss = window.localStorage.getItem("flora-notify-dismissed");
+    if (savedNotifyDismiss === "1") setNotifyDismissed(true);
+    if (window.localStorage.getItem("flora-push-enabled") === "1") setPushEnabled(true);
 
     const savedDismiss = window.localStorage.getItem("flora-install-dismissed");
     if (savedDismiss === "1") setDismissed(true);
@@ -109,7 +115,14 @@ export function PwaRegister() {
     const granted = await requestFloraPushPermission();
     if (granted) {
       window.localStorage.setItem("flora-push-enabled", "1");
+      setPushEnabled(true);
+      setNotifyDismissed(true);
     }
+  }
+
+  function handleDismissNotify() {
+    setNotifyDismissed(true);
+    window.localStorage.setItem("flora-notify-dismissed", "1");
   }
 
   function handleDismiss() {
@@ -118,7 +131,17 @@ export function PwaRegister() {
   }
 
   const isAdmin = pathname?.startsWith("/admin");
-  const shouldShowPrompt = isMobile && !installed && !dismissed && readyToShow && !isAdmin;
+  const isIos = isIosDevice();
+  const shouldShowInstallPrompt = isMobile && !installed && !dismissed && readyToShow && !isAdmin;
+  const canOfferNotifications = isOneSignalConfigured() && (!isIos || installed);
+  const shouldShowNotifyPrompt =
+    isMobile &&
+    canOfferNotifications &&
+    !pushEnabled &&
+    !notifyDismissed &&
+    readyToShow &&
+    !isAdmin &&
+    (!shouldShowInstallPrompt || !isIos);
 
   const copy =
     language === "ar"
@@ -163,7 +186,7 @@ export function PwaRegister() {
 
   return (
     <>
-      {shouldShowPrompt ? (
+      {shouldShowInstallPrompt ? (
         <div className="install-prompt" role="dialog" aria-live="polite">
           <div>
             <span>{copy.title}</span>
@@ -173,7 +196,7 @@ export function PwaRegister() {
             <button onClick={handleDismiss} type="button">
               {copy.later}
             </button>
-            {isOneSignalConfigured() && (installed || !isIosDevice()) ? (
+            {canOfferNotifications && !isIos ? (
               <button className="install-prompt__notify" onClick={handleEnableNotifications} type="button">
                 <Bell size={16} />
                 {copy.notifications}
@@ -182,6 +205,28 @@ export function PwaRegister() {
             <button onClick={handleInstall} type="button">
               <Download size={16} />
               {copy.install}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {shouldShowNotifyPrompt ? (
+        <div className="install-prompt install-prompt--notify-only" role="dialog" aria-live="polite">
+          <div>
+            <span>{language === "ar" ? "فعّلي إشعارات Flora Style" : "הפעילי התראות Flora Style"}</span>
+            <p>
+              {language === "ar"
+                ? "احصلي على تنبيهات العروض والمنتجات الجديدة مباشرة على جوالك."
+                : "קבלי עדכונים על מבצעים ומוצרים חדשים ישירות לנייד."}
+            </p>
+          </div>
+          <div className="install-prompt__actions">
+            <button onClick={handleDismissNotify} type="button">
+              {copy.later}
+            </button>
+            <button onClick={handleEnableNotifications} type="button">
+              <Bell size={16} />
+              {copy.notifications}
             </button>
           </div>
         </div>

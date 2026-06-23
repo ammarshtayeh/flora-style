@@ -3895,6 +3895,16 @@ button {
   color: var(--ivory);
 }
 
+.install-prompt--notify-only {
+  border-color: rgba(176, 139, 87, 0.32);
+}
+
+.install-prompt--notify-only .install-prompt__actions button:last-child {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--ivory);
+}
+
 .install-prompt__notify {
   background: rgba(176, 139, 87, 0.1) !important;
   border-color: rgba(176, 139, 87, 0.28) !important;
