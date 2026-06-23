@@ -3895,6 +3895,76 @@ button {
   color: var(--ivory);
 }
 
+.install-guide {
+  align-items: flex-end;
+  background: rgba(11, 11, 10, 0.42);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 16px;
+  position: fixed;
+  z-index: 160;
+}
+
+.install-guide__sheet {
+  background: #fffdf9;
+  border: 1px solid rgba(176, 139, 87, 0.18);
+  border-radius: 22px 22px 18px 18px;
+  box-shadow: 0 24px 60px rgba(58, 44, 28, 0.18);
+  display: grid;
+  gap: 14px;
+  max-width: 420px;
+  padding: 22px 20px max(20px, env(safe-area-inset-bottom));
+  position: relative;
+  width: 100%;
+}
+
+.install-guide__close {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: #8a7d70;
+  cursor: pointer;
+  display: inline-flex;
+  inset-inline-end: 12px;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 36px;
+  position: absolute;
+  top: 10px;
+}
+
+.install-guide__icon {
+  align-items: center;
+  background: rgba(176, 139, 87, 0.12);
+  border-radius: 999px;
+  color: var(--gold);
+  display: inline-flex;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
+}
+
+.install-guide__sheet h3 {
+  color: var(--ink);
+  font-size: 18px;
+  margin: 0;
+}
+
+.install-guide__sheet ol {
+  color: #5f5448;
+  display: grid;
+  gap: 10px;
+  line-height: 1.7;
+  margin: 0;
+  padding-inline-start: 20px;
+}
+
+.install-guide__confirm {
+  justify-self: stretch;
+  width: 100%;
+}
+
 /* Sliding Cart Drawer */
 .cart-sheet {
   background: rgba(11, 11, 10, 0.94);
@@ -6106,6 +6176,16 @@ html[data-theme="light"] select.select option {
   .install-prompt__actions button {
     flex: 1;
     justify-content: center;
+  }
+
+  .install-guide {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .install-guide__sheet {
+    border-radius: 22px 22px 0 0;
+    max-width: none;
   }
 }
 
