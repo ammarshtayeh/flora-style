@@ -197,45 +197,113 @@
 }
 
 .flora-home__hero {
-  align-content: start;
+  align-content: end;
   display: grid;
   grid-template-columns: 1fr;
   justify-items: center;
   min-height: calc(100dvh - var(--flora-header-height, 132px));
-  place-items: start center;
-}
-
-.flora-home__hero-content h1 {
-  margin-inline: auto;
-  max-width: 14ch;
+  padding-bottom: clamp(40px, 7vh, 88px);
+  place-items: end center;
 }
 
 .flora-home__hero-content {
-  background: linear-gradient(180deg, rgba(7, 7, 7, 0.58), rgba(7, 7, 7, 0.22));
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 28px;
-  backdrop-filter: blur(12px);
+  background: none;
+  border: none;
+  backdrop-filter: none;
+  box-shadow: none;
   margin-inline: auto;
-  margin-top: clamp(18px, 5vh, 56px);
-  max-width: min(760px, calc(100% - 32px));
-  padding: clamp(28px, 4vw, 40px) clamp(22px, 4vw, 36px);
+  margin-top: 0;
+  max-width: min(900px, calc(100% - 40px));
+  padding: 0;
   text-align: center;
   width: 100%;
 }
 
-.flora-home__hero-content p {
-  margin-inline: auto;
-  max-width: 46ch;
+.flora-home__hero-kicker {
+  color: #e8d2a5;
+  display: inline-block;
+  font-family: var(--font-luxury);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+  margin-bottom: 16px;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  text-transform: uppercase;
 }
 
-.flora-home__hero .luxury-actions {
+.flora-home__hero-content h1 {
+  color: #ffffff;
+  font-family: var(--font-arabic), var(--font-hebrew), var(--font-latin), Arial, sans-serif;
+  font-size: clamp(34px, 6.8vw, 68px);
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.22;
+  margin: 0 auto;
+  max-width: 11ch;
+  overflow: visible;
+  padding-block: 0.06em;
+  text-shadow: 0 6px 36px rgba(0, 0, 0, 0.55);
+}
+
+.flora-home__hero-content h1::after {
+  background: linear-gradient(90deg, transparent, #d4af37 20%, #f3e5ab 50%, #d4af37 80%, transparent);
+  border-radius: 999px;
+  content: "";
+  display: block;
+  height: 2px;
+  margin: 20px auto 0;
+  width: min(72px, 18vw);
+}
+
+.flora-home__hero-lead,
+.flora-home__hero-content p {
+  color: rgba(255, 250, 242, 0.94);
+  font-size: clamp(15px, 1.85vw, 19px);
+  line-height: 1.85;
+  margin: 22px auto 0;
+  max-width: 44ch;
+  text-shadow: 0 3px 24px rgba(0, 0, 0, 0.5);
+}
+
+.flora-home__hero-actions {
+  gap: 14px;
   justify-content: center;
+  margin-top: 34px;
+}
+
+.flora-home__hero .luxury-actions a:first-child {
+  background: linear-gradient(135deg, #e8c96a 0%, #d4af37 48%, #b08b57 100%);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+  color: #1a1410;
+  font-weight: 800;
+  min-height: 52px;
+  padding-inline: 34px;
+}
+
+.flora-home__hero .luxury-actions a:nth-child(2) {
+  background: rgba(255, 250, 242, 0.1);
+  border-color: rgba(255, 248, 238, 0.42);
+  box-shadow: none;
+  color: #fffaf2;
+  backdrop-filter: blur(10px);
+}
+
+.flora-home__hero .luxury-actions a:nth-child(2):hover {
+  background: rgba(255, 250, 242, 0.18);
+  border-color: rgba(243, 229, 171, 0.65);
+  color: #fffaf2;
 }
 
 .flora-home__hero .luxury-hero__media::after {
   background:
-    linear-gradient(180deg, rgba(11, 11, 10, 0.42) 0%, rgba(11, 11, 10, 0.18) 42%, rgba(11, 11, 10, 0.72) 100%),
-    radial-gradient(circle at 50% 24%, rgba(11, 11, 10, 0.08), rgba(11, 11, 10, 0.48));
+    linear-gradient(180deg, rgba(10, 8, 7, 0.12) 0%, rgba(10, 8, 7, 0.04) 34%, rgba(10, 8, 7, 0.78) 72%, rgba(10, 8, 7, 0.94) 100%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(176, 139, 87, 0.18), transparent 68%);
+}
+
+.flora-home__hero .luxury-hero__image {
+  filter: brightness(0.9) contrast(1.06) saturate(1.1);
+  transform: scale(1.02);
 }
 
 .flora-category-grid {
@@ -717,7 +785,6 @@ html[data-theme="light"] .share-link {
   background: rgba(255, 255, 255, 0.8);
 }
 
-html[data-theme="light"] .luxury-hero h1,
 html[data-theme="light"] .luxury-section h2,
 html[data-theme="light"] .brand-story h2,
 html[data-theme="light"] .luxury-product__meta h3,
@@ -761,12 +828,23 @@ html[data-theme="light"] .why-item p {
 }
 
 html[data-theme="light"] .flora-home__hero-content {
-  background: linear-gradient(180deg, rgba(10, 10, 10, 0.5), rgba(10, 10, 10, 0.18));
-  border-color: rgba(255, 255, 255, 0.1);
+  background: none;
+  border: none;
 }
 
-html[data-theme="light"] .flora-home__hero-content p {
-  color: rgba(255, 255, 255, 0.94);
+html[data-theme="light"] .flora-home__hero-kicker {
+  color: #f3e5ab;
+}
+
+html[data-theme="light"] .flora-home__hero-content h1 {
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 6px 36px rgba(0, 0, 0, 0.55);
+}
+
+html[data-theme="light"] .flora-home__hero-content p,
+html[data-theme="light"] .flora-home__hero-lead {
+  color: rgba(255, 250, 242, 0.94);
 }
 
 html[data-theme="light"] .concierge-banner__copy h2 {
@@ -989,6 +1067,22 @@ html[data-theme="light"] .clear-cart-trigger,
 html[data-theme="light"] .cart-line-remove {
   background: rgba(255, 255, 255, 0.86);
   color: var(--ink);
+}
+
+html[data-theme="light"] .flora-home__hero .luxury-actions a:first-child {
+  color: #1a1410;
+}
+
+html[data-theme="light"] .flora-home__hero .luxury-actions a:nth-child(2) {
+  background: rgba(255, 250, 242, 0.1);
+  border-color: rgba(255, 248, 238, 0.42);
+  color: #fffaf2;
+}
+
+html[data-theme="light"] .flora-home__hero .luxury-actions a:nth-child(2):hover {
+  background: rgba(255, 250, 242, 0.18);
+  border-color: rgba(243, 229, 171, 0.65);
+  color: #fffaf2;
 }
 
 html[data-theme="light"] .luxury-product,
@@ -8541,17 +8635,39 @@ html[data-theme="light"] .mobile-menu-links a {
 
   .luxury-hero__content,
   .flora-home__hero-content {
-    margin-top: clamp(12px, 3vh, 28px);
-    padding: 24px 18px;
+    margin-top: 0;
+    padding: 0 16px;
+  }
+
+  .flora-home__hero {
+    padding-bottom: 28px;
   }
 
   .flora-home__hero-content h1 {
+    font-size: clamp(30px, 9vw, 44px);
     max-width: none;
   }
 
-  .flora-home__hero-content p {
+  .flora-home__hero-kicker {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    margin-bottom: 12px;
+  }
+
+  .flora-home__hero-content p,
+  .flora-home__hero-lead {
     font-size: 15px;
-    line-height: 1.75;
+    line-height: 1.8;
+  }
+
+  .flora-home__hero-actions {
+    flex-direction: column;
+    margin-top: 26px;
+    width: 100%;
+  }
+
+  .flora-home__hero .luxury-actions a {
+    width: 100%;
   }
 
   .luxury-stat-band {

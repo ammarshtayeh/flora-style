@@ -25,7 +25,7 @@ const copy = {
       { title: "الأكثر طلباً", body: "قطع يتكرر اختيارها لأنها واضحة وناجحة في الإطلالات اليومية.", href: "#best-sellers" },
       { title: "وصل حديثاً", body: "شاهدي أحدث الإضافات قبل أن تصبح قطعاً مطلوبة.", href: "#new-arrivals" }
     ],
-    heroEyebrow: "Luxury pieces, quietly curated",
+    heroEyebrow: "فخامة هادئة · مختارة بعناية",
     heroTitle: "أناقة تشبهك، بتفاصيل عالمية",
     heroBody: "مجموعة مختارة من الحقائب والإكسسوارات والساعات. تصفّحي بسهولة وأرسلي طلبك مباشرة من الموقع.",
     editorialTitle: "مجموعات موسمية بلمسة بوتيك عالمية",
@@ -240,13 +240,16 @@ export function Storefront() {
             animate="show"
             variants={stagger}
           >
+            <motion.span className="flora-home__hero-kicker" variants={fadeUp}>
+              {labels.heroEyebrow}
+            </motion.span>
             <motion.h1 variants={fadeUp}>
               {banner ? textByLanguage(language, banner.titleAr, banner.titleHe) : labels.heroTitle}
             </motion.h1>
-            <motion.p variants={fadeUp}>
+            <motion.p className="flora-home__hero-lead" variants={fadeUp}>
               {banner ? textByLanguage(language, banner.subtitleAr, banner.subtitleHe) : labels.heroBody}
             </motion.p>
-            <motion.div className="luxury-actions" variants={fadeUp}>
+            <motion.div className="luxury-actions flora-home__hero-actions" variants={fadeUp}>
               <Link href="/shop">{labels.shop}</Link>
               <a href="#collections">{labels.browseCategories}</a>
             </motion.div>

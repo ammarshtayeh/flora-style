@@ -63,23 +63,24 @@ html[data-theme="light"] .flora-header__cart {
   min-height: calc(100dvh - var(--flora-header-height, 132px));
 }
 
-.flora-home__hero .luxury-hero__media::after {
-  background:
-    linear-gradient(180deg, rgba(23, 20, 18, 0.15) 0%, rgba(23, 20, 18, 0.05) 38%, rgba(23, 20, 18, 0.55) 100%),
-    radial-gradient(circle at 50% 20%, rgba(176, 139, 87, 0.12), transparent 55%);
-}
-
 .flora-home__hero-content {
   animation: flora-rise 1.1s var(--ease-out-expo) both;
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lift);
+}
+
+.flora-home__hero-kicker {
+  animation: flora-rise 1s var(--ease-out-expo) 0.08s both;
 }
 
 .flora-home__hero-content h1 {
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  overflow: visible;
-  padding-block: 0.08em;
+  animation: flora-rise 1.05s var(--ease-out-expo) 0.14s both;
+}
+
+.flora-home__hero-lead {
+  animation: flora-rise 1.05s var(--ease-out-expo) 0.22s both;
+}
+
+.flora-home__hero-actions {
+  animation: flora-rise 1.05s var(--ease-out-expo) 0.3s both;
 }
 
 @keyframes flora-rise {
