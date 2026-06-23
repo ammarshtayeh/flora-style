@@ -3062,13 +3062,13 @@ button {
   color: var(--ivory);
   cursor: pointer;
   display: inline-flex;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
   gap: 8px;
   justify-content: center;
-  letter-spacing: 0.14em;
-  min-height: 42px;
-  padding: 0 16px;
+  letter-spacing: 0.12em;
+  min-height: 36px;
+  padding: 0 12px;
   text-transform: uppercase;
 }
 
@@ -3121,15 +3121,15 @@ button {
 .shop-sidebar {
   align-self: start;
   display: grid;
-  gap: 22px;
-  padding: 26px;
+  gap: 16px;
+  padding: 20px;
   position: sticky;
   top: 128px;
 }
 
 .shop-filter-panel {
   display: grid;
-  gap: 22px;
+  gap: 16px;
 }
 
 .shop-sidebar__head,
@@ -3172,8 +3172,8 @@ button {
 .shop-filter-group {
   border-top: 1px solid var(--line);
   display: grid;
-  gap: 14px;
-  padding-top: 18px;
+  gap: 10px;
+  padding-top: 12px;
 }
 
 .shop-filter-context {
@@ -3212,19 +3212,20 @@ button {
 
 .shop-filter-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .shop-check {
   align-items: start;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(212, 175, 55, 0.06);
-  border-radius: 16px;
+  border-radius: 14px;
   cursor: pointer;
   display: grid;
-  gap: 12px;
-  grid-template-columns: auto 12px 1fr;
-  padding: 14px;
+  gap: 8px;
+  grid-template-columns: auto 10px 1fr;
+  min-height: 54px;
+  padding: 11px;
 }
 
 .shop-check input {
@@ -3235,9 +3236,9 @@ button {
   background: transparent;
   border: 1px solid rgba(212, 175, 55, 0.2);
   border-radius: 999px;
-  height: 12px;
-  margin-top: 5px;
-  width: 12px;
+  height: 10px;
+  margin-top: 4px;
+  width: 10px;
 }
 
 .shop-check input:checked + em {
@@ -3249,12 +3250,15 @@ button {
 .shop-check strong {
   color: #fff;
   display: block;
+  font-size: 13px;
+  line-height: 1.25;
 }
 
 .shop-check small {
   color: var(--muted-strong);
   display: block;
-  line-height: 1.7;
+  font-size: 11px;
+  line-height: 1.35;
 }
 
 .shop-price-fields {
@@ -6113,31 +6117,31 @@ html[data-theme="light"] select.select option {
 /* Final shop and mobile cleanup */
 .shop-sidebar__title {
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .shop-sidebar__title span {
   color: var(--gold);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .shop-sidebar__head h2 {
-  font-size: clamp(22px, 2.4vw, 34px);
+  font-size: clamp(18px, 2vw, 26px);
   line-height: 1.15;
 }
 
 .shop-filter-list--brands {
-  gap: 12px;
+  gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .shop-check__content {
   align-items: start;
   display: grid;
-  gap: 6px;
+  gap: 4px;
 }
 
 .shop-check.is-disabled {
@@ -6417,7 +6421,7 @@ html[data-theme="light"] select.select option {
   }
 
   .shop-sidebar__head h2 {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .shop-filter-list--brands {
@@ -6425,9 +6429,20 @@ html[data-theme="light"] select.select option {
   }
 
   .shop-check {
-    border-radius: 14px;
-    gap: 10px;
-    padding: 12px;
+    border-radius: 12px;
+    gap: 8px;
+    min-height: 50px;
+    padding: 9px;
+  }
+
+  .shop-check strong {
+    font-size: 12px;
+    line-height: 1.25;
+  }
+
+  .shop-check small {
+    font-size: 10px;
+    line-height: 1.35;
   }
 
   .luxury-product__meta {
@@ -7834,8 +7849,8 @@ html[data-theme="light"] .mobile-menu-links a {
 
 .shop-check {
   align-items: center;
-  min-height: 72px;
-  padding: 16px;
+  min-height: 54px;
+  padding: 11px;
 }
 
 .shop-check:hover {
@@ -8231,7 +8246,7 @@ html[data-theme="light"] .mobile-menu-links a {
   }
 
   .shop-check {
-    min-height: 64px;
+    min-height: 50px;
   }
 
   .purchase-panel {
