@@ -131,14 +131,13 @@ function buildAudienceStrategies(
   subscriptionIds: string[]
 ) {
   const strategies: Array<Record<string, unknown>> = [];
-  const resolvedUrl = base.url as string;
+  const resolvedUrl = base.web_url as string;
 
   const minimalBase = {
     app_id: appId,
     target_channel: "push",
     headings: base.headings,
     contents: base.contents,
-    url: resolvedUrl,
     web_url: resolvedUrl,
     name: base.name,
   };
@@ -294,7 +293,7 @@ export async function sendMarketingPushNotification(input: SendMarketingNotifica
     name: input.templateId ? `flora-${input.templateId}` : "flora-marketing-push",
     headings: buildLocalizedField(titleAr, titleHe),
     contents: buildLocalizedField(bodyAr, bodyHe),
-    url: resolvedUrl,
+    web_url: resolvedUrl,
   };
 
   const result = await sendWithStrategies(appId, apiKey, base, input.audience);
