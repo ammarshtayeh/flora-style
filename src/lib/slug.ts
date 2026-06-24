@@ -6,6 +6,14 @@ type ProductSlugInput = {
   id: string;
 };
 
+type EntitySlugInput = {
+  slug?: string;
+  nameHe?: string;
+  nameAr?: string;
+  id: string;
+  prefix: string;
+};
+
 export function slugify(value: string) {
   const normalized = value
     .toLowerCase()
@@ -44,4 +52,28 @@ export function buildProductSlug(input: ProductSlugInput) {
 
   const idSuffix = input.id.replace(/^prod-?/i, "").slice(-12) || Date.now().toString(36);
   return `product-${idSuffix}`;
+}
+
+export function buildEntitySlug(input: EntitySlugInput) {
+  const manual = input.slug?.trim();
+  if (manual) {
+    const fromManual = slugify(manual);
+    if (fromManual) return fromManual;
+  }
+
+  const fromHebrew = input.nameHe?.trim();
+  if (fromHebrew) {
+    const heSlug = slugify(fromHebrew);
+    if (heSlug) return heSlug;
+  }
+
+  const fromArabic = input.nameAr?.trim();
+  if (fromArabic) {
+    const arSlug = slugify(fromArabic);
+    if (arSlug) return arSlug;
+  }
+
+  const prefixPattern = new RegExp(`^${input.prefix}-?`, "i");
+  const idSuffix = input.id.replace(prefixPattern, "").slice(-12) || Date.now().toString(36);
+  return `${input.prefix}-${idSuffix}`;
 }

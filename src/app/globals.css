@@ -6827,7 +6827,8 @@ html[data-theme="light"] select.select option {
   gap: 14px;
 }
 
-.media-gallery__url-row {
+.media-gallery__url-row,
+.media-field__url {
   align-items: center;
   display: grid;
   gap: 10px;

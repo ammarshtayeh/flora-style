@@ -41,7 +41,7 @@ import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supa
 import { AdminMarketingNotifications } from "@/components/admin-marketing-notifications";
 import { isValidImageSource, shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
-import { buildProductSlug } from "@/lib/slug";
+import { buildEntitySlug, buildProductSlug } from "@/lib/slug";
 
 type AdminTab = "overview" | "products" | "inventory" | "orders" | "categories" | "brands" | "delivery" | "banners" | "marketing" | "backup" | "settings" | "accounts" | "profile";
 
@@ -633,29 +633,54 @@ export function AdminDashboard() {
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
-    if (!categoryDraft.imageUrl) {
-      setSyncError("ارفع صورة للتصنيف قبل الحفظ.");
+    if (!categoryDraft.nameAr.trim() && !categoryDraft.nameHe.trim()) {
+      setSyncError("أدخلي اسم التصنيف بالعربية أو العبرية.");
       return;
     }
-    const nextCategory = categoryDraft.id ? categoryDraft : { ...categoryDraft, id: uid("cat") };
-    await upsertCategory(nextCategory);
-    await refreshData();
-    setCategoryDraft(blankCategory());
-    setSyncMessage(adminSaveMessage("categories"));
+    if (!categoryDraft.imageUrl) {
+      setSyncError("ارفعي صورة للتصنيف أو ألصقي رابط الصورة قبل الحفظ.");
+      return;
+    }
+    try {
+      const baseCategory = categoryDraft.id ? categoryDraft : { ...categoryDraft, id: uid("cat") };
+      const nextCategory = {
+        ...baseCategory,
+        nameAr: baseCategory.nameAr.trim() || baseCategory.nameHe.trim(),
+        nameHe: baseCategory.nameHe.trim() || baseCategory.nameAr.trim(),
+        slug: buildEntitySlug({ ...baseCategory, prefix: "cat" }),
+      };
+      await upsertCategory(nextCategory);
+      await refreshData();
+      setCategoryDraft(blankCategory());
+      setSyncMessage(adminSaveMessage("categories"));
+    } catch (error) {
+      setSyncError(formatAdminError(error, "تعذر حفظ التصنيف."));
+    }
   }
 
   async function saveBrand(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSyncError("");
-    if (!brandDraft.logoUrl) {
-      setSyncError("ارفع شعار البراند قبل الحفظ.");
+    if (!brandDraft.nameAr.trim() && !brandDraft.nameHe.trim()) {
+      setSyncError("أدخلي اسم البراند بالعربية أو العبرية.");
       return;
     }
-    const nextBrand = brandDraft.id ? brandDraft : { ...brandDraft, id: uid("brand") };
-    await upsertBrand(nextBrand);
-    await refreshData();
-    setBrandDraft(blankBrand());
-    setSyncMessage(adminSaveMessage("brands"));
+    try {
+      const baseBrand = brandDraft.id ? brandDraft : { ...brandDraft, id: uid("brand") };
+      const nextBrand = {
+        ...baseBrand,
+        nameAr: baseBrand.nameAr.trim() || baseBrand.nameHe.trim(),
+        nameHe: baseBrand.nameHe.trim() || baseBrand.nameAr.trim(),
+        slug: buildEntitySlug({ ...baseBrand, prefix: "brand" }),
+        logoUrl: baseBrand.logoUrl.trim(),
+      };
+      await upsertBrand(nextBrand);
+      await refreshData();
+      setBrandDraft(blankBrand());
+      setSyncMessage(adminSaveMessage("brands"));
+    } catch (error) {
+      setSyncError(formatAdminError(error, "تعذر حفظ البراند."));
+    }
   }
 
   async function saveColor(event: FormEvent<HTMLFormElement>) {
@@ -1888,14 +1913,28 @@ function MediaField({
   value,
   onUpload,
   onClear,
+  onSetUrl,
   isUploading,
+  allowUrlInput = false,
 }: {
   label: string;
   value: string;
   onUpload: (file: File | null) => void;
   onClear: () => void;
+  onSetUrl?: (url: string) => void;
   isUploading: boolean;
+  allowUrlInput?: boolean;
 }) {
+  const [urlDraft, setUrlDraft] = useState("");
+
+  function handleAddUrl() {
+    if (!onSetUrl) return;
+    const nextUrl = urlDraft.trim();
+    if (!nextUrl) return;
+    onSetUrl(nextUrl);
+    setUrlDraft("");
+  }
+
   return (
     <div className="form-row">
       <span>{label}</span>
@@ -1904,6 +1943,20 @@ function MediaField({
           <input accept="image/*" hidden onChange={(event) => onUpload(event.target.files?.[0] ?? null)} type="file" />
           <span>{isUploading ? "جاري الرفع..." : "رفع صورة"}</span>
         </label>
+        {allowUrlInput && onSetUrl ? (
+          <div className="media-field__url">
+            <input
+              className="input"
+              onChange={(event) => setUrlDraft(event.target.value)}
+              placeholder="https://example.com/logo.png"
+              type="url"
+              value={urlDraft}
+            />
+            <button className="ghost-button" onClick={handleAddUrl} type="button">
+              إضافة الرابط
+            </button>
+          </div>
+        ) : null}
         {value ? (
           <div className="media-field__preview">
             <div className="media-field__preview-image">
@@ -2410,9 +2463,11 @@ function SimpleEntitySection<T extends Category | Brand>({
             {textInput<T>("الاسم عبري", draft.nameHe, "nameHe", setDraft)}
           </div>
           <MediaField
+            allowUrlInput
             isUploading={isUploading}
             label={imageLabel}
             onClear={() => setImageValue("")}
+            onSetUrl={setImageValue}
             onUpload={onUpload}
             value={imageValue}
           />

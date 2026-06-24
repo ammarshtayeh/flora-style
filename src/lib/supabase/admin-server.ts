@@ -8,7 +8,7 @@ import type {
   StoreSettings,
 } from "@/lib/store";
 import { getBannerImages } from "@/lib/store";
-import { buildProductSlug } from "@/lib/slug";
+import { buildEntitySlug, buildProductSlug } from "@/lib/slug";
 import { createServiceSupabaseClient } from "./service";
 
 function requireServiceClient() {
@@ -19,16 +19,42 @@ function requireServiceClient() {
   return client;
 }
 
+async function resolveUniqueSlug(table: "brands" | "categories", id: string, baseSlug: string) {
+  const client = requireServiceClient();
+  let candidate = baseSlug;
+  let suffix = 2;
+
+  while (true) {
+    const { data, error } = await client
+      .from(table)
+      .select("id")
+      .eq("slug", candidate)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return candidate;
+
+    candidate = `${baseSlug}-${suffix}`;
+    suffix += 1;
+  }
+}
+
 export async function serverUpsertCategory(category: Category) {
   const client = requireServiceClient();
+  const slug = await resolveUniqueSlug(
+    "categories",
+    category.id,
+    buildEntitySlug({ ...category, prefix: "cat" })
+  );
   const { error } = await client.from("categories").upsert({
     id: category.id,
-    slug: category.slug,
+    slug,
     name_ar: category.nameAr,
     name_he: category.nameHe,
     description_ar: category.descriptionAr,
     description_he: category.descriptionHe,
-    image_url: category.imageUrl,
+    image_url: category.imageUrl || null,
     active: category.active,
   });
   if (error) throw error;
@@ -36,14 +62,15 @@ export async function serverUpsertCategory(category: Category) {
 
 export async function serverUpsertBrand(brand: Brand) {
   const client = requireServiceClient();
+  const slug = await resolveUniqueSlug("brands", brand.id, buildEntitySlug({ ...brand, prefix: "brand" }));
   const { error } = await client.from("brands").upsert({
     id: brand.id,
-    slug: brand.slug,
+    slug,
     name_ar: brand.nameAr,
     name_he: brand.nameHe,
     description_ar: brand.descriptionAr,
     description_he: brand.descriptionHe,
-    logo_url: brand.logoUrl,
+    logo_url: brand.logoUrl || null,
     active: brand.active,
   });
   if (error) throw error;
