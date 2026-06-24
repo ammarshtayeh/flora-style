@@ -66,6 +66,9 @@ export const metadata: Metadata = {
     email: false,
     address: false,
     telephone: false
+  },
+  other: {
+    "google-adsense-account": "ca-pub-9795267028504854"
   }
 };
 
