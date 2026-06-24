@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
+import { isAcceptedImageFile, resolveImageContentType } from "@/lib/image-upload";
 import { requireAdminAccess } from "@/lib/supabase/admin-access";
 import { createServiceSupabaseClient, isServiceRoleConfigured } from "@/lib/supabase/service";
 
 const STORAGE_BUCKET = "flora-assets";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const ALLOWED_FOLDERS = new Set(["products", "categories", "brands", "banners"]);
-const ALLOWED_MIME_TYPES = new Set([
-  "image/png",
-  "image/jpeg",
-  "image/jpg",
-  "image/pjpeg",
-  "image/webp",
-  "image/svg+xml",
-  "image/heic",
-  "image/heif",
-  "image/avif",
-]);
 
 function sanitizeFileName(fileName: string) {
   return fileName
@@ -23,27 +13,6 @@ function sanitizeFileName(fileName: string) {
     .replace(/[^a-z0-9.-]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "");
-}
-
-function resolveContentType(file: File) {
-  const type = file.type?.toLowerCase() ?? "";
-  if (ALLOWED_MIME_TYPES.has(type)) {
-    return type;
-  }
-
-  const extension = file.name.split(".").pop()?.toLowerCase();
-  const byExtension: Record<string, string> = {
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    png: "image/png",
-    webp: "image/webp",
-    svg: "image/svg+xml",
-    heic: "image/heic",
-    heif: "image/heif",
-    avif: "image/avif",
-  };
-
-  return extension ? byExtension[extension] : undefined;
 }
 
 export async function POST(request: Request) {
@@ -80,10 +49,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "حجم الصورة أكبر من 10 ميغابايت." }, { status: 400 });
   }
 
-  const contentType = resolveContentType(fileEntry);
+  if (!isAcceptedImageFile(fileEntry)) {
+    return NextResponse.json(
+      { error: "الملف المختار ليس صورة مدعومة. جرّبي PNG أو JPG أو WEBP أو HEIC أو GIF." },
+      { status: 400 }
+    );
+  }
+
+  const contentType = resolveImageContentType(fileEntry);
   if (!contentType) {
     return NextResponse.json(
-      { error: "نوع الصورة غير مدعوم. استخدمي PNG أو JPG أو WEBP أو HEIC." },
+      { error: "تعذر تحديد نوع الصورة. غيّري امتداد الملف أو جرّبي صيغة أخرى." },
       { status: 400 }
     );
   }
@@ -113,6 +89,16 @@ export async function POST(request: Request) {
             "تعذر رفع الصورة بسبب إعدادات السيرفر. تأكدي من إضافة SUPABASE_SERVICE_ROLE_KEY الصحيح على Vercel ثم أعيدي النشر.",
         },
         { status: 500 }
+      );
+    }
+
+    if (message.includes("mime") || message.includes("content type")) {
+      return NextResponse.json(
+        {
+          error:
+            "تخزين الصور يرفض نوع الملف. شغّلي سكربت scripts/allow-all-image-formats.sql في Supabase ثم أعيدي المحاولة.",
+        },
+        { status: 400 }
       );
     }
 

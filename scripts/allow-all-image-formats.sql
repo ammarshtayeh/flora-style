@@ -1,8 +1,5 @@
 -- Run once in Supabase SQL Editor.
-
-DROP POLICY IF EXISTS "admins_bootstrap_first_admin" ON admins;
-
-REVOKE EXECUTE ON FUNCTION bootstrap_admin_account(TEXT) FROM authenticated;
+-- Allows every image MIME type in the flora-assets bucket (no whitelist).
 
 UPDATE storage.buckets
 SET
@@ -12,13 +9,7 @@ SET
 WHERE id = 'flora-assets';
 
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-    'flora-assets',
-    'flora-assets',
-    TRUE,
-    10485760,
-    NULL
-)
+VALUES ('flora-assets', 'flora-assets', TRUE, 10485760, NULL)
 ON CONFLICT (id) DO UPDATE SET
     public = EXCLUDED.public,
     file_size_limit = EXCLUDED.file_size_limit,

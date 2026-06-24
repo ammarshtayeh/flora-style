@@ -78,7 +78,7 @@ export function formatAdminError(error: unknown, fallback: string) {
   }
 
   if (lowered.includes("mime") || lowered.includes("content type")) {
-    return "نوع الصورة غير مدعوم. استخدمي PNG أو JPG أو WEBP أو HEIC.";
+    return "نوع الصورة غير مدعوم. جرّبي PNG أو JPG أو WEBP أو HEIC أو GIF، أو شغّلي سكربت allow-all-image-formats.sql في Supabase.";
   }
 
   if (lowered.includes("bucket") && lowered.includes("not found")) {

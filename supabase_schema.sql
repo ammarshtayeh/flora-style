@@ -368,7 +368,7 @@ VALUES (
     'flora-assets',
     TRUE,
     10485760,
-    ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/pjpeg', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif', 'image/avif']
+    NULL
 )
 ON CONFLICT (id) DO UPDATE SET
     public = EXCLUDED.public,
