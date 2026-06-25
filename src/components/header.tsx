@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowLeft,
   CheckCircle2,
   Globe2,
   LayoutDashboard,
@@ -52,7 +53,10 @@ const headerCopy = {
     light: "فاتح",
     dark: "داكن",
     concierge: "اطلبي مباشرة من الموقع",
-    cartHint: "راجعي القطع ثم أكملي الطلب من الموقع.",
+    cartHint: "راجعي القطع ثم أكملي الطلب.",
+    orderSummary: "ملخص الطلب",
+    color: "اللون",
+    itemsLabel: "قطعة",
     menuShop: "التسوق",
     menuSettings: "الإعدادات",
     menuHome: "الرئيسية",
@@ -79,7 +83,10 @@ const headerCopy = {
     light: "בהיר",
     dark: "כהה",
     concierge: "הזמנה ישירה דרך האתר",
-    cartHint: "בדקי את הפריטים ואז השלימי את ההזמנה דרך האתר.",
+    cartHint: "בדקי את הפריטים ואז השלימי את ההזמנה.",
+    orderSummary: "סיכום הזמנה",
+    color: "צבע",
+    itemsLabel: "פריטים",
     menuShop: "קנייה",
     menuSettings: "הגדרות",
     menuHome: "בית",
@@ -425,100 +432,127 @@ function HeaderInner() {
               onClick={(event) => event.stopPropagation()}
               transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="cart-sheet__head">
-                <div className="cart-sheet__title">
-                  <h2>{labels.cart}</h2>
-                  <p>{labels.cartHint}</p>
-                </div>
+              <div className="cart-sheet__header">
+                <nav aria-label="Breadcrumb" className="cart-sheet__crumb">
+                  <Link href="/" onClick={() => setCartOpen(false)}>
+                    {labels.menuHome}
+                  </Link>
+                  <span aria-hidden="true">›</span>
+                  <span>{labels.cart}</span>
+                </nav>
                 <button className="cart-sheet__close" onClick={() => setCartOpen(false)} aria-label="Close cart" type="button">
                   <X size={18} />
                 </button>
               </div>
 
+              <h2 className="cart-sheet__page-title">{labels.cart}</h2>
+
               {cartDetails.length ? (
-                <>
-                  <div className="cart-sheet__toolbar">
-                    <span>
-                      {cartItemsCount} {language === "ar" ? "قطعة" : "פריטים"}
-                    </span>
-                    <button className="clear-cart-trigger" onClick={clearCart} type="button">
-                      <Trash2 size={14} />
-                      {labels.clearCart}
-                    </button>
-                  </div>
-
-                  <div className="cart-lines">
-                    {cartDetails.map((item) =>
-                      item ? (
-                        <article className="cart-line" key={`${item.productId}-${item.colorId}`}>
-                          <div className="cart-line__image">
-                            <Image
-                              alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
-                              height={82}
-                              src={item.product.images[0] || "/flora-logo.png"}
-                              width={68}
-                            />
-                          </div>
-                          <div className="cart-line__body">
-                            <div className="cart-line__top">
-                              <strong>{textByLanguage(language, item.product.nameAr, item.product.nameHe)}</strong>
-                              <b>{formatPrice(item.total)}</b>
-                            </div>
-                            <select
-                              className="cart-color-select"
-                              onChange={(event) => changeCartColor(item.productId, item.colorId, event.target.value)}
-                              value={item.colorId}
+                <div className="cart-sheet__body">
+                  <div className="cart-sheet__items">
+                    <div className="cart-items-card">
+                      {cartDetails.map((item) =>
+                        item ? (
+                          <article className="cart-line" key={`${item.productId}-${item.colorId}`}>
+                            <button
+                              aria-label={labels.remove}
+                              className="cart-line__remove"
+                              onClick={() => removeFromCart(item.productId, item.colorId)}
+                              type="button"
                             >
-                              {item.availableColors.map((color) => (
-                                <option key={color.id} value={color.id}>
-                                  {textByLanguage(language, color.nameAr, color.nameHe)}
-                                </option>
-                              ))}
-                            </select>
-                            <div className="cart-line__actions">
-                              <div className="qty-control">
-                                <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)} type="button">
-                                  <Minus size={14} />
-                                </button>
-                                <span>{item.quantity}</span>
-                                <button
-                                  disabled={item.quantity >= item.color.stockQuantity}
-                                  onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
-                                  type="button"
-                                >
-                                  <Plus size={14} />
-                                </button>
-                              </div>
-                              <button className="cart-line-remove" onClick={() => removeFromCart(item.productId, item.colorId)} type="button">
-                                <Trash2 size={13} />
-                                {labels.remove}
-                              </button>
+                              <Trash2 size={16} />
+                            </button>
+                            <div className="cart-line__image">
+                              <Image
+                                alt={textByLanguage(language, item.product.nameAr, item.product.nameHe)}
+                                fill
+                                sizes="112px"
+                                src={item.product.images[0] || "/flora-logo.png"}
+                              />
                             </div>
-                          </div>
-                        </article>
-                      ) : null
-                    )}
+                            <div className="cart-line__content">
+                              <strong className="cart-line__title">
+                                {textByLanguage(language, item.product.nameAr, item.product.nameHe)}
+                              </strong>
+                              <label className="cart-line__meta">
+                                <span>{labels.color}</span>
+                                <select
+                                  className="cart-line__color-select"
+                                  onChange={(event) => changeCartColor(item.productId, item.colorId, event.target.value)}
+                                  value={item.colorId}
+                                >
+                                  {item.availableColors.map((color) => (
+                                    <option key={color.id} value={color.id}>
+                                      {textByLanguage(language, color.nameAr, color.nameHe)}
+                                    </option>
+                                  ))}
+                                </select>
+                              </label>
+                              <div className="cart-line__footer">
+                                <b className="cart-line__price">{formatPrice(item.total)}</b>
+                                <div className="qty-control qty-control--cart">
+                                  <button onClick={() => updateCartQty(item.productId, item.colorId, item.quantity - 1)} type="button">
+                                    <Minus size={14} />
+                                  </button>
+                                  <span>{item.quantity}</span>
+                                  <button
+                                    disabled={item.quantity >= item.color.stockQuantity}
+                                    onClick={() => updateCartQty(item.productId, item.colorId, item.quantity + 1)}
+                                    type="button"
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </article>
+                        ) : null
+                      )}
+                    </div>
                   </div>
 
-                  <div className="cart-checkout-panel">
-                    <div className="cart-total cart-total--grand">
+                  <aside className="cart-summary-card">
+                    <h3>{labels.orderSummary}</h3>
+                    <div className="cart-summary-rows">
+                      <div className="cart-summary-row">
+                        <span>{labels.subtotal}</span>
+                        <b>{formatPrice(subtotal)}</b>
+                      </div>
+                      <div className="cart-summary-row cart-summary-row--muted">
+                        <span>
+                          {cartItemsCount} {labels.itemsLabel}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="cart-summary-total">
                       <span>{labels.subtotal}</span>
                       <b>{formatPrice(subtotal)}</b>
                     </div>
                     <button
+                      className="cart-summary-checkout"
                       onClick={() => {
                         setCartOpen(false);
                         router.push("/checkout");
                       }}
                       type="button"
                     >
-                      <CheckCircle2 size={18} />
                       {labels.checkoutBtn}
+                      <ArrowLeft size={18} />
                     </button>
-                  </div>
-                </>
+                    <button className="cart-summary-clear" onClick={clearCart} type="button">
+                      <Trash2 size={14} />
+                      {labels.clearCart}
+                    </button>
+                  </aside>
+                </div>
               ) : (
-                <p className="cart-empty">{labels.empty}</p>
+                <div className="cart-empty-state">
+                  <ShoppingBag size={42} strokeWidth={1.4} />
+                  <p>{labels.empty}</p>
+                  <Link className="cart-empty-state__cta" href="/shop" onClick={() => setCartOpen(false)}>
+                    {labels.browseAll}
+                  </Link>
+                </div>
               )}
             </motion.aside>
           </motion.div>
