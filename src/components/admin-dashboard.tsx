@@ -669,9 +669,14 @@ export function AdminDashboard() {
       const baseBrand = brandDraft.id ? brandDraft : { ...brandDraft, id: uid("brand") };
       const nextBrand = {
         ...baseBrand,
-        nameAr: baseBrand.nameAr.trim() || baseBrand.nameHe.trim(),
-        nameHe: baseBrand.nameHe.trim() || baseBrand.nameAr.trim(),
-        slug: buildEntitySlug({ ...baseBrand, prefix: "brand" }),
+        nameAr: baseBrand.nameAr.trim(),
+        nameHe: baseBrand.nameHe.trim(),
+        slug: buildEntitySlug({
+          ...baseBrand,
+          nameAr: baseBrand.nameAr.trim(),
+          nameHe: baseBrand.nameHe.trim(),
+          prefix: "brand",
+        }),
         logoUrl: baseBrand.logoUrl.trim(),
       };
       await upsertBrand(nextBrand);

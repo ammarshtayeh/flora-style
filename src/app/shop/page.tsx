@@ -123,7 +123,10 @@ function ShopContent() {
   );
   const productSearchIndex = useMemo(() => {
     const brandNames = new Map(
-      storeData.brands.map((brand) => [brand.id, `${brand.nameAr} ${brand.nameHe}`.toLowerCase()])
+      storeData.brands.map((brand) => [
+        brand.id,
+        `${brand.nameAr} ${brand.nameHe} ${brand.slug} ${getBrandDisplayName("ar", brand)} ${getBrandDisplayName("he", brand)}`.toLowerCase(),
+      ])
     );
     const categoryNames = new Map(
       storeData.categories.map((category) => [category.id, `${category.nameAr} ${category.nameHe}`.toLowerCase()])

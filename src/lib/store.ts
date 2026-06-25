@@ -479,8 +479,18 @@ function formatBrandSlug(slug: string) {
     .join(" ");
 }
 
-export function getBrandDisplayName(language: Language, brand: Pick<Brand, "slug" | "nameHe">) {
-  return language === "he" ? brand.nameHe : formatBrandSlug(brand.slug);
+export function getBrandDisplayName(language: Language, brand: Pick<Brand, "slug" | "nameAr" | "nameHe">) {
+  const localized = textByLanguage(language, brand.nameAr, brand.nameHe).trim();
+  if (localized) {
+    return localized;
+  }
+
+  const alternate = textByLanguage(language, brand.nameHe, brand.nameAr).trim();
+  if (alternate) {
+    return alternate;
+  }
+
+  return formatBrandSlug(brand.slug);
 }
 
 export function getProductBySlug(slug: string) {
