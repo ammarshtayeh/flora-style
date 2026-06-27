@@ -1,10 +1,42 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, CheckCircle2, ShieldCheck, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { AlertCircle, AlertTriangle, CheckCircle2, Info, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState, type ReactNode } from "react";
 
 const DB_NOTICE_KEY = "flora-admin-db-notice-dismissed";
+
+type AdminHintVariant = "info" | "success" | "warning";
+
+const hintIcons = {
+  info: Info,
+  success: CheckCircle2,
+  warning: AlertTriangle,
+} as const;
+
+export function AdminHint({
+  variant = "info",
+  title,
+  children,
+}: {
+  variant?: AdminHintVariant;
+  title?: string;
+  children: ReactNode;
+}) {
+  const Icon = hintIcons[variant];
+
+  return (
+    <div className={`admin-hint admin-hint--${variant}`} role="note">
+      <div className={`admin-hint__icon admin-hint__icon--${variant}`}>
+        <Icon size={16} strokeWidth={2.2} />
+      </div>
+      <div className="admin-hint__content">
+        {title ? <strong>{title}</strong> : null}
+        <p>{children}</p>
+      </div>
+    </div>
+  );
+}
 
 type AdminAlertStackProps = {
   message: string;

@@ -39,7 +39,7 @@ import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
 import { AdminMarketingNotifications } from "@/components/admin-marketing-notifications";
-import { AdminAlertStack } from "@/components/admin-alerts";
+import { AdminAlertStack, AdminHint } from "@/components/admin-alerts";
 import { isValidImageSource, shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 import { buildEntitySlug, buildProductSlug } from "@/lib/slug";
@@ -1505,13 +1505,13 @@ export function AdminDashboard() {
             />
 
             {supabaseAvailable ? (
-              <div className="admin-inline-notice admin-inline-notice--success">
-                ✓ متصل بقاعدة البيانات — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
-              </div>
+              <AdminHint variant="success">
+                متصل بقاعدة البيانات — الطلبات الجديدة ستظهر هنا فوراً من أي جهاز.
+              </AdminHint>
             ) : (
-              <div className="admin-inline-notice admin-inline-notice--warning">
+              <AdminHint variant="warning">
                 اتصال قاعدة البيانات غير مفعّل بعد. راجع إعدادات الربط في السيرفر ثم أعد تشغيل الموقع.
-              </div>
+              </AdminHint>
             )}
 
             {ordersLoading ? (
@@ -1591,9 +1591,9 @@ export function AdminDashboard() {
             title="صورة الهيرو والنص الرئيسي"
             form={
               <form className="form-grid" onSubmit={saveBanner}>
-                <div className="admin-inline-notice admin-inline-notice--success">
+                <AdminHint variant="info">
                   من هنا تتحكمي بصور الهيرو (واحدة أو أكثر ككاروسيل) والعنوان والوصف في الصفحة الرئيسية.
-                </div>
+                </AdminHint>
                 <div className="two-col form-grid">
                   {textInput<Banner>("العنوان عربي", bannerDraft.titleAr, "titleAr", setBannerDraft)}
                   {textInput<Banner>("العنوان عبري", bannerDraft.titleHe, "titleHe", setBannerDraft)}
@@ -1715,9 +1715,9 @@ export function AdminDashboard() {
                 hint="كل حساب هنا يمكنه الدخول إلى لوحة الأدمن وإدارة المتجر."
               />
               {!serviceRoleConfigured ? (
-                <div className="admin-note admin-note--warning">
+                <AdminHint variant="warning">
                   لإضافة حسابات أدمن جديدة من داخل اللوحة، يجب إكمال إعدادات السيرفر أولاً ثم إعادة تشغيل الموقع.
-                </div>
+                </AdminHint>
               ) : null}
               {accountsLoading ? (
                 <div className="empty">جاري تحميل حسابات الأدمن...</div>
@@ -1881,7 +1881,7 @@ function PanelTitle({ title, hint }: { title: string; hint: string }) {
   return (
     <div className="section-head">
       <h2>{title}</h2>
-      <p>{hint}</p>
+      <AdminHint variant="info">{hint}</AdminHint>
     </div>
   );
 }

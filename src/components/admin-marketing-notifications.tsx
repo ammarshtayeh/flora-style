@@ -9,6 +9,7 @@ import {
   type MarketingNotificationDraft,
 } from "@/lib/marketing-notifications";
 import { formatAdminError } from "@/lib/admin-messages";
+import { AdminHint } from "@/components/admin-alerts";
 
 const blankDraft = (): MarketingNotificationDraft => ({
   titleAr: "",
@@ -95,11 +96,11 @@ export function AdminMarketingNotifications({
           </div>
         </div>
         {diagnostics?.issue ? (
-          <div className="admin-flash admin-flash--error">{diagnostics.issue}</div>
+          <AdminHint variant="warning">{diagnostics.issue}</AdminHint>
         ) : diagnostics?.apiReachable ? (
-          <div className="admin-inline-notice admin-inline-notice--success">
+          <AdminHint variant="success">
             OneSignal متصل — المشتركين المكتشفين عبر API: <strong>{diagnostics.subscriptionCount}</strong>
-          </div>
+          </AdminHint>
         ) : null}
       </div>
 
@@ -182,9 +183,9 @@ export function AdminMarketingNotifications({
           </select>
         </label>
 
-        <div className="admin-inline-notice">
+        <AdminHint variant="info">
           سيتم الإرسال إلى: <strong>{audienceLabel}</strong>
-        </div>
+        </AdminHint>
 
         <button className="button admin-marketing__send" disabled={isSending} type="submit">
           <Send size={16} />
