@@ -205,7 +205,7 @@ async function sendWithStrategies(
   const strategies = buildAudienceStrategies(appId, base, audience, segmentNames, subscriptionIds);
 
   let lastError =
-    "لم يتم إنشاء الإشعار. تأكدي أن REST API Key و App ID من نفس تطبيق OneSignal الذي فيه المشتركين.";
+    "لم يتم إنشاء الإشعار. تأكد أن REST API Key و App ID من نفس تطبيق OneSignal الذي فيه المشتركين.";
 
   for (const payload of strategies) {
     const { response, result } = await postOneSignalNotification(payload, apiKey);
@@ -276,7 +276,7 @@ export async function sendMarketingPushNotification(input: SendMarketingNotifica
   const apiKey = getOneSignalRestApiKey();
 
   if (!appId || !apiKey) {
-    throw new Error("إعدادات OneSignal غير مكتملة. أضيفي ONESIGNAL_REST_API_KEY و NEXT_PUBLIC_ONESIGNAL_APP_ID على Vercel.");
+    throw new Error("إعدادات OneSignal غير مكتملة. أضف ONESIGNAL_REST_API_KEY و NEXT_PUBLIC_ONESIGNAL_APP_ID على Vercel.");
   }
 
   const titleAr = input.titleAr.trim();

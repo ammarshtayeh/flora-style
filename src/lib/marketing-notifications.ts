@@ -51,7 +51,7 @@ export const marketingNotificationTemplates: MarketingNotificationTemplate[] = [
     id: "coupons",
     labelAr: "كوبونات خصم",
     labelHe: "קופונים",
-    descriptionAr: "إشعار بكود خصم — عدّلي النص قبل الإرسال.",
+    descriptionAr: "إشعار بكود خصم — عدّل النص قبل الإرسال.",
     draft: {
       titleAr: "كوبون خصم خاص لكِ",
       titleHe: "קופון הנחה מיוחד בשבילך",

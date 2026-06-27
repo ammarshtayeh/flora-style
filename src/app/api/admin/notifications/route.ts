@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         error:
-          "إعدادات OneSignal غير مكتملة. أضيفي ONESIGNAL_REST_API_KEY في Vercel مع NEXT_PUBLIC_ONESIGNAL_APP_ID ثم أعيدي النشر.",
+          "إعدادات OneSignal غير مكتملة. أضف ONESIGNAL_REST_API_KEY في Vercel مع NEXT_PUBLIC_ONESIGNAL_APP_ID ثم أعد النشر.",
       },
       { status: 500 }
     );

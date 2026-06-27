@@ -130,5 +130,5 @@ export async function syncBaseCatalog(seed: StoreData = initialStoreData) {
 }
 
 export async function seedStoreFromInitialData(seed: StoreData = initialStoreData) {
-  throw new Error("تم تعطيل إعادة تهيئة المتجر من الواجهة. استخدمي سكربتات الصيانة يدوياً عند الحاجة.");
+  throw new Error("تم تعطيل إعادة تهيئة المتجر من الواجهة. استخدم سكربتات الصيانة يدوياً عند الحاجة.");
 }

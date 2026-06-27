@@ -42,7 +42,7 @@ export function AdminMarketingNotifications({
   }, []);
 
   const audienceLabel = useMemo(() => {
-    return draft.audience === "cart" ? "مشتركات لديهن منتجات في السلة" : "كل المشتركين المفعّلين";
+    return draft.audience === "cart" ? "مشتركون لديهم منتجات في السلة" : "كل المشتركين المفعّلين";
   }, [draft.audience]);
 
   function applyTemplate(templateId: string) {
@@ -91,7 +91,7 @@ export function AdminMarketingNotifications({
             <p className="eyebrow">Marketing → Notifications</p>
             <h2>إرسال إشعارات Push</h2>
             <p className="muted">
-              أرسلي إشعارات للزبائن المشتركات في OneSignal. تذكير السلة يصل فقط لمن لديه منتجات في السلة ومفعّل الإشعارات.
+              أرسل إشعارات للزبائن المشتركين في OneSignal. تذكير السلة يصل فقط لمن لديه منتجات في السلة ومفعّل الإشعارات.
             </p>
           </div>
         </div>
@@ -179,7 +179,7 @@ export function AdminMarketingNotifications({
             value={draft.audience}
           >
             <option value="all">كل المشتركين المفعّلين</option>
-            <option value="cart">من لديهن منتجات في السلة فقط</option>
+            <option value="cart">من لديهم منتجات في السلة فقط</option>
           </select>
         </label>
 

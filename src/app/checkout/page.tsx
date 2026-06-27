@@ -37,7 +37,7 @@ const checkoutCopy = {
     deliveryZone: "منطقة التوصيل",
     items: "المنتجات",
     ready: "جاهز للتأكيد",
-    deliveryUnavailable: "لا توجد منطقة توصيل مفعلة حالياً. فعّلي منطقة من لوحة الأدمن قبل استقبال الطلبات."
+    deliveryUnavailable: "لا توجد منطقة توصيل مفعلة حالياً. فعّل منطقة من لوحة الأدمن قبل استقبال الطلبات."
   },
   he: {
     eyebrow: "Checkout",

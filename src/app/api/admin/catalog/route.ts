@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
   if (!isServiceRoleConfigured()) {
     return NextResponse.json(
-      { error: "إعدادات السيرفر غير مكتملة. أضيفي SUPABASE_SERVICE_ROLE_KEY على Vercel ثم أعيدي النشر." },
+      { error: "إعدادات السيرفر غير مكتملة. أضف SUPABASE_SERVICE_ROLE_KEY على Vercel ثم أعد النشر." },
       { status: 500 }
     );
   }

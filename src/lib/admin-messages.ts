@@ -74,11 +74,11 @@ export function formatAdminError(error: unknown, fallback: string) {
   }
 
   if (lowered.includes("row-level security") || lowered.includes("not allowed")) {
-    return "تعذر تنفيذ العملية. تأكدي من تسجيل الدخول بحساب أدمن معتمد، ومن إعداد SUPABASE_SERVICE_ROLE_KEY على Vercel.";
+    return "تعذر تنفيذ العملية. تأكد من تسجيل الدخول بحساب أدمن معتمد، ومن إعداد SUPABASE_SERVICE_ROLE_KEY على Vercel.";
   }
 
   if (lowered.includes("mime") || lowered.includes("content type")) {
-    return "نوع الصورة غير مدعوم. جرّبي PNG أو JPG أو WEBP أو HEIC أو GIF، أو شغّلي سكربت allow-all-image-formats.sql في Supabase.";
+    return "نوع الصورة غير مدعوم. جرّب PNG أو JPG أو WEBP أو HEIC أو GIF، أو شغّل سكربت allow-all-image-formats.sql في Supabase.";
   }
 
   if (lowered.includes("bucket") && lowered.includes("not found")) {

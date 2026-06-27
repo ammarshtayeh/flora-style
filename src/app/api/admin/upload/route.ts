@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   if (!isAcceptedImageFile(fileEntry)) {
     return NextResponse.json(
-      { error: "الملف المختار ليس صورة مدعومة. جرّبي PNG أو JPG أو WEBP أو HEIC أو GIF." },
+      { error: "الملف المختار ليس صورة مدعومة. جرّب PNG أو JPG أو WEBP أو HEIC أو GIF." },
       { status: 400 }
     );
   }
@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   const contentType = resolveImageContentType(fileEntry);
   if (!contentType) {
     return NextResponse.json(
-      { error: "تعذر تحديد نوع الصورة. غيّري امتداد الملف أو جرّبي صيغة أخرى." },
+      { error: "تعذر تحديد نوع الصورة. غيّر امتداد الملف أو جرّب صيغة أخرى." },
       { status: 400 }
     );
   }
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "تعذر رفع الصورة بسبب إعدادات السيرفر. تأكدي من إضافة SUPABASE_SERVICE_ROLE_KEY الصحيح على Vercel ثم أعيدي النشر.",
+            "تعذر رفع الصورة بسبب إعدادات السيرفر. تأكد من إضافة SUPABASE_SERVICE_ROLE_KEY الصحيح على Vercel ثم أعد النشر.",
         },
         { status: 500 }
       );
@@ -96,7 +96,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "تخزين الصور يرفض نوع الملف. شغّلي سكربت scripts/allow-all-image-formats.sql في Supabase ثم أعيدي المحاولة.",
+            "تخزين الصور يرفض نوع الملف. شغّل سكربت scripts/allow-all-image-formats.sql في Supabase ثم أعد المحاولة.",
         },
         { status: 400 }
       );

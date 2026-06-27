@@ -168,7 +168,7 @@ function AdminPicker({
   onChange,
   options,
   searchable = false,
-  searchPlaceholder = "ابحثي...",
+  searchPlaceholder = "ابحث...",
   value,
 }: {
   emptyLabel?: string;
@@ -534,7 +534,7 @@ export function AdminDashboard() {
     });
     setProductColorDrafts([blankProductColorRow()]);
     setProductDefaultStock(1);
-    setSyncMessage(`نسخة من «${product.nameAr}» — عدّلي رمز المنتج والاسم، أضيفي الألوان، ثم احفظي.`);
+    setSyncMessage(`نسخة من «${product.nameAr}» — عدّل رمز المنتج والاسم، أضف الألوان، ثم احفظ.`);
     setActiveTab("products");
   }
 
@@ -561,19 +561,19 @@ export function AdminDashboard() {
     event.preventDefault();
     setSyncError("");
     if (!productDraft.nameAr.trim()) {
-      setSyncError("أدخلي اسم المنتج بالعربية.");
+      setSyncError("أدخل اسم المنتج بالعربية.");
       return;
     }
     if (!productDraft.sku.trim()) {
-      setSyncError("أدخلي رمز المنتج (كود المخزون).");
+      setSyncError("أدخل رمز المنتج (كود المخزون).");
       return;
     }
     if (!productDraft.categoryId) {
-      setSyncError("اختاري تصنيفاً للمنتج.");
+      setSyncError("اختر تصنيفاً للمنتج.");
       return;
     }
     if (productDraft.price <= 0) {
-      setSyncError("أدخلي سعراً صحيحاً للمنتج.");
+      setSyncError("أدخل سعراً صحيحاً للمنتج.");
       return;
     }
     if (!productDraft.images.length) {
@@ -587,7 +587,7 @@ export function AdminDashboard() {
 
     const validColors = productColorDrafts.filter((row) => row.nameAr.trim() || row.nameHe.trim());
     if (validColors.length === 0 && productDefaultStock <= 0) {
-      setSyncError("أضيفي لوناً واحداً على الأقل مع الكمية، أو حددي مخزوناً افتراضياً.");
+      setSyncError("أضف لوناً واحداً على الأقل مع الكمية، أو حدّد مخزوناً افتراضياً.");
       return;
     }
 
@@ -635,11 +635,11 @@ export function AdminDashboard() {
     event.preventDefault();
     setSyncError("");
     if (!categoryDraft.nameAr.trim() && !categoryDraft.nameHe.trim()) {
-      setSyncError("أدخلي اسم التصنيف بالعربية أو العبرية.");
+      setSyncError("أدخل اسم التصنيف بالعربية أو العبرية.");
       return;
     }
     if (!categoryDraft.imageUrl) {
-      setSyncError("ارفعي صورة للتصنيف أو ألصقي رابط الصورة قبل الحفظ.");
+      setSyncError("ارفع صورة للتصنيف أو ألصق رابط الصورة قبل الحفظ.");
       return;
     }
     try {
@@ -663,7 +663,7 @@ export function AdminDashboard() {
     event.preventDefault();
     setSyncError("");
     if (!brandDraft.nameAr.trim() && !brandDraft.nameHe.trim()) {
-      setSyncError("أدخلي اسم البراند بالعربية أو العبرية.");
+      setSyncError("أدخل اسم البراند بالعربية أو العبرية.");
       return;
     }
     try {
@@ -693,11 +693,11 @@ export function AdminDashboard() {
     event.preventDefault();
     setSyncError("");
     if (!colorDraft.productId) {
-      setSyncError("اختاري المنتج أولاً.");
+      setSyncError("اختر المنتج أولاً.");
       return;
     }
     if (!colorDraft.nameAr.trim() && !colorDraft.nameHe.trim()) {
-      setSyncError("أدخلي اسم اللون بالعربية أو العبرية.");
+      setSyncError("أدخل اسم اللون بالعربية أو العبرية.");
       return;
     }
     const nextColor = colorDraft.id ? colorDraft : { ...colorDraft, id: uid("color") };
@@ -727,7 +727,7 @@ export function AdminDashboard() {
     setSyncError("");
     const imageUrls = uniqueImageUrls(bannerDraft.imageUrls);
     if (!imageUrls.length) {
-      setSyncError("ارفعي صورة واحدة على الأقل للهيرو (رفع ملف أو لصق رابط) قبل الحفظ.");
+      setSyncError("ارفع صورة واحدة على الأقل للهيرو (رفع ملف أو لصق رابط) قبل الحفظ.");
       return;
     }
     const nextBanner = normalizeBanner(
@@ -763,7 +763,7 @@ export function AdminDashboard() {
   function addBannerImageUrl(url: string) {
     const value = url.trim();
     if (!isValidImageSource(value)) {
-      setSyncError("أدخلي رابط صورة صالح (يبدأ بـ http:// أو https:// أو مسار محلي /).");
+      setSyncError("أدخل رابط صورة صالح (يبدأ بـ http:// أو https:// أو مسار محلي /).");
       return;
     }
 
@@ -1010,7 +1010,7 @@ export function AdminDashboard() {
 
   async function syncBaseStoreData() {
     const confirmed = window.confirm(
-      "سيتم تحديث التصنيفات والبراندات ومناطق التوصيل والبانرات فقط.\nالمنتجات والطلبات الحالية لن تُحذف.\nهل تريدين المتابعة؟"
+      "سيتم تحديث التصنيفات والبراندات ومناطق التوصيل والبانرات فقط.\nالمنتجات والطلبات الحالية لن تُحذف.\nهل تريد المتابعة؟"
     );
     if (!confirmed) return;
 
@@ -1210,7 +1210,7 @@ export function AdminDashboard() {
                     label="البراند"
                     onChange={(brandId) => setProductDraft({ ...productDraft, brandId })}
                     options={data.brands.map((brand) => ({ id: brand.id, label: brand.nameAr }))}
-                    searchPlaceholder="ابحثي عن براند..."
+                    searchPlaceholder="ابحث عن براند..."
                     searchable
                     value={productDraft.brandId}
                   />
@@ -1228,7 +1228,7 @@ export function AdminDashboard() {
                 <section className="color-studio">
                   <div className="admin-section-head">
                     <strong>ألوان المنتج والمخزون</strong>
-                    <p className="muted">اختاري اللون من اللوحة أو أدخلي الكود، ثم حددي الكمية المتبقية لكل لون.</p>
+                    <p className="muted">اختر اللون من اللوحة أو أدخل الكود، ثم حدّد الكمية المتبقية لكل لون.</p>
                   </div>
                   <div className="color-studio__list">
                     {productColorDrafts.map((row, index) => {
@@ -1239,7 +1239,7 @@ export function AdminDashboard() {
                             <label
                               className="color-card__picker"
                               style={{ background: swatchValue }}
-                              title="اختاري اللون"
+                              title="اختر اللون"
                             >
                               <input
                                 aria-label="منتقي اللون"
@@ -1384,7 +1384,7 @@ export function AdminDashboard() {
                     imageUrl: product.images[0],
                     label: `${product.nameAr} (${product.sku})`,
                   }))}
-                  searchPlaceholder="ابحثي عن منتج..."
+                  searchPlaceholder="ابحث عن منتج..."
                   searchable
                   value={colorDraft.productId}
                 />
@@ -1396,7 +1396,7 @@ export function AdminDashboard() {
                     <label
                       className="color-card__picker"
                       style={{ background: isHexColor(colorDraft.value) ? colorDraft.value : "#d4af37" }}
-                      title="اختاري اللون"
+                      title="اختر اللون"
                     >
                       <input
                         aria-label="منتقي اللون"
@@ -1592,7 +1592,7 @@ export function AdminDashboard() {
             form={
               <form className="form-grid" onSubmit={saveBanner}>
                 <AdminHint variant="info">
-                  من هنا تتحكمي بصور الهيرو (واحدة أو أكثر ككاروسيل) والعنوان والوصف في الصفحة الرئيسية.
+                  من هنا تتحكم بصور الهيرو (واحدة أو أكثر ككاروسيل) والعنوان والوصف في الصفحة الرئيسية.
                 </AdminHint>
                 <div className="two-col form-grid">
                   {textInput<Banner>("العنوان عربي", bannerDraft.titleAr, "titleAr", setBannerDraft)}
@@ -1600,7 +1600,7 @@ export function AdminDashboard() {
                 </div>
                 <ProductGalleryField
                   allowUrlInput
-                  emptyLabel="ارفعي صورة واحدة أو أكثر، أو ألصقي رابط صورة. الصور تتبدل تلقائياً كل 3 ثوانٍ في الهيرو."
+                  emptyLabel="ارفع صورة واحدة أو أكثر، أو ألصق رابط صورة. الصور تتبدل تلقائياً كل 3 ثوانٍ في الهيرو."
                   images={bannerDraft.imageUrls}
                   isUploading={uploadingField === "صور الهيرو"}
                   label="صور الهيرو (كاروسيل)"
@@ -1639,7 +1639,7 @@ export function AdminDashboard() {
             <div className="admin-panel">
               <PanelTitle
                 title="النسخة الاحتياطية"
-                hint="نزّلي نسخة كاملة من المنتجات وبياناتها وألوانها ومخزونها في ملف Excel واحد للاحتفاظ بها."
+                hint="نزّل نسخة كاملة من المنتجات وبياناتها وألوانها ومخزونها في ملف Excel واحد للاحتفاظ بها."
               />
 
               <div className="backup-card">
@@ -1689,7 +1689,7 @@ export function AdminDashboard() {
           <div className="admin-panel">
             <PanelTitle
               title="إعدادات المتجر العامة"
-              hint="روابط التواصل (واتساب، إنستغرام، تيك توك، فيسبوك، البريد) تظهر في تذييل الموقع والقائمة الجانبية. اتركي الحقل فارغاً لإخفائه."
+              hint="روابط التواصل (واتساب، إنستغرام، تيك توك، فيسبوك، البريد) تظهر في تذييل الموقع والقائمة الجانبية. اترك الحقل فارغاً لإخفائه."
             />
             <form className="form-grid" onSubmit={saveSettings} style={{ marginTop: "20px" }}>
               <div className="two-col form-grid">
