@@ -39,6 +39,7 @@ import { fetchStoreDataWithOrders } from "@/lib/supabase/catalog";
 import { fetchOrders, updateOrderStatus as updateOrderStatusSupabase, subscribeToOrders } from "@/lib/supabase/orders";
 import { createBrowserSupabaseClient, getSupabaseConfigStatus } from "@/lib/supabase/client";
 import { AdminMarketingNotifications } from "@/components/admin-marketing-notifications";
+import { AdminAlertStack } from "@/components/admin-alerts";
 import { isValidImageSource, shouldOptimizeRemoteImage, uniqueImageUrls } from "@/lib/image-url";
 import { adminDeleteMessage, adminSaveMessage, formatAdminError } from "@/lib/admin-messages";
 import { buildEntitySlug, buildProductSlug } from "@/lib/slug";
@@ -1108,16 +1109,12 @@ export function AdminDashboard() {
           </div>
         </header>
 
-        <div className="admin-inline-notice admin-inline-notice--success">
-          بيانات المنتجات محفوظة في قاعدة البيانات. الحذف الجماعي للكتالوج معطّل لحماية عملك.
-        </div>
-
-        {syncMessage ? (
-          <div className="admin-flash admin-flash--success">
-            {syncMessage}
-          </div>
-        ) : null}
-        {syncError ? <div className="admin-flash admin-flash--error">{syncError}</div> : null}
+        <AdminAlertStack
+          error={syncError}
+          message={syncMessage}
+          onClearError={() => setSyncError("")}
+          onClearMessage={() => setSyncMessage("")}
+        />
 
         {activeTab === "overview" ? (
           <>
