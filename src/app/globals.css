@@ -7007,6 +7007,27 @@ html[data-theme="light"] select.select option {
   padding: 14px 18px;
 }
 
+.admin-view-toolbar {
+  align-items: start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.admin-view-toolbar .section-head {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: min(100%, 320px);
+}
+
+.admin-view-toolbar .button,
+.admin-view-toolbar .ghost-button {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+
 .admin-alert-stack {
   display: grid;
   gap: 14px;

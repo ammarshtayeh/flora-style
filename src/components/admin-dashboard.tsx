@@ -258,6 +258,7 @@ function AdminPicker({
 export function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<AdminTab>("overview");
+  const [productsView, setProductsView] = useState<"add" | "manage">("add");
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [data, setData] = useState<StoreData>(initialStoreData);
   const [syncMessage, setSyncMessage] = useState("");
@@ -519,6 +520,7 @@ export function AdminDashboard() {
     setProductDraft(product);
     setProductColorDrafts(rows.length ? rows.map(mapColorToFormRow) : [blankProductColorRow()]);
     setProductDefaultStock(rows[0]?.stockQuantity ?? 1);
+    setProductsView("add");
   }
 
   function beginDuplicateProduct(product: Product) {
@@ -536,6 +538,7 @@ export function AdminDashboard() {
     setProductDefaultStock(1);
     setSyncMessage(`نسخة من «${product.nameAr}» — عدّل رمز المنتج والاسم، أضف الألوان، ثم احفظ.`);
     setActiveTab("products");
+    setProductsView("add");
   }
 
   function resetProductForm() {
@@ -626,9 +629,14 @@ export function AdminDashboard() {
       }
     }
 
+    const wasEditing = Boolean(productDraft.id);
+
     await refreshData();
     resetProductForm();
     setSyncMessage(adminSaveMessage("products"));
+    if (wasEditing) {
+      setProductsView("manage");
+    }
   }
 
   async function saveCategory(event: FormEvent<HTMLFormElement>) {
@@ -1072,7 +1080,18 @@ export function AdminDashboard() {
         <div className="sidebar-nav-shell" id="admin-nav-panel">
           <nav className="side-nav" aria-label="Admin sections">
             {tabs.map((tab) => (
-              <button className={activeTab === tab.id ? "is-active" : ""} key={tab.id} onClick={() => setActiveTab(tab.id)} type="button">
+              <button
+                className={activeTab === tab.id ? "is-active" : ""}
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === "products" && activeTab !== "products") {
+                    setProductsView("add");
+                    resetProductForm();
+                  }
+                  setActiveTab(tab.id);
+                }}
+                type="button"
+              >
                 {tab.label}
               </button>
             ))}
@@ -1164,10 +1183,44 @@ export function AdminDashboard() {
         ) : null}
 
         {activeTab === "products" ? (
-          <CrudLayout
-            title="إدارة المنتجات"
-            form={
-              <form className="form-grid" onSubmit={saveProduct}>
+          <div className="admin-grid admin-grid--single">
+            {productsView === "manage" ? (
+              <div className="admin-panel">
+                <div className="admin-view-toolbar">
+                  <PanelTitle
+                    hint="عدّل أو انسخ أو احذف أي منتج موجود. للإضافة استخدم زر إضافة منتج جديد."
+                    title="إدارة المنتجات المضافة"
+                  />
+                  <button
+                    className="button"
+                    onClick={() => {
+                      resetProductForm();
+                      setProductsView("add");
+                    }}
+                    type="button"
+                  >
+                    + إضافة منتج جديد
+                  </button>
+                </div>
+                <ProductsTable
+                  data={data}
+                  onDelete={(id) => deleteById("products", id)}
+                  onDuplicate={beginDuplicateProduct}
+                  onEdit={beginEditProduct}
+                />
+              </div>
+            ) : (
+              <div className="admin-panel">
+                <div className="admin-view-toolbar">
+                  <PanelTitle
+                    hint="أدخل بيانات المنتج ثم احفظ. لإدارة المنتجات الحالية اضغط زر إدارة المنتجات المضافة."
+                    title={productDraft.id ? "تعديل منتج" : "إضافة منتج"}
+                  />
+                  <button className="ghost-button" onClick={() => setProductsView("manage")} type="button">
+                    إدارة المنتجات المضافة ({data.products.length})
+                  </button>
+                </div>
+                <form className="form-grid" onSubmit={saveProduct}>
                 <div className="two-col form-grid">
                   {textInput<Product>("اسم المنتج عربي", productDraft.nameAr, "nameAr", setProductDraft)}
                   {textInput<Product>("اسم المنتج عبري", productDraft.nameHe, "nameHe", setProductDraft)}
@@ -1357,17 +1410,11 @@ export function AdminDashboard() {
                     ["فعال", productDraft.active, (checked) => setProductDraft({ ...productDraft, active: checked })]
                   ]}
                 />
-                <button className="button">حفظ المنتج</button>
-              </form>
-            }
-          >
-            <ProductsTable
-              data={data}
-              onDelete={(id) => deleteById("products", id)}
-              onDuplicate={beginDuplicateProduct}
-              onEdit={beginEditProduct}
-            />
-          </CrudLayout>
+                <button className="button">{productDraft.id ? "حفظ التعديلات" : "حفظ المنتج"}</button>
+                </form>
+              </div>
+            )}
+          </div>
         ) : null}
 
         {activeTab === "inventory" ? (
@@ -2094,6 +2141,13 @@ function ProductsTable({
           </tr>
         </thead>
         <tbody>
+          {data.products.length === 0 ? (
+            <tr>
+              <td className="empty" colSpan={5}>
+                لا توجد منتجات مضافة بعد. اضغط «إضافة منتج جديد» لبدء الإضافة.
+              </td>
+            </tr>
+          ) : null}
           {data.products.map((product) => {
             return (
               <tr key={product.id}>
