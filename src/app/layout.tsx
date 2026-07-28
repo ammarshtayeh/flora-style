@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Alexandria, Assistant, Manrope } from "next/font/google";
+import { MetaPixel } from "@/components/meta-pixel";
 import { OneSignalCartSync } from "@/components/onesignal-cart-sync";
 import { OneSignalInit } from "@/components/onesignal-init";
 import { PwaRegister } from "@/components/pwa-register";
@@ -89,6 +90,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       className={`${arabicFont.variable} ${hebrewFont.variable} ${latinFont.variable}`}
     >
       <body>
+        <MetaPixel />
         <SmoothScroll>{children}</SmoothScroll>
         <OneSignalInit />
         <OneSignalCartSync />
